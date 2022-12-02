@@ -7,6 +7,11 @@
   <version>1.0-SNAPSHOT</version>
   <name>epam-final-project Maven Webapp</name>
 
+  <properties>
+    <maven.compiler.target>11</maven.compiler.target>
+    <maven.compiler.source>11</maven.compiler.source>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>mysql</groupId>
@@ -26,8 +31,4 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-
-  <build>
-    <finalName>epam-final-project</finalName>
-  </build>
 </project>
