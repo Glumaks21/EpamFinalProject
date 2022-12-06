@@ -1,6 +1,7 @@
 package ua.maksym.hlushchenko.db.entity;
 
 import lombok.Data;
+import ua.maksym.hlushchenko.db.entity.roles.Reader;
 
 import java.time.LocalDate;
 

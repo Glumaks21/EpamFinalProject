@@ -1,4 +1,4 @@
-package ua.maksym.hlushchenko.db.entity;
+package ua.maksym.hlushchenko.db.entity.roles;
 
 import lombok.Data;
 

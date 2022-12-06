@@ -1,79 +1,79 @@
 package ua.maksym.hlushchenko.db.dao;
 
-import ua.maksym.hlushchenko.db.entity.roles.Admin;
+import ua.maksym.hlushchenko.db.entity.roles.Librarian;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class AdminDao extends AbstractSqlDao<String, Admin> {
-    static final String SQL_SELECT_ALL = "SELECT * FROM admin a " +
-            "JOIN user u ON a.user_login = u.login";
-    static final String SQL_SELECT_BY_LOGIN = "SELECT * FROM admin a " +
-            "JOIN user u ON a.user_login = u.login WHERE login = ?";
-    static final String SQL_INSERT = "INSERT INTO admin(user_login) VALUES(?)";
-    static final String SQL_DELETE_BY_LOGIN = "DELETE FROM admin WHERE user_login = ?";
+public class LibrarianDao extends AbstractSqlDao<String, Librarian> {
+    private static final String SQL_SELECT_ALL = "SELECT * FROM librarian l " +
+            "JOIN user u ON l.user_login = u.login";
+    private static final String SQL_SELECT_BY_LOGIN = "SELECT * FROM librarian l " +
+            "JOIN user u ON l.user_login = u.login WHERE login = ?";
+    private static final String SQL_INSERT = "INSERT INTO librarian(user_login) VALUES(?)";
+    private static final String SQL_DELETE_BY_LOGIN = "DELETE FROM librarian WHERE user_login = ?";
 
-    public AdminDao(Connection connection) {
+    public LibrarianDao(Connection connection) {
         super(connection);
     }
 
-    static Admin mapToAdmin(ResultSet resultSet) throws SQLException {
-        Admin admin = new Admin();
-        admin.setUser(UserDao.mapToUser(resultSet));
-        return admin;
+    static Librarian mapToLibrarian(ResultSet resultSet) throws SQLException {
+        Librarian librarian = new Librarian();
+        librarian.setUser(UserDao.mapToUser(resultSet));
+        return librarian;
     }
 
     @Override
-    public List<Admin> findAll() {
-        List<Admin> admins = new ArrayList<>();
+    public List<Librarian> findAll() {
+        List<Librarian> librarians = new ArrayList<>();
         try {
             Statement statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
 
             while (resultSet.next()) {
-                Admin admin = mapToAdmin(resultSet);
-                admins.add(admin);
+                Librarian librarian = mapToLibrarian(resultSet);
+                librarians.add(librarian);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
 
-        return admins;
+        return librarians;
     }
 
     @Override
-    public Optional<Admin> find(String id) {
-        Admin admin = null;
+    public Optional<Librarian> find(String id) {
+        Librarian librarian = null;
         try {
             PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_LOGIN);
             fillPreparedStatement(statement, id);
 
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {
-                admin = mapToAdmin(resultSet);
+                librarian = mapToLibrarian(resultSet);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
 
-        return Optional.ofNullable(admin);
+        return Optional.ofNullable(librarian);
     }
 
     @Override
-    public void save(Admin admin) {
-        try  {
+    public void save(Librarian librarian) {
+        try {
             connection.setAutoCommit(false);
 
             PreparedStatement statement = connection.prepareStatement(UserDao.SQL_INSERT);
             fillPreparedStatement(statement,
-                    admin.getUser().getLogin(),
-                    admin.getUser().getPassword());
+                    librarian.getUser().getLogin(),
+                    librarian.getUser().getPassword());
             statement.executeUpdate();
 
             statement = connection.prepareStatement(SQL_INSERT);
-            fillPreparedStatement(statement, admin.getUser().getLogin());
+            fillPreparedStatement(statement, librarian.getUser().getLogin());
             statement.executeUpdate();
 
             connection.commit();
@@ -84,11 +84,11 @@ public class AdminDao extends AbstractSqlDao<String, Admin> {
     }
 
     @Override
-    public void update(Admin entity) {}
+    public void update(Librarian entity) {}
 
     @Override
     public void delete(String id) {
-        try  {
+        try {
             connection.setAutoCommit(false);
 
             PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_LOGIN);
@@ -106,4 +106,3 @@ public class AdminDao extends AbstractSqlDao<String, Admin> {
         }
     }
 }
-
