@@ -1,4 +1,4 @@
-package ua.maksym.hlushchenko.db.dao;
+package ua.maksym.hlushchenko.db.dao.sql;
 
 import ua.maksym.hlushchenko.db.entity.roles.User;
 
@@ -7,14 +7,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class UserDao extends AbstractSqlDao<String, User> {
+public class UserSqlDao extends AbstractSqlDao<String, User> {
     static final String SQL_SELECT_ALL = "SELECT * FROM user";
     static final String SQL_SELECT_BY_LOGIN = "SELECT * FROM user WHERE login = ?";
     static final String SQL_INSERT = "INSERT INTO user(login, password) VALUES(?, ?)";
     static final String SQL_UPDATE_BY_LOGIN = "UPDATE user SET password = ? WHERE login = ?";
     static final String SQL_DELETE_BY_LOGIN = "DELETE FROM user WHERE login = ?";
 
-    public UserDao(Connection connection) {
+    public UserSqlDao(Connection connection) {
         super(connection);
     }
 

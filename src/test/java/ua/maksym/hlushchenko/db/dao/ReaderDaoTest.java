@@ -3,21 +3,18 @@ package ua.maksym.hlushchenko.db.dao;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.db.entity.roles.Librarian;
+import ua.maksym.hlushchenko.db.dao.sql.ReaderSqlDao;
 import ua.maksym.hlushchenko.db.entity.roles.Reader;
-import ua.maksym.hlushchenko.db.entity.roles.User;
 
 import java.sql.Connection;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ReaderDaoTest {
     private static Connection connection;
-    private static ReaderDao dao;
+    private static ReaderSqlDao dao;
     private static Reader reader;
 
     static Reader createReader() {
@@ -31,7 +28,7 @@ class ReaderDaoTest {
     @BeforeAll
     static void init() {
         connection = HikariCPDataSource.getConnection();
-        dao = new ReaderDao(connection);
+        dao = new ReaderSqlDao(connection);
         reader = createReader();
     }
 

@@ -3,6 +3,7 @@ package ua.maksym.hlushchenko.db.dao;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.db.HikariCPDataSource;
+import ua.maksym.hlushchenko.db.dao.sql.AdminSqlDao;
 import ua.maksym.hlushchenko.db.entity.roles.Admin;
 
 import java.sql.Connection;
@@ -12,7 +13,7 @@ import java.util.Optional;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class AdminDaoTest {
     private static Connection connection;
-    private static AdminDao dao;
+    private static AdminSqlDao dao;
     private static Admin admin;
 
     static Admin createAdmin() {
@@ -25,7 +26,7 @@ class AdminDaoTest {
     @BeforeAll
     static void init() {
         connection = HikariCPDataSource.getConnection();
-        dao = new AdminDao(connection);
+        dao = new AdminSqlDao(connection);
         admin = createAdmin();
     }
 
@@ -46,7 +47,9 @@ class AdminDaoTest {
     @Order(3)
     @Test
     void find() {
-        Admin adminInDb = dao.find(admin.getUser().getLogin()).get();
+        Optional<Admin> optionalAdminInDb = dao.find(admin.getUser().getLogin());
+        Assertions.assertTrue(optionalAdminInDb.isPresent());
+        Admin adminInDb = optionalAdminInDb.get();
         Assertions.assertEquals(adminInDb, admin);
     }
 

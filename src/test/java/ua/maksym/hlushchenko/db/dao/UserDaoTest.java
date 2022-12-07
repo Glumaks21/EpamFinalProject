@@ -3,6 +3,7 @@ package ua.maksym.hlushchenko.db.dao;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.db.HikariCPDataSource;
+import ua.maksym.hlushchenko.db.dao.sql.UserSqlDao;
 import ua.maksym.hlushchenko.db.entity.roles.User;
 
 
@@ -13,7 +14,7 @@ import java.util.Optional;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class UserDaoTest {
     private static Connection connection;
-    private static UserDao dao;
+    private static UserSqlDao dao;
     private static User user;
 
     static User createUser() {
@@ -27,7 +28,7 @@ class UserDaoTest {
     @BeforeAll
     static void init() {
         connection = HikariCPDataSource.getConnection();
-        dao = new UserDao(connection);
+        dao = new UserSqlDao(connection);
         user = createUser();
     }
 

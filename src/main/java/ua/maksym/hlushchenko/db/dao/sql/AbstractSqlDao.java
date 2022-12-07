@@ -1,4 +1,6 @@
-package ua.maksym.hlushchenko.db.dao;
+package ua.maksym.hlushchenko.db.dao.sql;
+
+import ua.maksym.hlushchenko.db.dao.Dao;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -29,6 +31,7 @@ public abstract class AbstractSqlDao<K, T> implements Dao<K, T> {
 
     @Override
     public abstract void delete(K id);
+
 
     protected void tryToRollBack(Connection connection) {
         if (connection != null) {

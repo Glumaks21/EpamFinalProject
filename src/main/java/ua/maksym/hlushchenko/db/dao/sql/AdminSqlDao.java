@@ -1,4 +1,4 @@
-package ua.maksym.hlushchenko.db.dao;
+package ua.maksym.hlushchenko.db.dao.sql;
 
 import ua.maksym.hlushchenko.db.entity.roles.Admin;
 
@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class AdminDao extends AbstractSqlDao<String, Admin> {
+public class AdminSqlDao extends AbstractSqlDao<String, Admin> {
     static final String SQL_SELECT_ALL = "SELECT * FROM admin a " +
             "JOIN user u ON a.user_login = u.login";
     static final String SQL_SELECT_BY_LOGIN = "SELECT * FROM admin a " +
@@ -15,13 +15,13 @@ public class AdminDao extends AbstractSqlDao<String, Admin> {
     static final String SQL_INSERT = "INSERT INTO admin(user_login) VALUES(?)";
     static final String SQL_DELETE_BY_LOGIN = "DELETE FROM admin WHERE user_login = ?";
 
-    public AdminDao(Connection connection) {
+    public AdminSqlDao(Connection connection) {
         super(connection);
     }
 
     static Admin mapToAdmin(ResultSet resultSet) throws SQLException {
         Admin admin = new Admin();
-        admin.setUser(UserDao.mapToUser(resultSet));
+        admin.setUser(UserSqlDao.mapToUser(resultSet));
         return admin;
     }
 
@@ -66,7 +66,7 @@ public class AdminDao extends AbstractSqlDao<String, Admin> {
         try  {
             connection.setAutoCommit(false);
 
-            PreparedStatement statement = connection.prepareStatement(UserDao.SQL_INSERT);
+            PreparedStatement statement = connection.prepareStatement(UserSqlDao.SQL_INSERT);
             fillPreparedStatement(statement,
                     admin.getUser().getLogin(),
                     admin.getUser().getPassword());
@@ -95,7 +95,7 @@ public class AdminDao extends AbstractSqlDao<String, Admin> {
             fillPreparedStatement(statement, id);
             statement.executeUpdate();
 
-            statement = connection.prepareStatement(UserDao.SQL_DELETE_BY_LOGIN);
+            statement = connection.prepareStatement(UserSqlDao.SQL_DELETE_BY_LOGIN);
             fillPreparedStatement(statement, id);
             statement.executeUpdate();
 

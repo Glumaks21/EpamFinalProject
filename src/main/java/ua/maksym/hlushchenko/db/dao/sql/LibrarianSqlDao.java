@@ -1,4 +1,4 @@
-package ua.maksym.hlushchenko.db.dao;
+package ua.maksym.hlushchenko.db.dao.sql;
 
 import ua.maksym.hlushchenko.db.entity.roles.Librarian;
 
@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class LibrarianDao extends AbstractSqlDao<String, Librarian> {
+public class LibrarianSqlDao extends AbstractSqlDao<String, Librarian> {
     private static final String SQL_SELECT_ALL = "SELECT * FROM librarian l " +
             "JOIN user u ON l.user_login = u.login";
     private static final String SQL_SELECT_BY_LOGIN = "SELECT * FROM librarian l " +
@@ -15,13 +15,13 @@ public class LibrarianDao extends AbstractSqlDao<String, Librarian> {
     private static final String SQL_INSERT = "INSERT INTO librarian(user_login) VALUES(?)";
     private static final String SQL_DELETE_BY_LOGIN = "DELETE FROM librarian WHERE user_login = ?";
 
-    public LibrarianDao(Connection connection) {
+    public LibrarianSqlDao(Connection connection) {
         super(connection);
     }
 
     static Librarian mapToLibrarian(ResultSet resultSet) throws SQLException {
         Librarian librarian = new Librarian();
-        librarian.setUser(UserDao.mapToUser(resultSet));
+        librarian.setUser(UserSqlDao.mapToUser(resultSet));
         return librarian;
     }
 
@@ -66,7 +66,7 @@ public class LibrarianDao extends AbstractSqlDao<String, Librarian> {
         try {
             connection.setAutoCommit(false);
 
-            PreparedStatement statement = connection.prepareStatement(UserDao.SQL_INSERT);
+            PreparedStatement statement = connection.prepareStatement(UserSqlDao.SQL_INSERT);
             fillPreparedStatement(statement,
                     librarian.getUser().getLogin(),
                     librarian.getUser().getPassword());
@@ -95,7 +95,7 @@ public class LibrarianDao extends AbstractSqlDao<String, Librarian> {
             fillPreparedStatement(statement, id);
             statement.executeUpdate();
 
-            statement = connection.prepareStatement(UserDao.SQL_DELETE_BY_LOGIN);
+            statement = connection.prepareStatement(UserSqlDao.SQL_DELETE_BY_LOGIN);
             fillPreparedStatement(statement, id);
             statement.executeUpdate();
 
