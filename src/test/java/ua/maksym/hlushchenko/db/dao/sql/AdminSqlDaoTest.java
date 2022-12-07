@@ -1,9 +1,8 @@
-package ua.maksym.hlushchenko.db.dao;
+package ua.maksym.hlushchenko.db.dao.sql;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.db.dao.sql.AdminSqlDao;
 import ua.maksym.hlushchenko.db.entity.roles.Admin;
 
 import java.sql.Connection;
@@ -11,14 +10,14 @@ import java.util.List;
 import java.util.Optional;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class AdminDaoTest {
+class AdminSqlDaoTest {
     private static Connection connection;
     private static AdminSqlDao dao;
     private static Admin admin;
 
     static Admin createAdmin() {
         Admin admin = new Admin();
-        admin.setUser(UserDaoTest.createUser());
+        admin.setUser(UserDaoSqlTest.createUser());
         return admin;
     }
 

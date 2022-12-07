@@ -1,9 +1,8 @@
-package ua.maksym.hlushchenko.db.dao;
+package ua.maksym.hlushchenko.db.dao.sql;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.db.dao.sql.LibrarianSqlDao;
 import ua.maksym.hlushchenko.db.entity.roles.Librarian;
 
 import java.sql.Connection;
@@ -11,14 +10,14 @@ import java.util.List;
 import java.util.Optional;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class LibrarianDaoTest {
+class LibrarianSqlDaoTest {
     private static Connection connection;
     private static LibrarianSqlDao dao;
     private static Librarian librarian;
 
     static Librarian createLibrarian() {
         Librarian librarian = new Librarian();
-        librarian.setUser(UserDaoTest.createUser());
+        librarian.setUser(UserDaoSqlTest.createUser());
         return librarian;
     }
 

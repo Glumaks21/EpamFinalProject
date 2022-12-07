@@ -1,9 +1,8 @@
-package ua.maksym.hlushchenko.db.dao;
+package ua.maksym.hlushchenko.db.dao.sql;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.db.dao.sql.GenreDao;
 import ua.maksym.hlushchenko.db.entity.Genre;
 
 import java.sql.Connection;
@@ -11,9 +10,9 @@ import java.util.List;
 import java.util.Optional;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class GenreDaoTest {
+class GenreSqlDaoTest {
     private static Connection connection;
-    private static GenreDao dao;
+    private static GenreSqlDao dao;
     private static Genre genre;
 
     static Genre createGenre() {
@@ -26,7 +25,7 @@ class GenreDaoTest {
     @BeforeAll
     static void init() {
         connection = HikariCPDataSource.getConnection();
-        dao = new GenreDao(connection);
+        dao = new GenreSqlDao(connection);
         genre = createGenre();
     }
 
@@ -58,11 +57,7 @@ class GenreDaoTest {
     void update() {
         genre.setName("ne_test");
         dao.update(genre);
-
-        Optional<Genre> optionalGenreInDb = dao.find(genre.getId());
-        Assertions.assertTrue(optionalGenreInDb.isPresent());
-        Genre genreInDb = optionalGenreInDb.get();
-        Assertions.assertEquals(genre, genreInDb);
+        find();
     }
 
     @Order(5)

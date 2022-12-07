@@ -1,9 +1,8 @@
-package ua.maksym.hlushchenko.db.dao;
+package ua.maksym.hlushchenko.db.dao.sql;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.db.dao.sql.UserSqlDao;
 import ua.maksym.hlushchenko.db.entity.roles.User;
 
 
@@ -12,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class UserDaoTest {
+class UserDaoSqlTest {
     private static Connection connection;
     private static UserSqlDao dao;
     private static User user;
@@ -49,7 +48,9 @@ class UserDaoTest {
     @Order(3)
     @Test
     void find() {
-        User userInDb = dao.find(user.getLogin()).get();
+        Optional<User> optionalUserInDb = dao.find(user.getLogin());
+        Assertions.assertTrue(optionalUserInDb.isPresent());
+        User userInDb = optionalUserInDb.get();
         Assertions.assertEquals(userInDb, user);
     }
 
@@ -58,8 +59,7 @@ class UserDaoTest {
     void update() {
         user.setPassword("ne_test");
         dao.update(user);
-        User userInDb = dao.find(user.getLogin()).get();
-        Assertions.assertEquals(userInDb, user);
+        find();
     }
 
     @Order(5)

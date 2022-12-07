@@ -1,9 +1,8 @@
-package ua.maksym.hlushchenko.db.dao;
+package ua.maksym.hlushchenko.db.dao.sql;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.db.dao.sql.PublisherSqlDao;
 import ua.maksym.hlushchenko.db.entity.Publisher;
 
 import java.sql.Connection;
@@ -11,9 +10,9 @@ import java.util.List;
 import java.util.Optional;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class PublisherDaoTest {
+class PublisherSqlDaoTest {
     private static Connection connection;
-    private static PublisherDao dao;
+    private static PublisherSqlDao dao;
     private static Publisher publisher;
 
     static Publisher createPublisher() {

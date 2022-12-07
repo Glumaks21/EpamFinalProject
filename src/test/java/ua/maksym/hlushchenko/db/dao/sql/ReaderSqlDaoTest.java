@@ -1,9 +1,8 @@
-package ua.maksym.hlushchenko.db.dao;
+package ua.maksym.hlushchenko.db.dao.sql;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.db.dao.sql.ReaderSqlDao;
 import ua.maksym.hlushchenko.db.entity.roles.Reader;
 
 import java.sql.Connection;
@@ -12,7 +11,7 @@ import java.util.Optional;
 
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class ReaderDaoTest {
+class ReaderSqlDaoTest {
     private static Connection connection;
     private static ReaderSqlDao dao;
     private static Reader reader;
@@ -20,7 +19,7 @@ class ReaderDaoTest {
     static Reader createReader() {
         Reader reader = new Reader();
         reader.setBlocked(false);
-        reader.setUser(UserDaoTest.createUser());
+        reader.setUser(UserDaoSqlTest.createUser());
         return reader;
     }
 
@@ -48,7 +47,9 @@ class ReaderDaoTest {
     @Order(3)
     @Test
     void find() {
-        Reader readerInDb = dao.find(reader.getUser().getLogin()).get();
+        Optional<Reader> optionalReaderInDb = dao.find(reader.getUser().getLogin());
+        Assertions.assertTrue(optionalReaderInDb.isPresent());
+        Reader readerInDb = optionalReaderInDb.get();
         Assertions.assertEquals(reader, readerInDb);
     }
 
@@ -57,8 +58,7 @@ class ReaderDaoTest {
     void update() {
         reader.setBlocked(true);
         dao.update(reader);
-        Reader readerInDb = dao.find(reader.getUser().getLogin()).get();
-        Assertions.assertEquals(reader, readerInDb);
+        find();
     }
 
     @Order(5)

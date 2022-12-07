@@ -1,52 +1,54 @@
 package ua.maksym.hlushchenko.db.dao.sql;
 
-import ua.maksym.hlushchenko.db.entity.Genre;
+import ua.maksym.hlushchenko.db.entity.Author;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class GenreDao extends AbstractSqlDao<Integer, Genre> {
-    static final String SQL_SELECT_ALL = "SELECT * FROM genre";
-    static final String SQL_SELECT_BY_ID = "SELECT * FROM genre WHERE id = ?";
-    static final String SQL_INSERT = "INSERT INTO genre(name) VALUES(?)";
-    static final String SQL_UPDATE_BY_ID = "UPDATE genre SET name = ? WHERE id = ?";
-    static final String SQL_DELETE_BY_ID = "DELETE FROM genre WHERE id = ?";
+public class AuthorSqlDao extends AbstractSqlDao<Integer, Author> {
+    static String SQL_SELECT_ALL = "SELECT * FROM author";
+    static String SQL_SELECT_BY_ID = "SELECT * FROM author WHERE id = ?";
+    static String SQL_INSERT = "INSERT INTO author(name, surname) VALUES(?, ?)";
+    static String SQL_UPDATE_BY_ID = "UPDATE author SET name = ?, surname = ? WHERE id = ?";
+    static String SQL_DELETE_BY_ID = "DELETE FROM author WHERE id = ?";
 
-    public GenreDao(Connection connection) {
+
+    public AuthorSqlDao(Connection connection) {
         super(connection);
     }
 
-    static Genre mapToGenre(ResultSet resultSet) throws SQLException {
-        Genre genre = new Genre();
-        genre.setId(resultSet.getInt("id"));
-        genre.setName(resultSet.getString("name"));
-        return genre;
+    static Author mapToAuthor(ResultSet resultSet) throws SQLException {
+        Author author = new Author();
+        author.setId(resultSet.getInt("id"));
+        author.setName(resultSet.getString("name"));
+        author.setSurname(resultSet.getString("surname"));
+        return author;
     }
 
     @Override
-    public List<Genre> findAll() {
-        List<Genre> genres = new ArrayList<>();
+    public List<Author> findAll() {
+        List<Author> authors = new ArrayList<>();
 
         try {
             Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
 
+            ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
             while (resultSet.next()) {
-                Genre genre = mapToGenre(resultSet);
-                genres.add(genre);
+                Author author = mapToAuthor(resultSet);
+                authors.add(author);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
 
-        return genres;
+        return authors;
     }
 
     @Override
-    public Optional<Genre> find(Integer id) {
-        Genre genre = null;
+    public Optional<Author> find(Integer id) {
+        Author author = null;
 
         try {
             PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_ID);
@@ -54,28 +56,30 @@ public class GenreDao extends AbstractSqlDao<Integer, Genre> {
 
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {
-                genre = mapToGenre(resultSet);
+                author = mapToAuthor(resultSet);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
 
-        return Optional.ofNullable(genre);
+        return Optional.ofNullable(author);
     }
 
     @Override
-    public void save(Genre genre) {
+    public void save(Author author) {
         try {
             connection.setAutoCommit(false);
 
             PreparedStatement statement = connection.prepareStatement(SQL_INSERT,
                     Statement.RETURN_GENERATED_KEYS);
-            fillPreparedStatement(statement, genre.getName());
+            fillPreparedStatement(statement,
+                    author.getName(),
+                    author.getSurname());
             statement.executeUpdate();
 
             ResultSet resultSet = statement.getGeneratedKeys();
             while (resultSet.next()) {
-                genre.setId(resultSet.getInt(1));
+                author.setId(resultSet.getInt(1));
             }
 
             connection.commit();
@@ -86,14 +90,15 @@ public class GenreDao extends AbstractSqlDao<Integer, Genre> {
     }
 
     @Override
-    public void update(Genre genre) {
+    public void update(Author author) {
         try {
             connection.setAutoCommit(false);
 
             PreparedStatement statement = connection.prepareStatement(SQL_UPDATE_BY_ID);
             fillPreparedStatement(statement,
-                    genre.getName(),
-                    genre.getId());
+                    author.getName(),
+                    author.getSurname(),
+                    author.getId());
             statement.executeUpdate();
 
             connection.commit();
