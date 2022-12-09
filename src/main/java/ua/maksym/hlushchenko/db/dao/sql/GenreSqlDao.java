@@ -1,5 +1,7 @@
 package ua.maksym.hlushchenko.db.dao.sql;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ua.maksym.hlushchenko.db.entity.Genre;
 
 import java.sql.*;
@@ -13,6 +15,8 @@ public class GenreSqlDao extends AbstractSqlDao<Integer, Genre> {
     static final String SQL_INSERT = "INSERT INTO genre(name) VALUES(?)";
     static final String SQL_UPDATE_BY_ID = "UPDATE genre SET name = ? WHERE id = ?";
     static final String SQL_DELETE_BY_ID = "DELETE FROM genre WHERE id = ?";
+
+    private static final Logger log = LoggerFactory.getLogger(GenreSqlDao.class);
 
     public GenreSqlDao(Connection connection) {
         super(connection);
@@ -31,14 +35,15 @@ public class GenreSqlDao extends AbstractSqlDao<Integer, Genre> {
 
         try {
             Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
 
+            log.info("Try to execute:\n" + formatSql(SQL_SELECT_ALL));
+            ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
             while (resultSet.next()) {
                 Genre genre = mapToGenre(resultSet);
                 genres.add(genre);
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            log.warn(e.getMessage());
         }
 
         return genres;
@@ -52,12 +57,13 @@ public class GenreSqlDao extends AbstractSqlDao<Integer, Genre> {
             PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_ID);
             fillPreparedStatement(statement, id);
 
+            log.info("Try to execute:\n" + formatSql(statement));
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {
                 genre = mapToGenre(resultSet);
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            log.warn(e.getMessage());
         }
 
         return Optional.ofNullable(genre);
@@ -71,6 +77,8 @@ public class GenreSqlDao extends AbstractSqlDao<Integer, Genre> {
             PreparedStatement statement = connection.prepareStatement(SQL_INSERT,
                     Statement.RETURN_GENERATED_KEYS);
             fillPreparedStatement(statement, genre.getName());
+
+            log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
 
             ResultSet resultSet = statement.getGeneratedKeys();
@@ -80,8 +88,8 @@ public class GenreSqlDao extends AbstractSqlDao<Integer, Genre> {
 
             connection.commit();
         } catch (SQLException e) {
+            log.warn(e.getMessage());
             tryToRollBack(connection);
-            throw new RuntimeException(e);
         }
     }
 
@@ -94,12 +102,14 @@ public class GenreSqlDao extends AbstractSqlDao<Integer, Genre> {
             fillPreparedStatement(statement,
                     genre.getName(),
                     genre.getId());
+
+            log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
 
             connection.commit();
         } catch (SQLException e) {
+            log.warn(e.getMessage());
             tryToRollBack(connection);
-            throw new RuntimeException(e);
         }
     }
 
@@ -110,12 +120,14 @@ public class GenreSqlDao extends AbstractSqlDao<Integer, Genre> {
 
             PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_ID);
             fillPreparedStatement(statement, id);
+
+            log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
 
             connection.commit();
         } catch (SQLException e) {
+            log.warn(e.getMessage());
             tryToRollBack(connection);
-            throw new RuntimeException(e);
         }
     }
 }

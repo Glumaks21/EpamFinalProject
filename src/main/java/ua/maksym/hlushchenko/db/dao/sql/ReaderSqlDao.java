@@ -1,5 +1,7 @@
 package ua.maksym.hlushchenko.db.dao.sql;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ua.maksym.hlushchenko.db.dao.ReaderDao;
 import ua.maksym.hlushchenko.db.entity.roles.Reader;
 
@@ -17,6 +19,8 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
     static String SQL_UPDATE_BY_LOGIN = "UPDATE reader SET blocked = ? WHERE user_login = ?";
     static String SQL_DELETE_BY_LOGIN = "DELETE FROM reader WHERE user_login = ?";
 
+    private static final Logger log = LoggerFactory.getLogger(ReaderSqlDao.class);
+
     public ReaderSqlDao(Connection connection) {
         super(connection);
     }
@@ -31,8 +35,10 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
     @Override
     public List<Reader> findAll() {
         List<Reader> readers = new ArrayList<>();
+
         try {
             Statement statement = connection.createStatement();
+            log.info("Try to execute:\n" + formatSql(SQL_SELECT_ALL));
             ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
 
             while (resultSet.next()) {
@@ -40,7 +46,7 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
                 readers.add(reader);
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            log.warn(e.getMessage());
         }
 
         return readers;
@@ -53,12 +59,13 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
             PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_LOGIN);
             fillPreparedStatement(statement, id);
 
+            log.info("Try to execute:\n" + formatSql(statement));
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {
                 reader = mapToReader(resultSet);
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            log.warn(e.getMessage());
         }
 
         return Optional.ofNullable(reader);
@@ -73,18 +80,20 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
             fillPreparedStatement(statement,
                     reader.getUser().getLogin(),
                     reader.getUser().getPassword());
+            log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
 
             statement = connection.prepareStatement(SQL_INSERT);
             fillPreparedStatement(statement,
                     reader.getUser().getLogin(),
                     reader.isBlocked());
+            log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
 
             connection.commit();
         } catch (SQLException e) {
+            log.warn(e.getMessage());
             tryToRollBack(connection);
-            throw new RuntimeException(e);
         }
     }
 
@@ -97,12 +106,13 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
             fillPreparedStatement(statement,
                     reader.isBlocked(),
                     reader.getUser().getLogin());
+            log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
 
             connection.commit();
         } catch (SQLException e) {
+            log.warn(e.getMessage());
             tryToRollBack(connection);
-            throw new RuntimeException(e);
         }
     }
 
@@ -113,16 +123,18 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
 
             PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_LOGIN);
             fillPreparedStatement(statement, id);
+            log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
 
             statement = connection.prepareStatement(UserSqlDao.SQL_DELETE_BY_LOGIN);
             fillPreparedStatement(statement, id);
+            log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
 
             connection.commit();
         } catch (SQLException e) {
+            log.warn(e.getMessage());
             tryToRollBack(connection);
-            throw new RuntimeException(e);
         }
     }
 }

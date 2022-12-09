@@ -1,5 +1,7 @@
 package ua.maksym.hlushchenko.db.dao.sql;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ua.maksym.hlushchenko.db.entity.Author;
 
 import java.sql.*;
@@ -14,6 +16,7 @@ public class AuthorSqlDao extends AbstractSqlDao<Integer, Author> {
     static String SQL_UPDATE_BY_ID = "UPDATE author SET name = ?, surname = ? WHERE id = ?";
     static String SQL_DELETE_BY_ID = "DELETE FROM author WHERE id = ?";
 
+    private static final Logger log = LoggerFactory.getLogger(AuthorSqlDao.class);
 
     public AuthorSqlDao(Connection connection) {
         super(connection);
@@ -34,13 +37,14 @@ public class AuthorSqlDao extends AbstractSqlDao<Integer, Author> {
         try {
             Statement statement = connection.createStatement();
 
+            log.info("Try to execute:\n" + formatSql(SQL_SELECT_ALL));
             ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
             while (resultSet.next()) {
                 Author author = mapToAuthor(resultSet);
                 authors.add(author);
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            log.warn(e.getMessage());
         }
 
         return authors;
@@ -53,13 +57,14 @@ public class AuthorSqlDao extends AbstractSqlDao<Integer, Author> {
         try {
             PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_ID);
             fillPreparedStatement(statement, id);
+            log.info("Try to execute:\n" + formatSql(statement));
 
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {
                 author = mapToAuthor(resultSet);
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            log.warn(e.getMessage());
         }
 
         return Optional.ofNullable(author);
@@ -75,6 +80,7 @@ public class AuthorSqlDao extends AbstractSqlDao<Integer, Author> {
             fillPreparedStatement(statement,
                     author.getName(),
                     author.getSurname());
+            log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
 
             ResultSet resultSet = statement.getGeneratedKeys();
@@ -84,8 +90,8 @@ public class AuthorSqlDao extends AbstractSqlDao<Integer, Author> {
 
             connection.commit();
         } catch (SQLException e) {
+            log.warn(e.getMessage());
             tryToRollBack(connection);
-            throw new RuntimeException(e);
         }
     }
 
@@ -99,12 +105,13 @@ public class AuthorSqlDao extends AbstractSqlDao<Integer, Author> {
                     author.getName(),
                     author.getSurname(),
                     author.getId());
+            log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
 
             connection.commit();
         } catch (SQLException e) {
+            log.warn(e.getMessage());
             tryToRollBack(connection);
-            throw new RuntimeException(e);
         }
     }
 
@@ -115,12 +122,13 @@ public class AuthorSqlDao extends AbstractSqlDao<Integer, Author> {
 
             PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_ID);
             fillPreparedStatement(statement, id);
+            log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
 
             connection.commit();
         } catch (SQLException e) {
+            log.warn(e.getMessage());
             tryToRollBack(connection);
-            throw new RuntimeException(e);
         }
     }
 }

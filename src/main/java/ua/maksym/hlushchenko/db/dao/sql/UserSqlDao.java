@@ -1,5 +1,7 @@
 package ua.maksym.hlushchenko.db.dao.sql;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ua.maksym.hlushchenko.db.entity.roles.User;
 
 import java.sql.*;
@@ -13,6 +15,8 @@ public class UserSqlDao extends AbstractSqlDao<String, User> {
     static final String SQL_INSERT = "INSERT INTO user(login, password) VALUES(?, ?)";
     static final String SQL_UPDATE_BY_LOGIN = "UPDATE user SET password = ? WHERE login = ?";
     static final String SQL_DELETE_BY_LOGIN = "DELETE FROM user WHERE login = ?";
+
+    private static final Logger log = LoggerFactory.getLogger(UserSqlDao.class);
 
     public UserSqlDao(Connection connection) {
         super(connection);
@@ -30,6 +34,7 @@ public class UserSqlDao extends AbstractSqlDao<String, User> {
         List<User> users = new ArrayList<>();
         try {
             Statement statement = connection.createStatement();
+            log.info("Try to execute:\n" + formatSql(SQL_SELECT_ALL));
             ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
 
             while (resultSet.next()) {
@@ -37,7 +42,7 @@ public class UserSqlDao extends AbstractSqlDao<String, User> {
                 users.add(user);
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            log.warn(e.getMessage());
         }
 
         return users;
@@ -50,12 +55,13 @@ public class UserSqlDao extends AbstractSqlDao<String, User> {
             PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_LOGIN);
             fillPreparedStatement(statement, id);
 
+            log.info("Try to execute:\n" + formatSql(statement));
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {
                 user = mapToUser(resultSet);
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            log.warn(e.getMessage());
         }
 
         return Optional.ofNullable(user);
@@ -70,12 +76,13 @@ public class UserSqlDao extends AbstractSqlDao<String, User> {
             fillPreparedStatement(statement,
                     user.getLogin(),
                     user.getPassword());
+            log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
 
             connection.commit();
         } catch (SQLException e) {
+            log.warn(e.getMessage());
             tryToRollBack(connection);
-            throw new RuntimeException(e);
         }
     }
 
@@ -88,12 +95,13 @@ public class UserSqlDao extends AbstractSqlDao<String, User> {
             fillPreparedStatement(statement,
                     user.getPassword(),
                     user.getLogin());
+            log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
 
             connection.commit();
         } catch (SQLException e) {
+            log.warn(e.getMessage());
             tryToRollBack(connection);
-            throw new RuntimeException(e);
         }
     }
 
@@ -104,12 +112,13 @@ public class UserSqlDao extends AbstractSqlDao<String, User> {
 
             PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_LOGIN);
             fillPreparedStatement(statement, id);
+            log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
 
             connection.commit();
         } catch (SQLException e) {
+            log.warn(e.getMessage());
             tryToRollBack(connection);
-            throw new RuntimeException(e);
         }
     }
 }

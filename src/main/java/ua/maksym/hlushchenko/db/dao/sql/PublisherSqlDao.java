@@ -1,5 +1,7 @@
 package ua.maksym.hlushchenko.db.dao.sql;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ua.maksym.hlushchenko.db.dao.PublisherDao;
 import ua.maksym.hlushchenko.db.entity.Publisher;
 
@@ -15,6 +17,8 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
     static String SQL_INSERT = "INSERT INTO publisher(isbn, name) VALUES(?, ?)";
     static String SQL_DELETE_BY_ISBN = "DELETE FROM publisher WHERE isbn = ?";
     static String SQL_DELETE_BY_NAME = "DELETE FROM publisher WHERE name = ?";
+
+    private static final Logger log = LoggerFactory.getLogger(PublisherSqlDao.class);
 
     public PublisherSqlDao(Connection connection) {
         super(connection);
@@ -32,6 +36,7 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
         List<Publisher> publishers = new ArrayList<>();
         try {
             Statement statement = connection.createStatement();
+            log.info("Try to execute:\n" + formatSql(SQL_SELECT_ALL));
             ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
 
             while (resultSet.next()) {
@@ -39,7 +44,7 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
                 publishers.add(publisher);
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            log.warn(e.getMessage());
         }
 
         return publishers;
@@ -52,12 +57,13 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
             PreparedStatement statement = connection.prepareStatement(sqlStatement);
             fillPreparedStatement(statement, column);
 
+            log.info("Try to execute:\n" + formatSql(statement));
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {
                 publisher = mapToPublisher(resultSet);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.warn(e.getMessage());
         }
 
         return Optional.ofNullable(publisher);
@@ -80,12 +86,13 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
 
             PreparedStatement statement = connection.prepareStatement(SQL_INSERT);
             fillPreparedStatement(statement, publisher.getIsbn(), publisher.getName());
+            log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
 
             connection.commit();
         } catch (SQLException e) {
+            log.warn(e.getMessage());
             tryToRollBack(connection);
-            throw new RuntimeException(e);
         }
     }
 
@@ -98,12 +105,13 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
 
             PreparedStatement statement = connection.prepareStatement(sqlStatement);
             fillPreparedStatement(statement, column);
+            log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
 
             connection.commit();
         } catch (SQLException e) {
+            log.warn(e.getMessage());
             tryToRollBack(connection);
-            throw new RuntimeException(e);
         }
     }
 

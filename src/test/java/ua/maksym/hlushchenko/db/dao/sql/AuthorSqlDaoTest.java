@@ -70,4 +70,10 @@ class AuthorSqlDaoTest {
         Optional<Author> optionalAuthorInDb = dao.find(author.getId());
         Assertions.assertTrue(optionalAuthorInDb.isEmpty());
     }
+
+    @SneakyThrows
+    @AfterAll
+    static void destroy() {
+        connection.close();
+    }
 }

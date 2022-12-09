@@ -1,5 +1,7 @@
 package ua.maksym.hlushchenko.db.dao.sql;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ua.maksym.hlushchenko.db.entity.roles.Librarian;
 
 import java.sql.*;
@@ -14,6 +16,8 @@ public class LibrarianSqlDao extends AbstractSqlDao<String, Librarian> {
             "JOIN user u ON l.user_login = u.login WHERE login = ?";
     private static final String SQL_INSERT = "INSERT INTO librarian(user_login) VALUES(?)";
     private static final String SQL_DELETE_BY_LOGIN = "DELETE FROM librarian WHERE user_login = ?";
+
+    private static final Logger log = LoggerFactory.getLogger(LibrarianSqlDao.class);
 
     public LibrarianSqlDao(Connection connection) {
         super(connection);
@@ -30,14 +34,15 @@ public class LibrarianSqlDao extends AbstractSqlDao<String, Librarian> {
         List<Librarian> librarians = new ArrayList<>();
         try {
             Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
 
+            log.info("Try to execute:\n" + formatSql(SQL_SELECT_ALL));
+            ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
             while (resultSet.next()) {
                 Librarian librarian = mapToLibrarian(resultSet);
                 librarians.add(librarian);
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            log.warn(e.getMessage());
         }
 
         return librarians;
@@ -50,12 +55,13 @@ public class LibrarianSqlDao extends AbstractSqlDao<String, Librarian> {
             PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_LOGIN);
             fillPreparedStatement(statement, id);
 
+            log.info("Try to execute:\n" + formatSql(statement));
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {
                 librarian = mapToLibrarian(resultSet);
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            log.warn(e.getMessage());
         }
 
         return Optional.ofNullable(librarian);
@@ -70,16 +76,18 @@ public class LibrarianSqlDao extends AbstractSqlDao<String, Librarian> {
             fillPreparedStatement(statement,
                     librarian.getUser().getLogin(),
                     librarian.getUser().getPassword());
+            log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
 
             statement = connection.prepareStatement(SQL_INSERT);
             fillPreparedStatement(statement, librarian.getUser().getLogin());
+            log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
 
             connection.commit();
         } catch (SQLException e) {
+            log.warn(e.getMessage());
             tryToRollBack(connection);
-            throw new RuntimeException(e);
         }
     }
 
@@ -93,16 +101,18 @@ public class LibrarianSqlDao extends AbstractSqlDao<String, Librarian> {
 
             PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_LOGIN);
             fillPreparedStatement(statement, id);
+            log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
 
             statement = connection.prepareStatement(UserSqlDao.SQL_DELETE_BY_LOGIN);
             fillPreparedStatement(statement, id);
+            log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
 
             connection.commit();
         } catch (SQLException e) {
+            log.warn(e.getMessage());
             tryToRollBack(connection);
-            throw new RuntimeException(e);
         }
     }
 }
