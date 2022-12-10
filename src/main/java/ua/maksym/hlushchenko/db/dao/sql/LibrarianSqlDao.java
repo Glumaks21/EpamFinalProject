@@ -87,7 +87,7 @@ public class LibrarianSqlDao extends AbstractSqlDao<String, Librarian> {
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
-            tryToRollBack(connection);
+            tryToRollBack();
         }
     }
 
@@ -112,7 +112,7 @@ public class LibrarianSqlDao extends AbstractSqlDao<String, Librarian> {
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
-            tryToRollBack(connection);
+            tryToRollBack();
         }
     }
 }

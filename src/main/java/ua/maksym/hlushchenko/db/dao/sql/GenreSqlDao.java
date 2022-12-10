@@ -89,7 +89,7 @@ public class GenreSqlDao extends AbstractSqlDao<Integer, Genre> {
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
-            tryToRollBack(connection);
+            tryToRollBack();
         }
     }
 
@@ -109,7 +109,7 @@ public class GenreSqlDao extends AbstractSqlDao<Integer, Genre> {
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
-            tryToRollBack(connection);
+            tryToRollBack();
         }
     }
 
@@ -127,7 +127,7 @@ public class GenreSqlDao extends AbstractSqlDao<Integer, Genre> {
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
-            tryToRollBack(connection);
+            tryToRollBack();
         }
     }
 }

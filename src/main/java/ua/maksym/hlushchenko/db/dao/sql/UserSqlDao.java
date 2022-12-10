@@ -82,7 +82,7 @@ public class UserSqlDao extends AbstractSqlDao<String, User> {
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
-            tryToRollBack(connection);
+            tryToRollBack();
         }
     }
 
@@ -101,7 +101,7 @@ public class UserSqlDao extends AbstractSqlDao<String, User> {
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
-            tryToRollBack(connection);
+            tryToRollBack();
         }
     }
 
@@ -118,7 +118,7 @@ public class UserSqlDao extends AbstractSqlDao<String, User> {
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
-            tryToRollBack(connection);
+            tryToRollBack();
         }
     }
 }

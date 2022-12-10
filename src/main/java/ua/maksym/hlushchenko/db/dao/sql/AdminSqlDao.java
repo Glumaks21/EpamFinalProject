@@ -88,7 +88,7 @@ public class AdminSqlDao extends AbstractSqlDao<String, Admin> {
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
-            tryToRollBack(connection);
+            tryToRollBack();
         }
     }
 
@@ -113,7 +113,7 @@ public class AdminSqlDao extends AbstractSqlDao<String, Admin> {
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
-            tryToRollBack(connection);
+            tryToRollBack();
         }
     }
 }

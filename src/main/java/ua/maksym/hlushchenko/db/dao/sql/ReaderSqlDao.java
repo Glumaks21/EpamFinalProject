@@ -3,12 +3,11 @@ package ua.maksym.hlushchenko.db.dao.sql;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ua.maksym.hlushchenko.db.dao.ReaderDao;
+import ua.maksym.hlushchenko.db.entity.Subscription;
 import ua.maksym.hlushchenko.db.entity.roles.Reader;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements ReaderDao {
     static String SQL_SELECT_ALL = "SELECT * FROM reader r " +
@@ -93,7 +92,7 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
-            tryToRollBack(connection);
+            tryToRollBack();
         }
     }
 
@@ -112,7 +111,7 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
-            tryToRollBack(connection);
+            tryToRollBack();
         }
     }
 
@@ -134,7 +133,14 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
-            tryToRollBack(connection);
+            tryToRollBack();
         }
+    }
+
+    @Override
+    public Set<Subscription> getSubscriptions() {
+        Set<Subscription> subscriptions = new HashSet<>();
+
+        return subscriptions;
     }
 }

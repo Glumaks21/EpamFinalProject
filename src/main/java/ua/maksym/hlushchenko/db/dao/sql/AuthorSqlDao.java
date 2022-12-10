@@ -91,7 +91,7 @@ public class AuthorSqlDao extends AbstractSqlDao<Integer, Author> {
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
-            tryToRollBack(connection);
+            tryToRollBack();
         }
     }
 
@@ -111,7 +111,7 @@ public class AuthorSqlDao extends AbstractSqlDao<Integer, Author> {
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
-            tryToRollBack(connection);
+            tryToRollBack();
         }
     }
 
@@ -128,7 +128,7 @@ public class AuthorSqlDao extends AbstractSqlDao<Integer, Author> {
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
-            tryToRollBack(connection);
+            tryToRollBack();
         }
     }
 }

@@ -8,15 +8,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
-public abstract class AbstractSqlDao<K, T> implements Dao<K, T> {
+public abstract class AbstractSqlDao<K, T> implements Dao<K, T>, AutoCloseable {
     protected Connection connection;
 
     private static final Logger log = LoggerFactory.getLogger(AbstractSqlDao.class);
@@ -42,7 +39,7 @@ public abstract class AbstractSqlDao<K, T> implements Dao<K, T> {
     public abstract void delete(K id);
 
 
-    protected void tryToRollBack(Connection connection) {
+    protected void tryToRollBack() {
         if (connection != null) {
             log.info("Try to roll back");
             try {
@@ -88,5 +85,10 @@ public abstract class AbstractSqlDao<K, T> implements Dao<K, T> {
 
         strb.append(words[words.length - 1]);
         return strb.toString();
+    }
+
+    @Override
+    public void close() throws Exception {
+        connection.close();
     }
 }

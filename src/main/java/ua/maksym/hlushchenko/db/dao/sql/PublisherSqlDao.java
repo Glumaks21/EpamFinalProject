@@ -92,7 +92,7 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
-            tryToRollBack(connection);
+            tryToRollBack();
         }
     }
 
@@ -111,7 +111,7 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
-            tryToRollBack(connection);
+            tryToRollBack();
         }
     }
 
