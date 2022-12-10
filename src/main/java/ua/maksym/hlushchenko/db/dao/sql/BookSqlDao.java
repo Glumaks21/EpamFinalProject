@@ -3,8 +3,14 @@ package ua.maksym.hlushchenko.db.dao.sql;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ua.maksym.hlushchenko.db.dao.BookDao;
-import ua.maksym.hlushchenko.db.entity.*;
+import ua.maksym.hlushchenko.db.entity.Book;
+import ua.maksym.hlushchenko.db.entity.Genre;
+import ua.maksym.hlushchenko.db.entity.model.AuthorModel;
+import ua.maksym.hlushchenko.db.entity.model.BookModel;
+import ua.maksym.hlushchenko.db.entity.model.GenreModel;
+import ua.maksym.hlushchenko.db.entity.model.PublisherModel;
 
+import java.lang.reflect.Proxy;
 import java.sql.*;
 import java.sql.Date;
 import java.util.*;
@@ -28,11 +34,12 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
     private static final String SQL_INSERT_BOOK_GENRE = "INSERT INTO book_has_genre(book_id, genre_id) " +
             "VALUES(?, ?)";
 
-    private static final String SQL_UPDATE_BY_ID = "UPDATE book SET title = ?, author_id = ?, " +
-            "publisher_isbn = ?, date = ? " +
+    private static final String SQL_UPDATE_BY_ID = "UPDATE book SET " +
+            "title = ?, author_id = ?, publisher_isbn = ?, date = ? " +
             "WHERE id = ?";
 
-    private static final String SQL_DELETE_BY_ID = "DELETE FROM book WHERE id = ?";
+    private static final String SQL_DELETE_BY_ID = "DELETE FROM book " +
+            "WHERE id = ?";
     private static final String SQL_DELETE_ALL_GENRES_BY_BOOK_ID = "DELETE FROM book_has_genre " +
             "WHERE book_id = ?";
 
@@ -43,23 +50,32 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
     }
 
     Book mapToBook(ResultSet resultSet) throws SQLException {
-        Book book = new Book();
+        Book book = new BookModel();
         book.setId(resultSet.getInt("id"));
         book.setTitle(resultSet.getString("title"));
 
-        Author author = AuthorSqlDao.mapToAuthor(resultSet);
+        AuthorModel author = AuthorSqlDao.mapToAuthor(resultSet);
         author.setId(resultSet.getInt("a.id"));
         book.setAuthor(author);
 
-        Publisher publisher = PublisherSqlDao.mapToPublisher(resultSet);
+        PublisherModel publisher = PublisherSqlDao.mapToPublisher(resultSet);
         publisher.setName(resultSet.getString("p.name"));
         book.setPublisher(publisher);
 
         book.setDate(resultSet.getDate("date").toLocalDate());
 
-        book.setDao(this);
+        return (Book) Proxy.newProxyInstance(
+                BookSqlDao.class.getClassLoader(),
+                new Class[]{Book.class},
+                (proxy, method, methodArgs) -> {
+                    if (method.getName().equals("getGenres") &&
+                            book.getGenres() == null) {
+                        List<Genre> genres = findGenres(book.getId());
+                        book.setGenres(genres);
+                    }
 
-        return book;
+                    return method.invoke(book, methodArgs);
+                });
     }
 
     @Override
@@ -95,7 +111,7 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
             while (resultSet.next()) {
                 book = mapToBook(resultSet);
             }
-        } catch(SQLException e) {
+        } catch (SQLException e) {
             log.warn(e.getMessage());
         }
 
@@ -175,8 +191,8 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
     }
 
     @Override
-    public Set<Genre> findGenres(Integer id) {
-        Set<Genre> genres = new HashSet<>();
+    public List<Genre> findGenres(Integer id) {
+        List<Genre> genres = new ArrayList<>();
 
         try {
             PreparedStatement statement = connection.prepareStatement(SQL_SELECT_GENRES_BY_BOOK_ID);
@@ -184,7 +200,7 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
 
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {
-                Genre genre = GenreSqlDao.mapToGenre(resultSet);
+                GenreModel genre = GenreSqlDao.mapToGenre(resultSet);
                 genres.add(genre);
             }
         } catch (SQLException e) {
@@ -200,7 +216,7 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
             connection.setAutoCommit(false);
 
             PreparedStatement statement = connection.prepareStatement(SQL_INSERT_BOOK_GENRE);
-            Set<Genre> genres = book.getGenres();
+            List<Genre> genres = book.getGenres();
             for (Genre genre : genres) {
                 fillPreparedStatement(statement,
                         book.getId(),

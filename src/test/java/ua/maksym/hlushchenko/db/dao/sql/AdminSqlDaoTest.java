@@ -3,7 +3,8 @@ package ua.maksym.hlushchenko.db.dao.sql;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.db.entity.roles.Admin;
+import ua.maksym.hlushchenko.db.entity.model.role.AdminModel;
+import ua.maksym.hlushchenko.db.entity.role.Admin;
 
 import java.sql.Connection;
 import java.util.List;
@@ -13,11 +14,12 @@ import java.util.Optional;
 class AdminSqlDaoTest {
     private static Connection connection;
     private static AdminSqlDao dao;
-    private static Admin admin;
+    private static AdminModel admin;
 
-    static Admin createAdmin() {
-        Admin admin = new Admin();
-        admin.setUser(UserDaoSqlTest.createUser());
+    static AdminModel createAdmin() {
+        AdminModel admin = new AdminModel();
+        admin.setLogin("test");
+        admin.setPassword("test");
         return admin;
     }
 
@@ -46,7 +48,7 @@ class AdminSqlDaoTest {
     @Order(3)
     @Test
     void find() {
-        Optional<Admin> optionalAdminInDb = dao.find(admin.getUser().getLogin());
+        Optional<Admin> optionalAdminInDb = dao.find(admin.getLogin());
         Assertions.assertTrue(optionalAdminInDb.isPresent());
         Admin adminInDb = optionalAdminInDb.get();
         Assertions.assertEquals(adminInDb, admin);
@@ -55,8 +57,8 @@ class AdminSqlDaoTest {
     @Order(4)
     @Test
     void delete() {
-        dao.delete(admin.getUser().getLogin());
-        Optional<Admin> userInDb = dao.find(admin.getUser().getLogin());
+        dao.delete(admin.getLogin());
+        Optional<Admin> userInDb = dao.find(admin.getLogin());
         Assertions.assertTrue(userInDb.isEmpty());
     }
 

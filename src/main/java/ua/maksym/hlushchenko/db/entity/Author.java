@@ -1,10 +1,10 @@
 package ua.maksym.hlushchenko.db.entity;
 
-import lombok.Data;
-
-@Data
-public class Author {
-    private int id;
-    private String name;
-    private String surname;
+public interface Author {
+    int getId();
+    void setId(int id);
+    String getName();
+    void setName(String name);
+    String getSurname();
+    void setSurname(String surname);
 }

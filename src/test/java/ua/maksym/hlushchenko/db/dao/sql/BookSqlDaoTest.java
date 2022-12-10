@@ -4,6 +4,7 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.db.entity.*;
+import ua.maksym.hlushchenko.db.entity.model.*;
 
 import java.sql.Connection;
 import java.time.LocalDate;
@@ -12,31 +13,31 @@ import java.util.*;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class BookSqlDaoTest {
     private static BookSqlDao dao;
-    private static Book book;
+    private static BookModel book;
 
     private static AuthorSqlDao authorDao;
     private static PublisherSqlDao publisherDao;
     private static GenreSqlDao genreDao;
 
-    static Book createBook() {
-        Book book = new Book();
+    static BookModel createBook() {
+        BookModel book = new BookModel();
 
         book.setTitle("test");
 
-        Author author = AuthorSqlDaoTest.createAuthor();
+        AuthorModel author = AuthorSqlDaoTest.createAuthor();
         book.setAuthor(author);
 
-        Publisher publisher = PublisherSqlDaoTest.createPublisher();
+        PublisherModel publisher = PublisherSqlDaoTest.createPublisher();
         book.setPublisher(publisher);
 
         book.setDate(LocalDate.of(1111, 11, 11));
 
-        Genre genre1 = new Genre();
+        GenreModel genre1 = new GenreModel();
         genre1.setName("Genre1");
-        Genre genre2 = new Genre();
+        GenreModel genre2 = new GenreModel();
         genre2.setName("Genre2");
 
-        Set<Genre> genres = new HashSet<>();
+        List<Genre> genres = new ArrayList<>();
         genres.add(genre1);
         genres.add(genre2);
 
@@ -90,11 +91,11 @@ class BookSqlDaoTest {
         book.setTitle("ne_test");
         book.setDate(LocalDate.now());
 
-        Genre genre3 = new Genre();
+        GenreModel genre3 = new GenreModel();
         genre3.setName("Genre3");
         genreDao.save(genre3);
 
-        Set<Genre> genres = book.getGenres();
+        List<Genre> genres = book.getGenres();
         genres.add(genre3);
         book.setGenres(genres);
 
@@ -109,7 +110,6 @@ class BookSqlDaoTest {
         Assertions.assertTrue(dao.find(book.getId()).isEmpty());
         Assertions.assertTrue(dao.findGenres(book.getId()).isEmpty());
     }
-
 
     @SneakyThrows
     @AfterAll

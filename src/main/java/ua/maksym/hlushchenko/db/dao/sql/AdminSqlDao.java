@@ -1,7 +1,8 @@
 package ua.maksym.hlushchenko.db.dao.sql;
 
 import org.slf4j.*;
-import ua.maksym.hlushchenko.db.entity.roles.Admin;
+import ua.maksym.hlushchenko.db.entity.model.role.AdminModel;
+import ua.maksym.hlushchenko.db.entity.role.Admin;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -13,9 +14,12 @@ public class AdminSqlDao extends AbstractSqlDao<String, Admin> {
     static final String SQL_SELECT_ALL = "SELECT * FROM admin a " +
             "JOIN user u ON a.user_login = u.login";
     static final String SQL_SELECT_BY_LOGIN = "SELECT * FROM admin a " +
-            "JOIN user u ON a.user_login = u.login WHERE login = ?";
-    static final String SQL_INSERT = "INSERT INTO admin(user_login) VALUES(?)";
-    static final String SQL_DELETE_BY_LOGIN = "DELETE FROM admin WHERE user_login = ?";
+            "JOIN user u ON a.user_login = u.login " +
+            "WHERE login = ?";
+    static final String SQL_INSERT = "INSERT INTO admin(user_login) " +
+            "VALUES(?)";
+    static final String SQL_DELETE_BY_LOGIN = "DELETE FROM admin " +
+            "WHERE user_login = ?";
 
     private static final Logger log = LoggerFactory.getLogger(AdminSqlDao.class);
 
@@ -23,9 +27,10 @@ public class AdminSqlDao extends AbstractSqlDao<String, Admin> {
         super(connection);
     }
 
-    static Admin mapToAdmin(ResultSet resultSet) throws SQLException {
-        Admin admin = new Admin();
-        admin.setUser(UserSqlDao.mapToUser(resultSet));
+    static AdminModel mapToAdmin(ResultSet resultSet) throws SQLException {
+        AdminModel admin = new AdminModel();
+        admin.setLogin(resultSet.getString("login"));
+        admin.setPassword(resultSet.getString("password"));
         return admin;
     }
 
@@ -39,7 +44,7 @@ public class AdminSqlDao extends AbstractSqlDao<String, Admin> {
 
             ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
             while (resultSet.next()) {
-                Admin admin = mapToAdmin(resultSet);
+                AdminModel admin = mapToAdmin(resultSet);
                 admins.add(admin);
             }
         } catch (SQLException e) {
@@ -52,6 +57,7 @@ public class AdminSqlDao extends AbstractSqlDao<String, Admin> {
     @Override
     public Optional<Admin> find(String id) {
         Admin admin = null;
+
         try {
             PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_LOGIN);
             fillPreparedStatement(statement, id);
@@ -75,13 +81,13 @@ public class AdminSqlDao extends AbstractSqlDao<String, Admin> {
 
             PreparedStatement statement = connection.prepareStatement(UserSqlDao.SQL_INSERT);
             fillPreparedStatement(statement,
-                    admin.getUser().getLogin(),
-                    admin.getUser().getPassword());
+                    admin.getLogin(),
+                    admin.getPassword());
             log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
 
             statement = connection.prepareStatement(SQL_INSERT);
-            fillPreparedStatement(statement, admin.getUser().getLogin());
+            fillPreparedStatement(statement, admin.getLogin());
             log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
 
@@ -93,7 +99,7 @@ public class AdminSqlDao extends AbstractSqlDao<String, Admin> {
     }
 
     @Override
-    public void update(Admin entity) {}
+    public void update(Admin admin) {}
 
     @Override
     public void delete(String id) {

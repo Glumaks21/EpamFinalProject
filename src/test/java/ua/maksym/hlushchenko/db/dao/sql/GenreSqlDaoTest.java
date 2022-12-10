@@ -4,6 +4,7 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.db.entity.Genre;
+import ua.maksym.hlushchenko.db.entity.model.GenreModel;
 
 import java.sql.Connection;
 import java.util.List;
@@ -13,10 +14,10 @@ import java.util.Optional;
 class GenreSqlDaoTest {
     private static Connection connection;
     private static GenreSqlDao dao;
-    private static Genre genre;
+    private static GenreModel genre;
 
-    static Genre createGenre() {
-        Genre genre = new Genre();
+    static GenreModel createGenre() {
+        GenreModel genre = new GenreModel();
         genre.setName("test");
         return genre;
     }

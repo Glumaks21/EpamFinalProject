@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ua.maksym.hlushchenko.db.dao.PublisherDao;
 import ua.maksym.hlushchenko.db.entity.Publisher;
+import ua.maksym.hlushchenko.db.entity.model.PublisherModel;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -12,11 +13,16 @@ import java.util.Optional;
 
 public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implements PublisherDao {
     static String SQL_SELECT_ALL = "SELECT * FROM publisher";
-    static String SQL_SELECT_BY_ISBN = "SELECT * FROM publisher WHERE isbn = ?";
-    static String SQL_SELECT_BY_NAME = "SELECT * FROM publisher WHERE name = ?";
-    static String SQL_INSERT = "INSERT INTO publisher(isbn, name) VALUES(?, ?)";
-    static String SQL_DELETE_BY_ISBN = "DELETE FROM publisher WHERE isbn = ?";
-    static String SQL_DELETE_BY_NAME = "DELETE FROM publisher WHERE name = ?";
+    static String SQL_SELECT_BY_ISBN = "SELECT * FROM publisher " +
+            "WHERE isbn = ?";
+    static String SQL_SELECT_BY_NAME = "SELECT * FROM publisher " +
+            "WHERE name = ?";
+    static String SQL_INSERT = "INSERT INTO publisher(isbn, name) " +
+            "VALUES(?, ?)";
+    static String SQL_DELETE_BY_ISBN = "DELETE FROM publisher " +
+            "WHERE isbn = ?";
+    static String SQL_DELETE_BY_NAME = "DELETE FROM publisher " +
+            "WHERE name = ?";
 
     private static final Logger log = LoggerFactory.getLogger(PublisherSqlDao.class);
 
@@ -24,8 +30,8 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
         super(connection);
     }
 
-    static Publisher mapToPublisher(ResultSet resultSet) throws SQLException {
-        Publisher publisher = new Publisher();
+    static PublisherModel mapToPublisher(ResultSet resultSet) throws SQLException {
+        PublisherModel publisher = new PublisherModel();
         publisher.setIsbn(resultSet.getString("isbn"));
         publisher.setName(resultSet.getString("name"));
         return publisher;

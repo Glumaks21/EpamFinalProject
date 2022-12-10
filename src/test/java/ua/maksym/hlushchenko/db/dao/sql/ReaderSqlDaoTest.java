@@ -3,7 +3,8 @@ package ua.maksym.hlushchenko.db.dao.sql;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.db.entity.roles.Reader;
+import ua.maksym.hlushchenko.db.entity.model.role.ReaderModel;
+import ua.maksym.hlushchenko.db.entity.role.Reader;
 
 import java.sql.Connection;
 import java.util.List;
@@ -14,12 +15,13 @@ import java.util.Optional;
 class ReaderSqlDaoTest {
     private static Connection connection;
     private static ReaderSqlDao dao;
-    private static Reader reader;
+    private static ReaderModel reader;
 
-    static Reader createReader() {
-        Reader reader = new Reader();
+    static ReaderModel createReader() {
+        ReaderModel reader = new ReaderModel();
         reader.setBlocked(false);
-        reader.setUser(UserDaoSqlTest.createUser());
+        reader.setLogin("test");
+        reader.setPassword("test");
         return reader;
     }
 
@@ -47,7 +49,7 @@ class ReaderSqlDaoTest {
     @Order(3)
     @Test
     void find() {
-        Optional<Reader> optionalReaderInDb = dao.find(reader.getUser().getLogin());
+        Optional<Reader> optionalReaderInDb = dao.find(reader.getLogin());
         Assertions.assertTrue(optionalReaderInDb.isPresent());
         Reader readerInDb = optionalReaderInDb.get();
         Assertions.assertEquals(reader, readerInDb);
@@ -64,8 +66,8 @@ class ReaderSqlDaoTest {
     @Order(5)
     @Test
     void delete() {
-        dao.delete(reader.getUser().getLogin());
-        Optional<Reader> librarianInDb = dao.find(reader.getUser().getLogin());
+        dao.delete(reader.getLogin());
+        Optional<Reader> librarianInDb = dao.find(reader.getLogin());
         Assertions.assertTrue(librarianInDb.isEmpty());
     }
 

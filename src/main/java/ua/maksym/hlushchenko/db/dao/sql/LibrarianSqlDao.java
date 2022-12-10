@@ -2,7 +2,8 @@ package ua.maksym.hlushchenko.db.dao.sql;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ua.maksym.hlushchenko.db.entity.roles.Librarian;
+import ua.maksym.hlushchenko.db.entity.model.role.LibrarianModel;
+import ua.maksym.hlushchenko.db.entity.role.Librarian;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -13,9 +14,12 @@ public class LibrarianSqlDao extends AbstractSqlDao<String, Librarian> {
     private static final String SQL_SELECT_ALL = "SELECT * FROM librarian l " +
             "JOIN user u ON l.user_login = u.login";
     private static final String SQL_SELECT_BY_LOGIN = "SELECT * FROM librarian l " +
-            "JOIN user u ON l.user_login = u.login WHERE login = ?";
-    private static final String SQL_INSERT = "INSERT INTO librarian(user_login) VALUES(?)";
-    private static final String SQL_DELETE_BY_LOGIN = "DELETE FROM librarian WHERE user_login = ?";
+            "JOIN user u ON l.user_login = u.login " +
+            "WHERE login = ?";
+    private static final String SQL_INSERT = "INSERT INTO librarian(user_login) " +
+            "VALUES(?)";
+    private static final String SQL_DELETE_BY_LOGIN = "DELETE FROM librarian " +
+            "WHERE user_login = ?";
 
     private static final Logger log = LoggerFactory.getLogger(LibrarianSqlDao.class);
 
@@ -23,9 +27,10 @@ public class LibrarianSqlDao extends AbstractSqlDao<String, Librarian> {
         super(connection);
     }
 
-    static Librarian mapToLibrarian(ResultSet resultSet) throws SQLException {
-        Librarian librarian = new Librarian();
-        librarian.setUser(UserSqlDao.mapToUser(resultSet));
+    static LibrarianModel mapToLibrarian(ResultSet resultSet) throws SQLException {
+        LibrarianModel librarian = new LibrarianModel();
+        librarian.setLogin(resultSet.getString("login"));
+        librarian.setPassword(resultSet.getString("password"));
         return librarian;
     }
 
@@ -50,7 +55,7 @@ public class LibrarianSqlDao extends AbstractSqlDao<String, Librarian> {
 
     @Override
     public Optional<Librarian> find(String id) {
-        Librarian librarian = null;
+        LibrarianModel librarian = null;
         try {
             PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_LOGIN);
             fillPreparedStatement(statement, id);
@@ -74,13 +79,13 @@ public class LibrarianSqlDao extends AbstractSqlDao<String, Librarian> {
 
             PreparedStatement statement = connection.prepareStatement(UserSqlDao.SQL_INSERT);
             fillPreparedStatement(statement,
-                    librarian.getUser().getLogin(),
-                    librarian.getUser().getPassword());
+                    librarian.getLogin(),
+                    librarian.getPassword());
             log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
 
             statement = connection.prepareStatement(SQL_INSERT);
-            fillPreparedStatement(statement, librarian.getUser().getLogin());
+            fillPreparedStatement(statement, librarian.getLogin());
             log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
 

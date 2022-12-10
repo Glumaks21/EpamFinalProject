@@ -3,7 +3,8 @@ package ua.maksym.hlushchenko.db.dao.sql;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.db.entity.roles.Librarian;
+import ua.maksym.hlushchenko.db.entity.model.role.LibrarianModel;
+import ua.maksym.hlushchenko.db.entity.role.Librarian;
 
 import java.sql.Connection;
 import java.util.List;
@@ -13,11 +14,12 @@ import java.util.Optional;
 class LibrarianSqlDaoTest {
     private static Connection connection;
     private static LibrarianSqlDao dao;
-    private static Librarian librarian;
+    private static LibrarianModel librarian;
 
-    static Librarian createLibrarian() {
-        Librarian librarian = new Librarian();
-        librarian.setUser(UserDaoSqlTest.createUser());
+    static LibrarianModel createLibrarian() {
+        LibrarianModel librarian = new LibrarianModel();
+        librarian.setLogin("test");
+        librarian.setPassword("test");
         return librarian;
     }
 
@@ -46,7 +48,7 @@ class LibrarianSqlDaoTest {
     @Order(3)
     @Test
     void find() {
-        Optional<Librarian> optionalLibrarianInDb = dao.find(librarian.getUser().getLogin());
+        Optional<Librarian> optionalLibrarianInDb = dao.find(librarian.getLogin());
         Assertions.assertTrue(optionalLibrarianInDb.isPresent());
         Librarian librarianInDb = optionalLibrarianInDb.get();
         Assertions.assertEquals(librarian, librarianInDb);
@@ -55,8 +57,8 @@ class LibrarianSqlDaoTest {
     @Order(4)
     @Test
     void delete() {
-        dao.delete(librarian.getUser().getLogin());
-        Optional<Librarian> librarianInDb = dao.find(librarian.getUser().getLogin());
+        dao.delete(librarian.getLogin());
+        Optional<Librarian> librarianInDb = dao.find(librarian.getLogin());
         Assertions.assertTrue(librarianInDb.isEmpty());
     }
 

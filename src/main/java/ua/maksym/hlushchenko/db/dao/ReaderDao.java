@@ -1,10 +1,11 @@
 package ua.maksym.hlushchenko.db.dao;
 
-import ua.maksym.hlushchenko.db.entity.Subscription;
-import ua.maksym.hlushchenko.db.entity.roles.Reader;
+import ua.maksym.hlushchenko.db.entity.*;
+import ua.maksym.hlushchenko.db.entity.role.Reader;
 
-import java.util.Set;
+import java.util.List;
 
 public interface ReaderDao extends Dao<String, Reader> {
-    Set<Subscription> getSubscriptions();
+    List<Receipt> findReceipts();
+    List<Subscription> findSubscriptions();
 }

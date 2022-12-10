@@ -2,7 +2,8 @@ package ua.maksym.hlushchenko.db.dao.sql;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ua.maksym.hlushchenko.db.entity.roles.User;
+import ua.maksym.hlushchenko.db.entity.model.role.UserModel;
+import ua.maksym.hlushchenko.db.entity.role.User;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -11,10 +12,15 @@ import java.util.Optional;
 
 public class UserSqlDao extends AbstractSqlDao<String, User> {
     static final String SQL_SELECT_ALL = "SELECT * FROM user";
-    static final String SQL_SELECT_BY_LOGIN = "SELECT * FROM user WHERE login = ?";
-    static final String SQL_INSERT = "INSERT INTO user(login, password) VALUES(?, ?)";
-    static final String SQL_UPDATE_BY_LOGIN = "UPDATE user SET password = ? WHERE login = ?";
-    static final String SQL_DELETE_BY_LOGIN = "DELETE FROM user WHERE login = ?";
+    static final String SQL_SELECT_BY_LOGIN = "SELECT * FROM user " +
+            "WHERE login = ?";
+    static final String SQL_INSERT = "INSERT INTO user(login, password) " +
+            "VALUES(?, ?)";
+    static final String SQL_UPDATE_BY_LOGIN = "UPDATE user SET " +
+            "password = ? " +
+            "WHERE login = ?";
+    static final String SQL_DELETE_BY_LOGIN = "DELETE FROM user " +
+            "WHERE login = ?";
 
     private static final Logger log = LoggerFactory.getLogger(UserSqlDao.class);
 
@@ -23,7 +29,7 @@ public class UserSqlDao extends AbstractSqlDao<String, User> {
     }
 
     static User mapToUser(ResultSet resultSet) throws SQLException {
-        User user = new User();
+        User user = new UserModel();
         user.setLogin(resultSet.getString("login"));
         user.setPassword(resultSet.getString("password"));
         return user;

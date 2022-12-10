@@ -3,8 +3,9 @@ package ua.maksym.hlushchenko.db.dao.sql;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ua.maksym.hlushchenko.db.dao.ReaderDao;
-import ua.maksym.hlushchenko.db.entity.Subscription;
-import ua.maksym.hlushchenko.db.entity.roles.Reader;
+import ua.maksym.hlushchenko.db.entity.*;
+import ua.maksym.hlushchenko.db.entity.model.role.ReaderModel;
+import ua.maksym.hlushchenko.db.entity.role.Reader;
 
 import java.sql.*;
 import java.util.*;
@@ -13,10 +14,15 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
     static String SQL_SELECT_ALL = "SELECT * FROM reader r " +
             "JOIN user u ON r.user_login = u.login";
     static String SQL_SELECT_BY_LOGIN = "SELECT * FROM reader r " +
-            "JOIN user u ON r.user_login = u.login WHERE login = ?";
-    static String SQL_INSERT = "INSERT INTO reader(user_login, blocked) VALUES(?, ?)";
-    static String SQL_UPDATE_BY_LOGIN = "UPDATE reader SET blocked = ? WHERE user_login = ?";
-    static String SQL_DELETE_BY_LOGIN = "DELETE FROM reader WHERE user_login = ?";
+            "JOIN user u ON r.user_login = u.login " +
+            "WHERE login = ?";
+    static String SQL_INSERT = "INSERT INTO reader(user_login, blocked) " +
+            "VALUES(?, ?)";
+    static String SQL_UPDATE_BY_LOGIN = "UPDATE reader SET " +
+            "blocked = ? " +
+            "WHERE user_login = ?";
+    static String SQL_DELETE_BY_LOGIN = "DELETE FROM reader " +
+            "WHERE user_login = ?";
 
     private static final Logger log = LoggerFactory.getLogger(ReaderSqlDao.class);
 
@@ -24,10 +30,11 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
         super(connection);
     }
 
-    static Reader mapToReader(ResultSet resultSet) throws SQLException {
-        Reader reader = new Reader();
+    ReaderModel mapToReader(ResultSet resultSet) throws SQLException {
+        ReaderModel reader = new ReaderModel();
         reader.setBlocked(resultSet.getBoolean("blocked"));
-        reader.setUser(UserSqlDao.mapToUser(resultSet));
+        reader.setLogin(resultSet.getString("login"));
+        reader.setPassword(resultSet.getString("password"));
         return reader;
     }
 
@@ -41,7 +48,7 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
             ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
 
             while (resultSet.next()) {
-                Reader reader = mapToReader(resultSet);
+                ReaderModel reader = mapToReader(resultSet);
                 readers.add(reader);
             }
         } catch (SQLException e) {
@@ -53,7 +60,7 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
 
     @Override
     public Optional<Reader> find(String id) {
-        Reader reader = null;
+        ReaderModel reader = null;
         try {
             PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_LOGIN);
             fillPreparedStatement(statement, id);
@@ -77,14 +84,14 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
 
             PreparedStatement statement = connection.prepareStatement(UserSqlDao.SQL_INSERT);
             fillPreparedStatement(statement,
-                    reader.getUser().getLogin(),
-                    reader.getUser().getPassword());
+                    reader.getLogin(),
+                    reader.getPassword());
             log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
 
             statement = connection.prepareStatement(SQL_INSERT);
             fillPreparedStatement(statement,
-                    reader.getUser().getLogin(),
+                    reader.getLogin(),
                     reader.isBlocked());
             log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
@@ -104,7 +111,7 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
             PreparedStatement statement = connection.prepareStatement(SQL_UPDATE_BY_LOGIN);
             fillPreparedStatement(statement,
                     reader.isBlocked(),
-                    reader.getUser().getLogin());
+                    reader.getLogin());
             log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
 
@@ -138,9 +145,12 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
     }
 
     @Override
-    public Set<Subscription> getSubscriptions() {
-        Set<Subscription> subscriptions = new HashSet<>();
+    public List<Receipt> findReceipts() {
+        return null;
+    }
 
-        return subscriptions;
+    @Override
+    public List<Subscription> findSubscriptions() {
+        return null;
     }
 }

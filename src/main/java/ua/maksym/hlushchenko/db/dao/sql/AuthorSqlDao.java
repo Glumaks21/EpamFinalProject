@@ -1,20 +1,23 @@
 package ua.maksym.hlushchenko.db.dao.sql;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.*;
 import ua.maksym.hlushchenko.db.entity.Author;
+import ua.maksym.hlushchenko.db.entity.model.AuthorModel;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class AuthorSqlDao extends AbstractSqlDao<Integer, Author> {
     static String SQL_SELECT_ALL = "SELECT * FROM author";
-    static String SQL_SELECT_BY_ID = "SELECT * FROM author WHERE id = ?";
-    static String SQL_INSERT = "INSERT INTO author(name, surname) VALUES(?, ?)";
-    static String SQL_UPDATE_BY_ID = "UPDATE author SET name = ?, surname = ? WHERE id = ?";
-    static String SQL_DELETE_BY_ID = "DELETE FROM author WHERE id = ?";
+    static String SQL_SELECT_BY_ID = "SELECT * FROM author " +
+            "WHERE id = ?";
+    static String SQL_INSERT = "INSERT INTO author(name, surname) " +
+            "VALUES(?, ?)";
+    static String SQL_UPDATE_BY_ID = "UPDATE author SET " +
+            "name = ?, surname = ? " +
+            "WHERE id = ?";
+    static String SQL_DELETE_BY_ID = "DELETE FROM author " +
+            "WHERE id = ?";
 
     private static final Logger log = LoggerFactory.getLogger(AuthorSqlDao.class);
 
@@ -22,8 +25,8 @@ public class AuthorSqlDao extends AbstractSqlDao<Integer, Author> {
         super(connection);
     }
 
-    static Author mapToAuthor(ResultSet resultSet) throws SQLException {
-        Author author = new Author();
+    static AuthorModel mapToAuthor(ResultSet resultSet) throws SQLException {
+        AuthorModel author = new AuthorModel();
         author.setId(resultSet.getInt("id"));
         author.setName(resultSet.getString("name"));
         author.setSurname(resultSet.getString("surname"));
@@ -40,7 +43,7 @@ public class AuthorSqlDao extends AbstractSqlDao<Integer, Author> {
             log.info("Try to execute:\n" + formatSql(SQL_SELECT_ALL));
             ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
             while (resultSet.next()) {
-                Author author = mapToAuthor(resultSet);
+                AuthorModel author = mapToAuthor(resultSet);
                 authors.add(author);
             }
         } catch (SQLException e) {
@@ -52,7 +55,7 @@ public class AuthorSqlDao extends AbstractSqlDao<Integer, Author> {
 
     @Override
     public Optional<Author> find(Integer id) {
-        Author author = null;
+        AuthorModel author = null;
 
         try {
             PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_ID);

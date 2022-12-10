@@ -3,6 +3,7 @@ package ua.maksym.hlushchenko.db.dao.sql;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ua.maksym.hlushchenko.db.entity.Genre;
+import ua.maksym.hlushchenko.db.entity.model.GenreModel;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -11,10 +12,14 @@ import java.util.Optional;
 
 public class GenreSqlDao extends AbstractSqlDao<Integer, Genre> {
     static final String SQL_SELECT_ALL = "SELECT * FROM genre";
-    static final String SQL_SELECT_BY_ID = "SELECT * FROM genre WHERE id = ?";
-    static final String SQL_INSERT = "INSERT INTO genre(name) VALUES(?)";
-    static final String SQL_UPDATE_BY_ID = "UPDATE genre SET name = ? WHERE id = ?";
-    static final String SQL_DELETE_BY_ID = "DELETE FROM genre WHERE id = ?";
+    static final String SQL_SELECT_BY_ID = "SELECT * FROM genre " +
+            "WHERE id = ?";
+    static final String SQL_INSERT = "INSERT INTO genre(name) " +
+            "VALUES(?)";
+    static final String SQL_UPDATE_BY_ID = "UPDATE genre SET name = ? " +
+            "WHERE id = ?";
+    static final String SQL_DELETE_BY_ID = "DELETE FROM genre " +
+            "WHERE id = ?";
 
     private static final Logger log = LoggerFactory.getLogger(GenreSqlDao.class);
 
@@ -22,8 +27,8 @@ public class GenreSqlDao extends AbstractSqlDao<Integer, Genre> {
         super(connection);
     }
 
-    static Genre mapToGenre(ResultSet resultSet) throws SQLException {
-        Genre genre = new Genre();
+    static GenreModel mapToGenre(ResultSet resultSet) throws SQLException {
+        GenreModel genre = new GenreModel();
         genre.setId(resultSet.getInt("id"));
         genre.setName(resultSet.getString("name"));
         return genre;
@@ -39,7 +44,7 @@ public class GenreSqlDao extends AbstractSqlDao<Integer, Genre> {
             log.info("Try to execute:\n" + formatSql(SQL_SELECT_ALL));
             ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
             while (resultSet.next()) {
-                Genre genre = mapToGenre(resultSet);
+                GenreModel genre = mapToGenre(resultSet);
                 genres.add(genre);
             }
         } catch (SQLException e) {

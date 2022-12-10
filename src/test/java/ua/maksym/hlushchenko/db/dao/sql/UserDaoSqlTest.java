@@ -3,7 +3,8 @@ package ua.maksym.hlushchenko.db.dao.sql;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.db.entity.roles.User;
+import ua.maksym.hlushchenko.db.entity.model.role.UserModel;
+import ua.maksym.hlushchenko.db.entity.role.User;
 
 
 import java.sql.Connection;
@@ -14,10 +15,10 @@ import java.util.Optional;
 class UserDaoSqlTest {
     private static Connection connection;
     private static UserSqlDao dao;
-    private static User user;
+    private static UserModel user;
 
-    static User createUser() {
-        User user = new User();
+    static UserModel createUser() {
+        UserModel user = new UserModel();
         user.setLogin("test");
         user.setPassword("test");
         return user;
