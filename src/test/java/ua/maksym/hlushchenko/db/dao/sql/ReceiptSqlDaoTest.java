@@ -2,10 +2,9 @@ package ua.maksym.hlushchenko.db.dao.sql;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
-import ua.maksym.hlushchenko.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.db.entity.Receipt;
-import ua.maksym.hlushchenko.db.entity.model.ReceiptModel;
-import ua.maksym.hlushchenko.db.entity.model.role.ReaderModel;
+import ua.maksym.hlushchenko.db.entity.impl.ReceiptImpl;
+import ua.maksym.hlushchenko.db.entity.impl.role.ReaderImpl;
 
 import java.sql.Connection;
 import java.time.LocalDateTime;
@@ -15,13 +14,13 @@ import java.util.Optional;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ReceiptSqlDaoTest {
     private static ReceiptSqlDao dao;
-    private static ReceiptModel receipt;
+    private static ReceiptImpl receipt;
 
     private static ReaderSqlDao readerDao;
 
-    static ReceiptModel createReceipt() {
-        ReceiptModel receipt = new ReceiptModel();
-        ReaderModel reader = ReaderSqlDaoTest.createReader();
+    static ReceiptImpl createReceipt() {
+        ReceiptImpl receipt = new ReceiptImpl();
+        ReaderImpl reader = ReaderSqlDaoTest.createReader();
         receipt.setReader(reader);
         receipt.setDateTime(LocalDateTime.of(1111, 11, 11, 11, 11, 11));
         return receipt;

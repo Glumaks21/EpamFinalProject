@@ -4,9 +4,8 @@ import ua.maksym.hlushchenko.db.entity.Book;
 import ua.maksym.hlushchenko.db.entity.Genre;
 
 import java.util.List;
-import java.util.Set;
 
-public interface BookDao {
+public interface BookDao extends Dao<Integer, Book> {
     List<Genre> findGenres(Integer id);
     void saveGenres(Book book);
     void updateGenres(Book book);

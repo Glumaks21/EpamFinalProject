@@ -2,9 +2,8 @@ package ua.maksym.hlushchenko.db.dao.sql;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
-import ua.maksym.hlushchenko.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.db.entity.Author;
-import ua.maksym.hlushchenko.db.entity.model.AuthorModel;
+import ua.maksym.hlushchenko.db.entity.impl.AuthorImpl;
 
 import java.sql.Connection;
 import java.util.List;
@@ -14,10 +13,10 @@ import java.util.Optional;
 class AuthorSqlDaoTest {
     private static Connection connection;
     private static AuthorSqlDao dao;
-    private static AuthorModel author;
+    private static AuthorImpl author;
 
-    static AuthorModel createAuthor() {
-        AuthorModel author = new AuthorModel();
+    static AuthorImpl createAuthor() {
+        AuthorImpl author = new AuthorImpl();
         author.setName("Barak");
         author.setSurname("Obama");
         return author;

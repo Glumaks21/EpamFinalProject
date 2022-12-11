@@ -2,9 +2,8 @@ package ua.maksym.hlushchenko.db.dao.sql;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
-import ua.maksym.hlushchenko.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.db.entity.*;
-import ua.maksym.hlushchenko.db.entity.model.*;
+import ua.maksym.hlushchenko.db.entity.impl.*;
 
 import java.sql.Connection;
 import java.time.LocalDate;
@@ -13,28 +12,28 @@ import java.util.*;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class BookSqlDaoTest {
     private static BookSqlDao dao;
-    private static BookModel book;
+    private static BookImpl book;
 
     private static AuthorSqlDao authorDao;
     private static PublisherSqlDao publisherDao;
     private static GenreSqlDao genreDao;
 
-    static BookModel createBook() {
-        BookModel book = new BookModel();
+    static BookImpl createBook() {
+        BookImpl book = new BookImpl();
 
         book.setTitle("test");
 
-        AuthorModel author = AuthorSqlDaoTest.createAuthor();
+        AuthorImpl author = AuthorSqlDaoTest.createAuthor();
         book.setAuthor(author);
 
-        PublisherModel publisher = PublisherSqlDaoTest.createPublisher();
+        PublisherImpl publisher = PublisherSqlDaoTest.createPublisher();
         book.setPublisher(publisher);
 
         book.setDate(LocalDate.of(1111, 11, 11));
 
-        GenreModel genre1 = new GenreModel();
+        GenreImpl genre1 = new GenreImpl();
         genre1.setName("Genre1");
-        GenreModel genre2 = new GenreModel();
+        GenreImpl genre2 = new GenreImpl();
         genre2.setName("Genre2");
 
         List<Genre> genres = new ArrayList<>();
@@ -91,7 +90,7 @@ class BookSqlDaoTest {
         book.setTitle("ne_test");
         book.setDate(LocalDate.now());
 
-        GenreModel genre3 = new GenreModel();
+        GenreImpl genre3 = new GenreImpl();
         genre3.setName("Genre3");
         genreDao.save(genre3);
 

@@ -1,43 +1,30 @@
 package ua.maksym.hlushchenko.db.dao.sql;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import ua.maksym.hlushchenko.db.dao.BookDao;
-import ua.maksym.hlushchenko.db.entity.Book;
-import ua.maksym.hlushchenko.db.entity.Genre;
-import ua.maksym.hlushchenko.db.entity.model.AuthorModel;
-import ua.maksym.hlushchenko.db.entity.model.BookModel;
-import ua.maksym.hlushchenko.db.entity.model.GenreModel;
-import ua.maksym.hlushchenko.db.entity.model.PublisherModel;
+import org.slf4j.*;
+
+import ua.maksym.hlushchenko.db.dao.*;
+import ua.maksym.hlushchenko.db.entity.*;
+import ua.maksym.hlushchenko.db.entity.impl.*;
 
 import java.lang.reflect.Proxy;
 import java.sql.*;
 import java.sql.Date;
 import java.util.*;
 
-
 public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao {
-    private static final String SQL_SELECT_ALL = "SELECT * FROM book b " +
-            "JOIN author a ON b.author_id = a.id " +
-            "JOIN publisher p ON b.publisher_isbn = p.isbn";
-
-    private static final String SQL_SELECT_BY_ID = "SELECT * FROM book b " +
-            "JOIN author a ON b.author_id = a.id " +
-            "JOIN publisher p ON b.publisher_isbn = p.isbn " +
-            "WHERE b.id = ?";
+    private static final String SQL_SELECT_ALL = "SELECT * FROM book";
+    private static final String SQL_SELECT_BY_ID = "SELECT * FROM book  " +
+            "WHERE id = ?";
     private static final String SQL_SELECT_GENRES_BY_BOOK_ID = "SELECT * FROM genre g " +
             "JOIN book_has_genre bg ON g.id = bg.genre_id " +
             "WHERE bg.book_id = ?";
-
     private static final String SQL_INSERT = "INSERT INTO book(title, author_id, publisher_isbn, date)" +
             "VALUES(?, ?, ?, ?)";
     private static final String SQL_INSERT_BOOK_GENRE = "INSERT INTO book_has_genre(book_id, genre_id) " +
             "VALUES(?, ?)";
-
     private static final String SQL_UPDATE_BY_ID = "UPDATE book SET " +
             "title = ?, author_id = ?, publisher_isbn = ?, date = ? " +
             "WHERE id = ?";
-
     private static final String SQL_DELETE_BY_ID = "DELETE FROM book " +
             "WHERE id = ?";
     private static final String SQL_DELETE_ALL_GENRES_BY_BOOK_ID = "DELETE FROM book_has_genre " +
@@ -50,28 +37,27 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
     }
 
     Book mapToBook(ResultSet resultSet) throws SQLException {
-        Book book = new BookModel();
+        Book book = new BookImpl();
+
         book.setId(resultSet.getInt("id"));
         book.setTitle(resultSet.getString("title"));
 
-        AuthorModel author = AuthorSqlDao.mapToAuthor(resultSet);
-        author.setId(resultSet.getInt("a.id"));
+        AuthorSqlDao authorSqlDao = new AuthorSqlDao(connection);
+        Author author = authorSqlDao.find(resultSet.getInt("author_id")).get();
         book.setAuthor(author);
 
-        PublisherModel publisher = PublisherSqlDao.mapToPublisher(resultSet);
-        publisher.setName(resultSet.getString("p.name"));
+        PublisherDao publisherDao = new PublisherSqlDao(connection);
+        Publisher publisher = publisherDao.find(resultSet.getString("publisher_isbn")).get();
         book.setPublisher(publisher);
 
         book.setDate(resultSet.getDate("date").toLocalDate());
-
         return (Book) Proxy.newProxyInstance(
                 BookSqlDao.class.getClassLoader(),
                 new Class[]{Book.class},
                 (proxy, method, methodArgs) -> {
                     if (method.getName().equals("getGenres") &&
                             book.getGenres() == null) {
-                        List<Genre> genres = findGenres(book.getId());
-                        book.setGenres(genres);
+                        book.setGenres(findGenres(book.getId()));
                     }
 
                     return method.invoke(book, methodArgs);
@@ -122,24 +108,7 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
     public void save(Book book) {
         try {
             connection.setAutoCommit(false);
-
-            PreparedStatement statement = connection.prepareStatement(SQL_INSERT,
-                    Statement.RETURN_GENERATED_KEYS);
-            fillPreparedStatement(statement,
-                    book.getTitle(),
-                    book.getAuthor().getId(),
-                    book.getPublisher().getIsbn(),
-                    Date.valueOf(book.getDate()));
-            log.info("Try to execute:\n" + formatSql(statement));
-            statement.executeUpdate();
-
-            ResultSet resultSet = statement.getGeneratedKeys();
-            while (resultSet.next()) {
-                book.setId(resultSet.getInt(1));
-            }
-
-            saveGenres(book);
-
+            saveBookInSession(book);
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
@@ -151,19 +120,7 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
     public void update(Book book) {
         try {
             connection.setAutoCommit(false);
-
-            PreparedStatement statement = connection.prepareStatement(SQL_UPDATE_BY_ID);
-            fillPreparedStatement(statement,
-                    book.getTitle(),
-                    book.getAuthor().getId(),
-                    book.getPublisher().getIsbn(),
-                    Date.valueOf(book.getDate()),
-                    book.getId());
-            log.info("Try to execute:\n" + formatSql(statement));
-            statement.executeUpdate();
-
-            updateGenres(book);
-
+            updateInSession(book);
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
@@ -175,14 +132,7 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
     public void delete(Integer id) {
         try {
             connection.setAutoCommit(false);
-
-            deleteGenres(id);
-
-            PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_ID);
-            fillPreparedStatement(statement, id);
-            log.info("Try to execute:\n" + formatSql(statement));
-            statement.executeUpdate();
-
+            deleteInSession(id);
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
@@ -200,7 +150,7 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
 
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {
-                GenreModel genre = GenreSqlDao.mapToGenre(resultSet);
+                GenreImpl genre = GenreSqlDao.mapToGenre(resultSet);
                 genres.add(genre);
             }
         } catch (SQLException e) {
@@ -214,17 +164,7 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
     public void saveGenres(Book book) {
         try {
             connection.setAutoCommit(false);
-
-            PreparedStatement statement = connection.prepareStatement(SQL_INSERT_BOOK_GENRE);
-            List<Genre> genres = book.getGenres();
-            for (Genre genre : genres) {
-                fillPreparedStatement(statement,
-                        book.getId(),
-                        genre.getId());
-                log.info("Try to execute:\n" + formatSql(statement));
-                statement.executeUpdate();
-            }
-
+            saveGenresInSession(book);
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
@@ -234,24 +174,91 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
 
     @Override
     public void updateGenres(Book book) {
-        deleteGenres(book.getId());
-        saveGenres(book);
+        try {
+            connection.setAutoCommit(false);
+            updateGenresInSession(book);
+            connection.commit();
+        } catch (SQLException e) {
+            log.warn(e.getMessage());
+            tryToRollBack();
+        }
     }
 
     @Override
     public void deleteGenres(Integer id) {
         try {
             connection.setAutoCommit(false);
-
-            PreparedStatement statement = connection.prepareStatement(SQL_DELETE_ALL_GENRES_BY_BOOK_ID);
-            fillPreparedStatement(statement, id);
-            log.info("Try to execute:\n" + formatSql(statement));
-            statement.executeUpdate();
-
+            deleteGenresInSession(id);
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
             tryToRollBack();
         }
+    }
+
+    void saveBookInSession(Book book) throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(SQL_INSERT,
+                Statement.RETURN_GENERATED_KEYS);
+        fillPreparedStatement(statement,
+                book.getTitle(),
+                book.getAuthor().getId(),
+                book.getPublisher().getIsbn(),
+                Date.valueOf(book.getDate()));
+        log.info("Try to execute:\n" + formatSql(statement));
+        statement.executeUpdate();
+
+        ResultSet resultSet = statement.getGeneratedKeys();
+        while (resultSet.next()) {
+            book.setId(resultSet.getInt(1));
+        }
+
+        saveGenresInSession(book);
+    }
+
+    void updateInSession(Book book) throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(SQL_UPDATE_BY_ID);
+        fillPreparedStatement(statement,
+                book.getTitle(),
+                book.getAuthor().getId(),
+                book.getPublisher().getIsbn(),
+                Date.valueOf(book.getDate()),
+                book.getId());
+        log.info("Try to execute:\n" + formatSql(statement));
+        statement.executeUpdate();
+
+        updateGenresInSession(book);
+    }
+
+    void deleteInSession(Integer id) throws SQLException {
+        deleteGenresInSession(id);
+
+        PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_ID);
+        fillPreparedStatement(statement, id);
+        log.info("Try to execute:\n" + formatSql(statement));
+        statement.executeUpdate();
+    }
+
+    void saveGenresInSession(Book book) throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(SQL_INSERT_BOOK_GENRE);
+        List<Genre> genres = book.getGenres();
+        for (Genre genre : genres) {
+            fillPreparedStatement(statement,
+                    book.getId(),
+                    genre.getId());
+            log.info("Try to execute:\n" + formatSql(statement));
+            statement.executeUpdate();
+        }
+    }
+
+    void updateGenresInSession(Book book) throws SQLException {
+        deleteGenresInSession(book.getId());
+        saveGenresInSession(book);
+    }
+
+    void deleteGenresInSession(Integer id) throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(SQL_DELETE_ALL_GENRES_BY_BOOK_ID);
+        fillPreparedStatement(statement, id);
+        log.info("Try to execute:\n" + formatSql(statement));
+        statement.executeUpdate();
     }
 }

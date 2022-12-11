@@ -3,7 +3,7 @@ package ua.maksym.hlushchenko.db.dao.sql;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ua.maksym.hlushchenko.db.entity.Genre;
-import ua.maksym.hlushchenko.db.entity.model.GenreModel;
+import ua.maksym.hlushchenko.db.entity.impl.GenreImpl;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -27,8 +27,8 @@ public class GenreSqlDao extends AbstractSqlDao<Integer, Genre> {
         super(connection);
     }
 
-    static GenreModel mapToGenre(ResultSet resultSet) throws SQLException {
-        GenreModel genre = new GenreModel();
+    static GenreImpl mapToGenre(ResultSet resultSet) throws SQLException {
+        GenreImpl genre = new GenreImpl();
         genre.setId(resultSet.getInt("id"));
         genre.setName(resultSet.getString("name"));
         return genre;
@@ -44,7 +44,7 @@ public class GenreSqlDao extends AbstractSqlDao<Integer, Genre> {
             log.info("Try to execute:\n" + formatSql(SQL_SELECT_ALL));
             ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
             while (resultSet.next()) {
-                GenreModel genre = mapToGenre(resultSet);
+                GenreImpl genre = mapToGenre(resultSet);
                 genres.add(genre);
             }
         } catch (SQLException e) {

@@ -4,13 +4,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ua.maksym.hlushchenko.db.dao.Dao;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+
+import java.sql.*;
+import java.util.*;
+
 
 
 public abstract class AbstractSqlDao<K, T> implements Dao<K, T>, AutoCloseable {
@@ -51,19 +48,19 @@ public abstract class AbstractSqlDao<K, T> implements Dao<K, T>, AutoCloseable {
         }
     }
 
-    protected void fillPreparedStatement(PreparedStatement statement, Object... args) throws SQLException {
+    protected static void fillPreparedStatement(PreparedStatement statement, Object... args) throws SQLException {
         for (int i = 0; i < args.length; i++) {
             statement.setObject(i + 1, args[i]);
         }
     }
 
-    protected String formatSql(Statement statement) {
+    protected static String formatSql(Statement statement) {
         Objects.requireNonNull(statement);
         String dirtySqlQuery = statement.toString();
         return formatSql(dirtySqlQuery.substring(dirtySqlQuery.indexOf(": ") + 1));
     }
 
-    protected String formatSql(String sqlQuery) {
+    protected static String formatSql(String sqlQuery) {
         if (sqlQuery == null || sqlQuery.trim().isEmpty()) {
             throw new IllegalArgumentException("SQL query is " + sqlQuery);
         }

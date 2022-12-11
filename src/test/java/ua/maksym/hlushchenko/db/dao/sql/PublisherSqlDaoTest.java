@@ -2,9 +2,8 @@ package ua.maksym.hlushchenko.db.dao.sql;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
-import ua.maksym.hlushchenko.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.db.entity.Publisher;
-import ua.maksym.hlushchenko.db.entity.model.PublisherModel;
+import ua.maksym.hlushchenko.db.entity.impl.PublisherImpl;
 
 import java.sql.Connection;
 import java.util.List;
@@ -14,10 +13,10 @@ import java.util.Optional;
 class PublisherSqlDaoTest {
     private static Connection connection;
     private static PublisherSqlDao dao;
-    private static PublisherModel publisher;
+    private static PublisherImpl publisher;
 
-    static PublisherModel createPublisher() {
-        PublisherModel publisher = new PublisherModel();
+    static PublisherImpl createPublisher() {
+        PublisherImpl publisher = new PublisherImpl();
         publisher.setIsbn("1234567890123");
         publisher.setName("Test company");
         return publisher;

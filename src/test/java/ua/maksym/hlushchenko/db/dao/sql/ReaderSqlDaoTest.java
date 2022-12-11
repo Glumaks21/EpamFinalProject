@@ -2,11 +2,14 @@ package ua.maksym.hlushchenko.db.dao.sql;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
-import ua.maksym.hlushchenko.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.db.entity.model.role.ReaderModel;
+import ua.maksym.hlushchenko.db.entity.Receipt;
+import ua.maksym.hlushchenko.db.entity.impl.ReceiptImpl;
+import ua.maksym.hlushchenko.db.entity.impl.role.ReaderImpl;
 import ua.maksym.hlushchenko.db.entity.role.Reader;
 
 import java.sql.Connection;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,13 +18,22 @@ import java.util.Optional;
 class ReaderSqlDaoTest {
     private static Connection connection;
     private static ReaderSqlDao dao;
-    private static ReaderModel reader;
+    private static ReaderImpl reader;
 
-    static ReaderModel createReader() {
-        ReaderModel reader = new ReaderModel();
+    static ReaderImpl createReader() {
+        ReaderImpl reader = new ReaderImpl();
+
         reader.setBlocked(false);
         reader.setLogin("test");
         reader.setPassword("test");
+
+        Receipt receipt = new ReceiptImpl();
+        receipt.setReader(reader);
+        receipt.setDateTime(LocalDateTime.of(1111, 11, 11, 11, 11, 11));
+
+        List<Receipt> receipts = new ArrayList<>();
+
+
         return reader;
     }
 

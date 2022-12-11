@@ -2,8 +2,7 @@ package ua.maksym.hlushchenko.db.dao.sql;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
-import ua.maksym.hlushchenko.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.db.entity.model.role.LibrarianModel;
+import ua.maksym.hlushchenko.db.entity.impl.role.LibrarianImpl;
 import ua.maksym.hlushchenko.db.entity.role.Librarian;
 
 import java.sql.Connection;
@@ -14,10 +13,10 @@ import java.util.Optional;
 class LibrarianSqlDaoTest {
     private static Connection connection;
     private static LibrarianSqlDao dao;
-    private static LibrarianModel librarian;
+    private static LibrarianImpl librarian;
 
-    static LibrarianModel createLibrarian() {
-        LibrarianModel librarian = new LibrarianModel();
+    static LibrarianImpl createLibrarian() {
+        LibrarianImpl librarian = new LibrarianImpl();
         librarian.setLogin("test");
         librarian.setPassword("test");
         return librarian;

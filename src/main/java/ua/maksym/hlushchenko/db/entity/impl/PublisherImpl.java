@@ -1,10 +1,10 @@
-package ua.maksym.hlushchenko.db.entity.model;
+package ua.maksym.hlushchenko.db.entity.impl;
 
 import lombok.Data;
 import ua.maksym.hlushchenko.db.entity.Publisher;
 
 @Data
-public class PublisherModel implements Publisher {
+public class PublisherImpl implements Publisher {
     private String isbn;
     private String name;
 }

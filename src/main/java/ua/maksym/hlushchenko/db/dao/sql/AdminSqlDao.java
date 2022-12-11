@@ -1,24 +1,22 @@
 package ua.maksym.hlushchenko.db.dao.sql;
 
 import org.slf4j.*;
-import ua.maksym.hlushchenko.db.entity.model.role.AdminModel;
+
+import ua.maksym.hlushchenko.db.entity.impl.role.AdminImpl;
 import ua.maksym.hlushchenko.db.entity.role.Admin;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
+import java.util.*;
 
 public class AdminSqlDao extends AbstractSqlDao<String, Admin> {
-    static final String SQL_SELECT_ALL = "SELECT * FROM admin a " +
+    private static final String SQL_SELECT_ALL = "SELECT * FROM admin a " +
             "JOIN user u ON a.user_login = u.login";
-    static final String SQL_SELECT_BY_LOGIN = "SELECT * FROM admin a " +
+    private static final String SQL_SELECT_BY_LOGIN = "SELECT * FROM admin a " +
             "JOIN user u ON a.user_login = u.login " +
             "WHERE login = ?";
-    static final String SQL_INSERT = "INSERT INTO admin(user_login) " +
+    private static final String SQL_INSERT = "INSERT INTO admin(user_login) " +
             "VALUES(?)";
-    static final String SQL_DELETE_BY_LOGIN = "DELETE FROM admin " +
+    private static final String SQL_DELETE_BY_LOGIN = "DELETE FROM admin " +
             "WHERE user_login = ?";
 
     private static final Logger log = LoggerFactory.getLogger(AdminSqlDao.class);
@@ -27,8 +25,8 @@ public class AdminSqlDao extends AbstractSqlDao<String, Admin> {
         super(connection);
     }
 
-    static AdminModel mapToAdmin(ResultSet resultSet) throws SQLException {
-        AdminModel admin = new AdminModel();
+    private Admin mapToAdmin(ResultSet resultSet) throws SQLException {
+        Admin admin = new AdminImpl();
         admin.setLogin(resultSet.getString("login"));
         admin.setPassword(resultSet.getString("password"));
         return admin;
@@ -39,25 +37,22 @@ public class AdminSqlDao extends AbstractSqlDao<String, Admin> {
         List<Admin> admins = new ArrayList<>();
         try {
             Statement statement = connection.createStatement();
-
             log.info("Try to execute:\n" + formatSql(SQL_SELECT_ALL));
 
             ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
             while (resultSet.next()) {
-                AdminModel admin = mapToAdmin(resultSet);
+                Admin admin = mapToAdmin(resultSet);
                 admins.add(admin);
             }
         } catch (SQLException e) {
             log.warn(e.getMessage());
         }
-
         return admins;
     }
 
     @Override
     public Optional<Admin> find(String id) {
         Admin admin = null;
-
         try {
             PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_LOGIN);
             fillPreparedStatement(statement, id);
@@ -70,7 +65,6 @@ public class AdminSqlDao extends AbstractSqlDao<String, Admin> {
         } catch (SQLException e) {
             log.warn(e.getMessage());
         }
-
         return Optional.ofNullable(admin);
     }
 
@@ -78,19 +72,7 @@ public class AdminSqlDao extends AbstractSqlDao<String, Admin> {
     public void save(Admin admin) {
         try  {
             connection.setAutoCommit(false);
-
-            PreparedStatement statement = connection.prepareStatement(UserSqlDao.SQL_INSERT);
-            fillPreparedStatement(statement,
-                    admin.getLogin(),
-                    admin.getPassword());
-            log.info("Try to execute:\n" + formatSql(statement));
-            statement.executeUpdate();
-
-            statement = connection.prepareStatement(SQL_INSERT);
-            fillPreparedStatement(statement, admin.getLogin());
-            log.info("Try to execute:\n" + formatSql(statement));
-            statement.executeUpdate();
-
+            saveInSession(admin, connection);
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
@@ -105,22 +87,29 @@ public class AdminSqlDao extends AbstractSqlDao<String, Admin> {
     public void delete(String id) {
         try  {
             connection.setAutoCommit(false);
-
-            PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_LOGIN);
-            fillPreparedStatement(statement, id);
-            log.info("Try to execute:\n" + formatSql(statement));
-            statement.executeUpdate();
-
-            statement = connection.prepareStatement(UserSqlDao.SQL_DELETE_BY_LOGIN);
-            fillPreparedStatement(statement, id);
-            log.info("Try to execute:\n" + formatSql(statement));
-            statement.executeUpdate();
-
+            deleteInSession(id, connection);
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
             tryToRollBack();
         }
     }
-}
 
+    static void saveInSession(Admin admin, Connection connection) throws SQLException {
+        UserSqlDao.saveInSession(admin, connection);
+
+        PreparedStatement statement = connection.prepareStatement(SQL_INSERT);
+        fillPreparedStatement(statement, admin.getLogin());
+        log.info("Try to execute:\n" + formatSql(statement));
+        statement.executeUpdate();
+    }
+
+    static void deleteInSession(String id, Connection connection) throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_LOGIN);
+        fillPreparedStatement(statement, id);
+        log.info("Try to execute:\n" + formatSql(statement));
+        statement.executeUpdate();
+
+        UserSqlDao.deleteInSession(id, connection);
+    }
+}

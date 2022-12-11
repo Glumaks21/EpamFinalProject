@@ -2,8 +2,7 @@ package ua.maksym.hlushchenko.db.dao.sql;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
-import ua.maksym.hlushchenko.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.db.entity.model.role.AdminModel;
+import ua.maksym.hlushchenko.db.entity.impl.role.AdminImpl;
 import ua.maksym.hlushchenko.db.entity.role.Admin;
 
 import java.sql.Connection;
@@ -14,10 +13,10 @@ import java.util.Optional;
 class AdminSqlDaoTest {
     private static Connection connection;
     private static AdminSqlDao dao;
-    private static AdminModel admin;
+    private static AdminImpl admin;
 
-    static AdminModel createAdmin() {
-        AdminModel admin = new AdminModel();
+    static AdminImpl createAdmin() {
+        AdminImpl admin = new AdminImpl();
         admin.setLogin("test");
         admin.setPassword("test");
         return admin;

@@ -3,7 +3,7 @@ package ua.maksym.hlushchenko.db.entity;
 import ua.maksym.hlushchenko.db.entity.role.Reader;
 
 import java.time.LocalDateTime;
-import java.util.Set;
+import java.util.List;
 
 public interface Receipt {
     int getId();
@@ -12,6 +12,6 @@ public interface Receipt {
     void setReader(Reader reader);
     LocalDateTime getDateTime();
     void setDateTime(LocalDateTime dateTime);
-    Set<Book> getBooks();
-    void setBooks(Set<Book> books);
+    List<Book> getBooks();
+    void setBooks(List<Book> books);
 }

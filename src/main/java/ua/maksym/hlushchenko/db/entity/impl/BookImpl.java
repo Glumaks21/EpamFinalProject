@@ -1,22 +1,21 @@
-package ua.maksym.hlushchenko.db.entity.model;
+package ua.maksym.hlushchenko.db.entity.impl;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import ua.maksym.hlushchenko.db.entity.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 @Data
-public class BookModel implements Book {
+public class BookImpl implements Book {
     private int id;
+    private String title;
     private Author author;
     private Publisher publisher;
     private LocalDate date;
-    private String title;
 
-    private List<Genre> genres;
+    private List<Genre> genres = new ArrayList<>();
 
     @Override
     public boolean equals(Object o) {

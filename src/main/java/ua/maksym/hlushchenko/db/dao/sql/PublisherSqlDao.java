@@ -1,27 +1,25 @@
 package ua.maksym.hlushchenko.db.dao.sql;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.*;
+
 import ua.maksym.hlushchenko.db.dao.PublisherDao;
 import ua.maksym.hlushchenko.db.entity.Publisher;
-import ua.maksym.hlushchenko.db.entity.model.PublisherModel;
+import ua.maksym.hlushchenko.db.entity.impl.PublisherImpl;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implements PublisherDao {
-    static String SQL_SELECT_ALL = "SELECT * FROM publisher";
-    static String SQL_SELECT_BY_ISBN = "SELECT * FROM publisher " +
+    private static final String SQL_SELECT_ALL = "SELECT * FROM publisher";
+    private static final String SQL_SELECT_BY_ISBN = "SELECT * FROM publisher " +
             "WHERE isbn = ?";
-    static String SQL_SELECT_BY_NAME = "SELECT * FROM publisher " +
+    private static final String SQL_SELECT_BY_NAME = "SELECT * FROM publisher " +
             "WHERE name = ?";
-    static String SQL_INSERT = "INSERT INTO publisher(isbn, name) " +
+    private static final String SQL_INSERT = "INSERT INTO publisher(isbn, name) " +
             "VALUES(?, ?)";
-    static String SQL_DELETE_BY_ISBN = "DELETE FROM publisher " +
+    private static final String SQL_DELETE_BY_ISBN = "DELETE FROM publisher " +
             "WHERE isbn = ?";
-    static String SQL_DELETE_BY_NAME = "DELETE FROM publisher " +
+    private static final String SQL_DELETE_BY_NAME = "DELETE FROM publisher " +
             "WHERE name = ?";
 
     private static final Logger log = LoggerFactory.getLogger(PublisherSqlDao.class);
@@ -30,8 +28,8 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
         super(connection);
     }
 
-    static PublisherModel mapToPublisher(ResultSet resultSet) throws SQLException {
-        PublisherModel publisher = new PublisherModel();
+    private PublisherImpl mapToPublisher(ResultSet resultSet) throws SQLException {
+        PublisherImpl publisher = new PublisherImpl();
         publisher.setIsbn(resultSet.getString("isbn"));
         publisher.setName(resultSet.getString("name"));
         return publisher;
@@ -52,16 +50,15 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
         } catch (SQLException e) {
             log.warn(e.getMessage());
         }
-
         return publishers;
     }
 
-    private Optional<Publisher> findPattern(String sqlStatement, String column) {
+    @Override
+    public Optional<Publisher> find(String isbn) {
         Publisher publisher = null;
-
         try {
-            PreparedStatement statement = connection.prepareStatement(sqlStatement);
-            fillPreparedStatement(statement, column);
+            PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_ISBN);
+            fillPreparedStatement(statement, isbn);
 
             log.info("Try to execute:\n" + formatSql(statement));
             ResultSet resultSet = statement.executeQuery();
@@ -71,30 +68,14 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
         } catch (SQLException e) {
             log.warn(e.getMessage());
         }
-
         return Optional.ofNullable(publisher);
-    }
-
-    @Override
-    public Optional<Publisher> find(String isbn) {
-        return findPattern(SQL_SELECT_BY_ISBN, isbn);
-    }
-
-    @Override
-    public Optional<Publisher> findByName(String name) {
-        return findPattern(SQL_SELECT_BY_NAME, name);
     }
 
     @Override
     public void save(Publisher publisher) {
         try {
             connection.setAutoCommit(false);
-
-            PreparedStatement statement = connection.prepareStatement(SQL_INSERT);
-            fillPreparedStatement(statement, publisher.getIsbn(), publisher.getName());
-            log.info("Try to execute:\n" + formatSql(statement));
-            statement.executeUpdate();
-
+            saveInSession(publisher, connection);
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
@@ -105,15 +86,12 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
     @Override
     public void update(Publisher publisher) {}
 
-    private void deletePattern(String sqlStatement, String column) {
+
+    @Override
+    public void delete(String isbn) {
         try {
             connection.setAutoCommit(false);
-
-            PreparedStatement statement = connection.prepareStatement(sqlStatement);
-            fillPreparedStatement(statement, column);
-            log.info("Try to execute:\n" + formatSql(statement));
-            statement.executeUpdate();
-
+            deleteInSession(isbn, connection);
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
@@ -121,14 +99,54 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
         }
     }
 
+    static void saveInSession(Publisher publisher, Connection connection) throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(SQL_INSERT);
+        fillPreparedStatement(statement, publisher.getIsbn(), publisher.getName());
+        log.info("Try to execute:\n" + formatSql(statement));
+        statement.executeUpdate();
+    }
 
     @Override
-    public void delete(String isbn) {
-        deletePattern(SQL_DELETE_BY_ISBN, isbn);
+    public Optional<Publisher> findByName(String name) {
+        Publisher publisher = null;
+        try {
+            PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_NAME);
+            fillPreparedStatement(statement, name);
+
+            log.info("Try to execute:\n" + formatSql(statement));
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                publisher = mapToPublisher(resultSet);
+            }
+        } catch (SQLException e) {
+            log.warn(e.getMessage());
+        }
+        return Optional.ofNullable(publisher);
     }
 
     @Override
     public void deleteByName(String name) {
-        deletePattern(SQL_DELETE_BY_NAME, name);
+        try {
+            connection.setAutoCommit(false);
+            deleteInSessionByName(name, connection);
+            connection.commit();
+        } catch (SQLException e) {
+            log.warn(e.getMessage());
+            tryToRollBack();
+        }
+    }
+
+    static void deleteInSession(String isbn, Connection connection) throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_ISBN);
+        fillPreparedStatement(statement, isbn);
+        log.info("Try to execute:\n" + formatSql(statement));
+        statement.executeUpdate();
+    }
+
+    static void deleteInSessionByName(String name, Connection connection) throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_NAME);
+        fillPreparedStatement(statement, name);
+        log.info("Try to execute:\n" + formatSql(statement));
+        statement.executeUpdate();
     }
 }
