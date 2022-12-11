@@ -8,7 +8,7 @@
         </File>
     </Appenders>
     <Loggers>
-        <Logger name="ua.maksym.hlushchenko.db.dao.sql" level="info" additivity="false">
+        <Logger name="ua.maksym.hlushchenko.dao.db.sql" level="info" additivity="false">
             <AppenderRef ref="DaoLogToFile"/>
         </Logger>
         <Root level="error">
