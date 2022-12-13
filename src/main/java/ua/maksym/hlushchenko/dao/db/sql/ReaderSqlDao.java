@@ -1,6 +1,5 @@
 package ua.maksym.hlushchenko.dao.db.sql;
 
-
 import org.slf4j.*;
 
 import ua.maksym.hlushchenko.dao.ReaderDao;
@@ -8,10 +7,9 @@ import ua.maksym.hlushchenko.dao.entity.*;
 import ua.maksym.hlushchenko.dao.entity.impl.role.ReaderImpl;
 import ua.maksym.hlushchenko.dao.entity.role.Reader;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
+import java.lang.reflect.*;
 import java.sql.*;
+import java.sql.Date;
 import java.util.*;
 
 public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements ReaderDao {
@@ -23,8 +21,6 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
     private static final String SQL_SELECT_READER_RECEIPTS = "SELECT * FROM receipt r " +
             "JOIN reader_has_receipt rhr ON r.id = rhr.receipt_id " +
             "WHERE rhr.reader_login = ?";
-    private static final String SQL_SELECT_READER_SUBSCRIPTIONS = "SELECT * FROM subscription " +
-            "WHERE reader_login = ?";
     private static final String SQL_INSERT = "INSERT INTO reader(user_login, blocked) " +
             "VALUES(?, ?)";
     private static final String SQL_INSERT_READER_RECEIPT = "INSERT INTO reader_has_receipt(reader_login, receipt_id) " +
@@ -34,8 +30,9 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
             "WHERE user_login = ?";
     private static final String SQL_DELETE_BY_LOGIN = "DELETE FROM reader " +
             "WHERE user_login = ?";
-    private static final String SQL_DELETE_RECEIPTS_BY_READER_LOGIN = "DELETE FROM reader_has_receipt rhr " +
-            "WHERE rhr.reader_login = ?";
+    private static final String SQL_DELETE_READER_RECEIPTS = "DELETE FROM reader_has_receipt " +
+            "WHERE reader_login = ?";
+
 
     private static final Logger log = LoggerFactory.getLogger(ReaderSqlDao.class);
 
@@ -264,7 +261,7 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
     }
 
     static void deleteReceiptsInSession(String login, Connection connection) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(SQL_DELETE_RECEIPTS_BY_READER_LOGIN);
+        PreparedStatement statement = connection.prepareStatement(SQL_DELETE_READER_RECEIPTS);
         fillPreparedStatement(statement, login);
         log.info("Try to execute:\n" + formatSql(statement));
         statement.executeUpdate();
@@ -272,21 +269,8 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
 
     @Override
     public List<Subscription> findSubscriptions(String login) {
-        List<Subscription> subscriptions = new ArrayList<>();
-        try {
-            PreparedStatement statement = connection.prepareStatement(SQL_SELECT_READER_SUBSCRIPTIONS);
-            fillPreparedStatement(statement, login);
-            log.info("Try to execute:\n" + formatSql(statement));
-
-            ResultSet resultSet = statement.executeQuery();
-            SubscriptionSqlDao subscriptionSqlDao = new SubscriptionSqlDao(connection);
-            while (resultSet.next()) {
-                subscriptions.add(subscriptionSqlDao.mapToSubscription(resultSet));
-            }
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-        }
-        return subscriptions;
+        SubscriptionSqlDao subscriptionSqlDao = new SubscriptionSqlDao(connection);
+        return  subscriptionSqlDao.findByReaderLogin(login);
     }
 
     @Override
@@ -325,15 +309,18 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
         }
     }
 
-    static void saveSubscriptionsInSession(Reader reader, Connection connection) {
-
+    static void saveSubscriptionsInSession(Reader reader, Connection connection) throws SQLException {
+        for (Subscription subscription : reader.getSubscriptions()) {
+            SubscriptionSqlDao.saveInSession(subscription, connection);
+        }
     }
 
-    static void updateSubscriptionsInSession(Reader reader, Connection connection) {
-
+    static void updateSubscriptionsInSession(Reader reader, Connection connection) throws SQLException {
+        deleteSubscriptionsInSession(reader.getLogin(), connection);
+        saveSubscriptionsInSession(reader, connection);
     }
 
-    static void deleteSubscriptionsInSession(String login, Connection connection) {
-
+    static void deleteSubscriptionsInSession(String login, Connection connection) throws SQLException {
+         SubscriptionSqlDao.deleteByReaderLoginInSession(login, connection);
     }
 }

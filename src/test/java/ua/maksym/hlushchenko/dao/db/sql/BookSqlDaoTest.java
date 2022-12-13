@@ -10,6 +10,8 @@ import java.sql.Connection;
 import java.time.LocalDate;
 import java.util.*;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class BookSqlDaoTest {
     private static BookSqlDao dao;
@@ -21,7 +23,6 @@ class BookSqlDaoTest {
 
     static BookImpl createBook() {
         BookImpl book = new BookImpl();
-
         book.setTitle("test");
 
         AuthorImpl author = AuthorSqlDaoTest.createAuthor();
@@ -31,18 +32,6 @@ class BookSqlDaoTest {
         book.setPublisher(publisher);
 
         book.setDate(LocalDate.of(1111, 11, 11));
-
-        GenreImpl genre1 = new GenreImpl();
-        genre1.setName("Genre1");
-        GenreImpl genre2 = new GenreImpl();
-        genre2.setName("Genre2");
-
-        List<Genre> genres = new ArrayList<>();
-        genres.add(genre1);
-        genres.add(genre2);
-
-        book.setGenres(genres);
-
         return book;
     }
 
@@ -66,23 +55,23 @@ class BookSqlDaoTest {
     @Test
     void save() {
         dao.save(book);
-        Assertions.assertTrue(book.getId() != 0);
+        assertTrue(book.getId() != 0);
     }
 
     @Order(2)
     @Test
     void findAll() {
         List<Book> books = dao.findAll();
-        Assertions.assertTrue(books.contains(book));
+        assertTrue(books.contains(book));
     }
 
     @Order(3)
     @Test
     void find() {
         Optional<Book> optionalBookInDb = dao.find(book.getId());
-        Assertions.assertTrue(optionalBookInDb.isPresent());
+        assertTrue(optionalBookInDb.isPresent());
         Book bookInDb = optionalBookInDb.get();
-        Assertions.assertEquals(book, bookInDb);
+        assertEquals(book, bookInDb);
     }
 
     @Order(4)
@@ -90,7 +79,38 @@ class BookSqlDaoTest {
     void update() {
         book.setTitle("ne_test");
         book.setDate(LocalDate.now());
+        dao.update(book);
+        find();
+    }
 
+    @Order(5)
+    @Test
+    void saveGenres() {
+        GenreImpl genre1 = new GenreImpl();
+        genre1.setName("Genre1");
+        GenreImpl genre2 = new GenreImpl();
+        genre2.setName("Genre2");
+        genreDao.save(genre1);
+        genreDao.save(genre2);
+
+        List<Genre> genres = new ArrayList<>();
+        genres.add(genre1);
+        genres.add(genre2);
+        book.setGenres(genres);
+
+        dao.saveGenres(book);
+    }
+
+    @Order(6)
+    @Test
+    void findGenres() {
+        List<Genre> genres = dao.findGenres(book.getId());
+        assertEquals(book.getGenres(), genres);
+    }
+
+    @Order(7)
+    @Test
+    void updateGenres() {
         GenreImpl genre3 = new GenreImpl();
         genre3.setName("Genre3");
         genreDao.save(genre3);
@@ -99,16 +119,23 @@ class BookSqlDaoTest {
         genres.add(genre3);
         book.setGenres(genres);
 
-        dao.update(book);
-        find();
+        dao.updateGenres(book);
+
+        findGenres();
     }
 
-    @Order(5)
+    @Order(8)
+    @Test
+    void deleteGenres() {
+        dao.deleteGenres(book.getId());
+        assertTrue(dao.findGenres(book.getId()).isEmpty());
+    }
+
+    @Order(9)
     @Test
     void delete() {
         dao.delete(book.getId());
-        Assertions.assertTrue(dao.find(book.getId()).isEmpty());
-        Assertions.assertTrue(dao.findGenres(book.getId()).isEmpty());
+        assertTrue(dao.find(book.getId()).isEmpty());
     }
 
     @SneakyThrows

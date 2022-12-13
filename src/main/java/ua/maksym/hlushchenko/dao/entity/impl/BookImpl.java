@@ -4,8 +4,7 @@ import lombok.Data;
 import ua.maksym.hlushchenko.dao.entity.*;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Data
 public class BookImpl implements Book {
@@ -29,5 +28,10 @@ public class BookImpl implements Book {
                 getDate().equals(book.getDate()) &&
                 getTitle().equals(book.getTitle()) &&
                 getGenres().equals(book.getGenres());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId(), getTitle(), getAuthor(), getPublisher(), getGenres());
     }
 }

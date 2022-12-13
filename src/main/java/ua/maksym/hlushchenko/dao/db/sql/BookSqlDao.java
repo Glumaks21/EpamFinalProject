@@ -121,7 +121,7 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
     public void save(Book book) {
         try {
             connection.setAutoCommit(false);
-            saveBookInSession(book);
+            saveInSession(book);
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
@@ -209,7 +209,7 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
         }
     }
 
-    void saveBookInSession(Book book) throws SQLException {
+    void saveInSession(Book book) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(SQL_INSERT,
                 Statement.RETURN_GENERATED_KEYS);
         fillPreparedStatement(statement,

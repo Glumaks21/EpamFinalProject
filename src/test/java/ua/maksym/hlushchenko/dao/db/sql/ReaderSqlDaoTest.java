@@ -3,46 +3,46 @@ package ua.maksym.hlushchenko.dao.db.sql;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.dao.entity.Receipt;
-import ua.maksym.hlushchenko.dao.entity.impl.ReceiptImpl;
+
+import ua.maksym.hlushchenko.dao.entity.*;
 import ua.maksym.hlushchenko.dao.entity.impl.role.ReaderImpl;
 import ua.maksym.hlushchenko.dao.entity.role.Reader;
 
 import java.sql.Connection;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
+import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ReaderSqlDaoTest {
-    private static Connection connection;
     private static ReaderSqlDao dao;
-    private static ReaderImpl reader;
+    private static ReceiptSqlDao receiptSqlDao;
+    private static SubscriptionSqlDao subscriptionSqlDao;
+    private static BookSqlDao bookSqlDao;
+    private static AuthorSqlDao authorSqlDao;
+    private static PublisherSqlDao publisherSqlDao;
 
-    static ReaderImpl createReader() {
+    private static Reader reader;
+
+    static Reader createReader() {
         ReaderImpl reader = new ReaderImpl();
-
-        reader.setBlocked(false);
         reader.setLogin("test");
         reader.setPassword("test");
-
-        Receipt receipt = new ReceiptImpl();
-        receipt.setReader(reader);
-        receipt.setDateTime(LocalDateTime.of(1111, 11, 11, 11, 11, 11));
-
-        List<Receipt> receipts = new ArrayList<>();
-
-
+        reader.setBlocked(false);
         return reader;
     }
 
     @SneakyThrows
     @BeforeAll
     static void init() {
-        connection = HikariCPDataSource.getConnection();
+        Connection connection = HikariCPDataSource.getConnection();
         dao = new ReaderSqlDao(connection);
+        receiptSqlDao = new ReceiptSqlDao(connection);
+        subscriptionSqlDao = new SubscriptionSqlDao(connection);
+        authorSqlDao = new AuthorSqlDao(connection);
+        publisherSqlDao = new PublisherSqlDao(connection);
+        bookSqlDao = new BookSqlDao(connection);
+
         reader = createReader();
     }
 
@@ -56,16 +56,16 @@ class ReaderSqlDaoTest {
     @Test
     void findAll() {
         List<Reader> readers = dao.findAll();
-        Assertions.assertTrue(readers.contains(reader));
+        assertTrue(readers.contains(reader));
     }
 
     @Order(3)
     @Test
     void find() {
         Optional<Reader> optionalReaderInDb = dao.find(reader.getLogin());
-        Assertions.assertTrue(optionalReaderInDb.isPresent());
+        assertTrue(optionalReaderInDb.isPresent());
         Reader readerInDb = optionalReaderInDb.get();
-        Assertions.assertEquals(reader, readerInDb);
+        assertEquals(reader, readerInDb);
     }
 
     @Order(4)
@@ -78,15 +78,124 @@ class ReaderSqlDaoTest {
 
     @Order(5)
     @Test
+    void saveReceipts() {
+        Receipt receipt1 = ReceiptSqlDaoTest.createReceipt();
+        Receipt receipt2 = ReceiptSqlDaoTest.createReceipt();
+        receipt1.setReader(reader);
+        receipt2.setReader(reader);
+        receiptSqlDao.save(receipt1);
+        receiptSqlDao.save(receipt2);
+        List<Receipt> receipts = new ArrayList<>();
+        receipts.add(receipt1);
+        receipts.add(receipt2);
+        reader.setReceipts(receipts);
+
+        dao.saveReceipts(reader);
+    }
+
+    @Order(6)
+    @Test
+    void findReceipts() {
+        List<Receipt> receipts = dao.findReceipts(reader.getLogin());
+        assertEquals(reader.getReceipts(), receipts);
+    }
+
+    @Order(7)
+    @Test
+    void updateReceipts() {
+        Receipt receipt3 = ReceiptSqlDaoTest.createReceipt();
+        receipt3.setReader(reader);
+        receiptSqlDao.save(receipt3);
+        List<Receipt> receipts = reader.getReceipts();
+        receipts.add(receipt3);
+        reader.setReceipts(receipts);
+
+        dao.updateReceipts(reader);
+        findReceipts();
+    }
+
+    @Order(8)
+    @Test
+    void deleteReceipts() {
+        dao.deleteReceipts(reader.getLogin());
+        assertTrue(dao.findReceipts(reader.getLogin()).isEmpty());
+        reader.getReceipts().forEach(
+                receipt -> receiptSqlDao.delete(receipt.getId())
+        );
+    }
+
+    @Order(9)
+    @Test
+    void saveSubscriptions() {
+        Subscription subscription1 = SubscriptionSqlDaoTest.createSubscription();
+        Subscription subscription2 = SubscriptionSqlDaoTest.createSubscription();
+        Book commonBook = subscription1.getBook();
+        Author commonAuthor = commonBook.getAuthor();
+        Publisher commonPublisher = commonBook.getPublisher();
+
+        subscription1.setReader(reader);
+        subscription2.setReader(reader);
+
+        subscription2.setBook(commonBook);
+
+        authorSqlDao.save(commonAuthor);
+        publisherSqlDao.save(commonPublisher);
+        bookSqlDao.save(commonBook);
+
+        List<Subscription> subscriptions = new ArrayList<>();
+        subscriptions.add(subscription1);
+        subscriptions.add(subscription2);
+        reader.setSubscriptions(subscriptions);
+
+        dao.saveSubscriptions(reader);
+    }
+
+    @Order(10)
+    @Test
+    void findSubscriptions() {
+        List<Subscription> subscriptions = dao.findSubscriptions(reader.getLogin());
+        assertEquals(reader.getSubscriptions(), subscriptions);
+    }
+
+    @Order(11)
+    @Test
+    void updateSubscriptions() {
+        List<Subscription> subscriptions = reader.getSubscriptions();
+        Subscription subscription3 = SubscriptionSqlDaoTest.createSubscription();
+        subscription3.setReader(reader);
+        subscription3.setBook(subscriptions.get(0).getBook());
+        subscriptionSqlDao.save(subscription3);
+        subscriptions.add(subscription3);
+        reader.setSubscriptions(subscriptions);
+
+        dao.updateSubscriptions(reader);
+        findSubscriptions();
+    }
+
+    @Order(12)
+    @Test
+    void deleteSubscriptions() {
+        dao.deleteSubscriptions(reader.getLogin());
+        assertTrue(dao.findSubscriptions(reader.getLogin()).isEmpty());
+    }
+
+    @Order(13)
+    @Test
     void delete() {
         dao.delete(reader.getLogin());
-        Optional<Reader> librarianInDb = dao.find(reader.getLogin());
-        Assertions.assertTrue(librarianInDb.isEmpty());
+        assertTrue(dao.find(reader.getLogin()).isEmpty());
     }
 
     @SneakyThrows
     @AfterAll
     static void destroy() {
-        connection.close();
+        bookSqlDao.delete(reader.getSubscriptions().
+                get(0).getBook().getId());
+        authorSqlDao.delete(reader.getSubscriptions().
+                get(0).getBook().getAuthor().getId());
+        publisherSqlDao.delete(reader.getSubscriptions().
+                get(0).getBook().getPublisher().getIsbn());
+
+        dao.close();
     }
 }
