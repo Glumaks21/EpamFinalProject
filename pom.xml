@@ -7,6 +7,11 @@
   <version>1.0-SNAPSHOT</version>
   <name>epam-final-project Maven Webapp</name>
 
+  <properties>
+    <maven.compiler.target>11</maven.compiler.target>
+    <maven.compiler.source>11</maven.compiler.source>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>mysql</groupId>
@@ -17,6 +22,19 @@
       <groupId>com.zaxxer</groupId>
       <artifactId>HikariCP</artifactId>
       <version>5.0.1</version>
+      <exclusions>
+        <exclusion>
+          <!--Заважає корректній роботі залежності для log4j-->
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>1.18.24</version>
     </dependency>
 
     <dependency>
@@ -25,9 +43,21 @@
       <version>5.9.0</version>
       <scope>test</scope>
     </dependency>
-  </dependencies>
 
-  <build>
-    <finalName>epam-final-project</finalName>
-  </build>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <version>2.19.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+      <version>2.19.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
+      <version>2.19.0</version>
+    </dependency>
+  </dependencies>
 </project>
