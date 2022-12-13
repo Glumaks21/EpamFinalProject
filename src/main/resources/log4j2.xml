@@ -6,10 +6,18 @@
                 <Pattern>%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1} - %m%n</Pattern>
             </PatternLayout>
         </File>
+        <File name="WebLogToFile" fileName="logs/servlets/web.log">
+            <PatternLayout>
+                <Pattern>%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1} - %m%n</Pattern>
+            </PatternLayout>
+        </File>
     </Appenders>
     <Loggers>
         <Logger name="ua.maksym.hlushchenko.dao.db.sql" level="info" additivity="false">
             <AppenderRef ref="DaoLogToFile"/>
+        </Logger>
+        <Logger name="ua.maksym.hlushchenko.servlets" level="info" additivity="false">
+            <AppenderRef ref="WebLogToFile"/>
         </Logger>
         <Root level="error">
             <AppenderRef ref="DaoLogToFile"/>

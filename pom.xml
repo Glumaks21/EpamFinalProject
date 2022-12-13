@@ -3,9 +3,8 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>ua.maksym.hlushchenko</groupId>
   <artifactId>epam-final-project</artifactId>
-  <packaging>war</packaging>
   <version>1.0-SNAPSHOT</version>
-  <name>epam-final-project Maven Webapp</name>
+  <packaging>war</packaging>
 
   <properties>
     <maven.compiler.target>11</maven.compiler.target>
@@ -35,6 +34,22 @@
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <version>1.18.24</version>
+    </dependency>
+
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <version>4.0.1</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet.jsp</groupId>
+      <artifactId>javax.servlet.jsp-api</artifactId>
+      <version>2.3.1</version>
+    </dependency>
+    <dependency>
+      <groupId>jstl</groupId>
+      <artifactId>jstl</artifactId>
+      <version>1.2</version>
     </dependency>
 
     <dependency>

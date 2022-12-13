@@ -3,11 +3,12 @@ package ua.maksym.hlushchenko.dao.entity.impl;
 import lombok.Data;
 import ua.maksym.hlushchenko.dao.entity.*;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.*;
 
 @Data
-public class BookImpl implements Book {
+public class BookImpl implements Book, Serializable {
     private int id;
     private String title;
     private Author author;

@@ -18,9 +18,11 @@ public class HikariCPDataSource {
         Properties properties = new Properties();
 
         System.out.println(new File("").getAbsolutePath());
-        try (InputStream is = HikariCPDataSource.class.getClassLoader().getResourceAsStream("db.properties")) {
+        try (InputStream is = HikariCPDataSource.class.getClassLoader().
+                getResourceAsStream("db.properties")) {
             properties.load(is);
 
+            config.setDriverClassName(properties.getProperty("db.driver"));
             config.setJdbcUrl(properties.getProperty("db.url"));
             config.setUsername(properties.getProperty("db.user"));
             config.setPassword(properties.getProperty("db.password"));
