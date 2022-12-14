@@ -25,10 +25,10 @@ class BookSqlDaoTest {
         BookImpl book = new BookImpl();
         book.setTitle("test");
 
-        AuthorImpl author = AuthorSqlDaoTest.createAuthor();
+        Author author = AuthorSqlDaoTest.createAuthor();
         book.setAuthor(author);
 
-        PublisherImpl publisher = PublisherSqlDaoTest.createPublisher();
+        Publisher publisher = PublisherSqlDaoTest.createPublisher();
         book.setPublisher(publisher);
 
         book.setDate(LocalDate.of(1111, 11, 11));
@@ -38,13 +38,12 @@ class BookSqlDaoTest {
     @SneakyThrows
     @BeforeAll
     static void init() {
-        Connection connection = HikariCPDataSource.getConnection();
-        dao = new BookSqlDao(connection);
+        dao = new BookSqlDao(HikariCPDataSource.getInstance());
         book = createBook();
 
-        authorDao = new AuthorSqlDao(connection);
-        publisherDao = new PublisherSqlDao(connection);
-        genreDao = new GenreSqlDao(connection);
+        authorDao = new AuthorSqlDao(HikariCPDataSource.getInstance());
+        publisherDao = new PublisherSqlDao(HikariCPDataSource.getInstance());
+        genreDao = new GenreSqlDao(HikariCPDataSource.getInstance());
 
         authorDao.save(book.getAuthor());
         publisherDao.save(book.getPublisher());
@@ -144,9 +143,5 @@ class BookSqlDaoTest {
         authorDao.delete(book.getAuthor().getId());
         publisherDao.delete(book.getPublisher().getIsbn());
         book.getGenres().forEach(genre -> genreDao.delete(genre.getId()));
-
-        authorDao.close();
-        publisherDao.close();
-        genreDao.close();
     }
 }

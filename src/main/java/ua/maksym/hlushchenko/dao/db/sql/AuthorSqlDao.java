@@ -4,6 +4,7 @@ import org.slf4j.*;
 import ua.maksym.hlushchenko.dao.entity.Author;
 import ua.maksym.hlushchenko.dao.entity.impl.AuthorImpl;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.*;
 
@@ -21,11 +22,12 @@ public class AuthorSqlDao extends AbstractSqlDao<Integer, Author> {
 
     private static final Logger log = LoggerFactory.getLogger(AuthorSqlDao.class);
 
-    public AuthorSqlDao(Connection connection) {
-        super(connection);
+    public AuthorSqlDao(DataSource dataSource) {
+        super(dataSource);
     }
 
-    private Author mapToAuthor(ResultSet resultSet) throws SQLException {
+    @Override
+    protected Author mapToEntity(ResultSet resultSet) throws SQLException {
         Author author = new AuthorImpl();
         author.setId(resultSet.getInt("id"));
         author.setName(resultSet.getString("name"));
@@ -36,35 +38,32 @@ public class AuthorSqlDao extends AbstractSqlDao<Integer, Author> {
     @Override
     public List<Author> findAll() {
         List<Author> authors = new ArrayList<>();
-
-        try {
+        try (Connection connection = dataSource.getConnection()) {
             Statement statement = connection.createStatement();
 
             log.info("Try to execute:\n" + formatSql(SQL_SELECT_ALL));
             ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
             while (resultSet.next()) {
-                Author author = mapToAuthor(resultSet);
+                Author author = mapToEntity(resultSet);
                 authors.add(author);
             }
         } catch (SQLException e) {
             log.warn(e.getMessage());
         }
-
         return authors;
     }
 
     @Override
     public Optional<Author> find(Integer id) {
         Author author = null;
-
-        try {
+        try (Connection connection = dataSource.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_ID);
             fillPreparedStatement(statement, id);
             log.info("Try to execute:\n" + formatSql(statement));
 
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {
-                author = mapToAuthor(resultSet);
+                author = mapToEntity(resultSet);
             }
         } catch (SQLException e) {
             log.warn(e.getMessage());
@@ -75,41 +74,20 @@ public class AuthorSqlDao extends AbstractSqlDao<Integer, Author> {
 
     @Override
     public void save(Author author) {
-        try {
-            connection.setAutoCommit(false);
-            saveInSession(author, connection);
-            connection.commit();
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            tryToRollBack();
-        }
+        dmlOperation(AuthorSqlDao::saveInTransaction, author);
     }
 
     @Override
     public void update(Author author) {
-        try {
-            connection.setAutoCommit(false);
-            updateInSession(author, connection);
-            connection.commit();
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            tryToRollBack();
-        }
+        dmlOperation(AuthorSqlDao::updateInTransaction, author);
     }
 
     @Override
     public void delete(Integer id) {
-        try {
-            connection.setAutoCommit(false);
-            deleteInConnection(id, connection);
-            connection.commit();
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            tryToRollBack();
-        }
+        dmlOperation(AuthorSqlDao::deleteInTransaction, id);
     }
 
-    static void saveInSession(Author author, Connection connection) throws SQLException {
+    static void saveInTransaction(Author author, Connection connection) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(SQL_INSERT,
                 Statement.RETURN_GENERATED_KEYS);
         fillPreparedStatement(statement,
@@ -124,7 +102,7 @@ public class AuthorSqlDao extends AbstractSqlDao<Integer, Author> {
         }
     }
 
-    static void updateInSession(Author author, Connection connection) throws SQLException {
+    static void updateInTransaction(Author author, Connection connection) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(SQL_UPDATE_BY_ID);
         fillPreparedStatement(statement,
                 author.getName(),
@@ -134,7 +112,7 @@ public class AuthorSqlDao extends AbstractSqlDao<Integer, Author> {
         statement.executeUpdate();
     }
 
-    static void deleteInConnection(Integer id, Connection connection) throws SQLException {
+    static void deleteInTransaction(Integer id, Connection connection) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_ID);
         fillPreparedStatement(statement, id);
         log.info("Try to execute:\n" + formatSql(statement));

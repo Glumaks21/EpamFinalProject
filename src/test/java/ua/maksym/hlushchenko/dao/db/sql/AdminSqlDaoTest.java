@@ -12,7 +12,6 @@ import java.util.Optional;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class AdminSqlDaoTest {
-    private static Connection connection;
     private static AdminSqlDao dao;
     private static AdminImpl admin;
 
@@ -26,8 +25,7 @@ class AdminSqlDaoTest {
     @SneakyThrows
     @BeforeAll
     static void init() {
-        connection = HikariCPDataSource.getConnection();
-        dao = new AdminSqlDao(connection);
+        dao = new AdminSqlDao(HikariCPDataSource.getInstance());
         admin = createAdmin();
     }
 
@@ -60,11 +58,5 @@ class AdminSqlDaoTest {
         dao.delete(admin.getLogin());
         Optional<Admin> userInDb = dao.find(admin.getLogin());
         Assertions.assertTrue(userInDb.isEmpty());
-    }
-
-    @SneakyThrows
-    @AfterAll
-    static void destroy() {
-        connection.close();
     }
 }

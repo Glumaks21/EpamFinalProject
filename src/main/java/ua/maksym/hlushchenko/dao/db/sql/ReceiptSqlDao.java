@@ -5,7 +5,9 @@ import org.slf4j.*;
 import ua.maksym.hlushchenko.dao.ReceiptDao;
 import ua.maksym.hlushchenko.dao.entity.*;
 import ua.maksym.hlushchenko.dao.entity.impl.ReceiptImpl;
+import ua.maksym.hlushchenko.exception.DaoException;
 
+import javax.sql.DataSource;
 import java.lang.reflect.Proxy;
 import java.sql.*;
 import java.util.*;
@@ -30,11 +32,12 @@ public class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements R
 
     private static final Logger log = LoggerFactory.getLogger(ReceiptSqlDao.class);
 
-    Receipt mapToReceipt(ResultSet resultSet) throws SQLException {
+    @Override
+    protected Receipt mapToEntity(ResultSet resultSet) throws SQLException {
         Receipt receipt = new ReceiptImpl();
         receipt.setId(resultSet.getInt("id"));
 
-        ReaderSqlDao readerDao = new ReaderSqlDao(connection);
+        ReaderSqlDao readerDao = new ReaderSqlDao(dataSource);
         receipt.setReader(readerDao.find(resultSet.getString("reader_login")).get());
 
         receipt.setDateTime(resultSet.getTimestamp("time").toLocalDateTime());
@@ -50,23 +53,24 @@ public class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements R
                 });
     }
 
-    public ReceiptSqlDao(Connection connection) {
-        super(connection);
+    public ReceiptSqlDao(DataSource dataSource) {
+        super(dataSource);
     }
 
     @Override
     public List<Receipt> findAll() {
         List<Receipt> receipts = new ArrayList<>();
-        try {
+        try (Connection connection = dataSource.getConnection()) {
             Statement statement = connection.createStatement();
             log.info("Try to execute:\n" + formatSql(SQL_SELECT_ALL));
 
             ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
             while (resultSet.next()) {
-                receipts.add(mapToReceipt(resultSet));
+                receipts.add(mapToEntity(resultSet));
             }
         } catch (SQLException e) {
             log.warn(e.getMessage());
+            throw new DaoException(e);
         }
         return receipts;
     }
@@ -74,58 +78,38 @@ public class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements R
     @Override
     public Optional<Receipt> find(Integer id) {
         Receipt receipt = null;
-        try {
+        try (Connection connection = dataSource.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_ID);
             fillPreparedStatement(statement, id);
             log.info("Try to execute:\n" + formatSql(statement));
 
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {
-                receipt = mapToReceipt(resultSet);
+                receipt = mapToEntity(resultSet);
             }
         } catch (SQLException e) {
             log.warn(e.getMessage());
+            throw new DaoException(e);
         }
         return Optional.ofNullable(receipt);
     }
 
     @Override
     public void save(Receipt receipt) {
-        try {
-            connection.setAutoCommit(false);
-            saveInSession(receipt, connection);
-            connection.commit();
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            tryToRollBack();
-        }
+        dmlOperation(ReceiptSqlDao::saveInTransaction, receipt);
     }
 
     @Override
     public void update(Receipt receipt) {
-        try {
-            connection.setAutoCommit(false);
-            updateInSession(receipt, connection);
-            connection.commit();
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            tryToRollBack();
-        }
+        dmlOperation(ReceiptSqlDao::updateInTransaction, receipt);
     }
 
     @Override
     public void delete(Integer id) {
-        try {
-            connection.setAutoCommit(false);
-            deleteInSession(id, connection);
-            connection.commit();
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            tryToRollBack();
-        }
+        dmlOperation(ReceiptSqlDao::deleteInTransaction, id);
     }
 
-    static void saveInSession(Receipt receipt, Connection connection) throws SQLException {
+    static void saveInTransaction(Receipt receipt, Connection connection) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(SQL_INSERT,
                 Statement.RETURN_GENERATED_KEYS);
         fillPreparedStatement(statement,
@@ -139,11 +123,11 @@ public class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements R
             receipt.setId(resultSet.getInt(1));
         }
 
-        saveBooksInSession(receipt, connection);
+        saveBooksInTransaction(receipt, connection);
     }
 
-    static void updateInSession(Receipt receipt, Connection connection) throws SQLException {
-        updateBooksInSession(receipt, connection);
+    static void updateInTransaction(Receipt receipt, Connection connection) throws SQLException {
+        updateBooksInTransaction(receipt, connection);
 
         PreparedStatement statement = connection.prepareStatement(SQL_UPDATE_BY_ID);
         fillPreparedStatement(statement,
@@ -154,8 +138,8 @@ public class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements R
         statement.executeUpdate();
     }
 
-    static void deleteInSession(Integer id, Connection connection) throws SQLException {
-        deleteBooksInSession(id, connection);
+    static void deleteInTransaction(Integer id, Connection connection) throws SQLException {
+        deleteBooksInTransaction(id, connection);
 
         PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_ID);
         fillPreparedStatement(statement, id);
@@ -166,60 +150,40 @@ public class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements R
     @Override
     public List<Book> findBooks(Integer id) {
         List<Book> books = new ArrayList<>();
-        try {
+        try (Connection connection = dataSource.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SQL_SELECT_RECEIPT_BOOKS);
             fillPreparedStatement(statement, id);
             log.info("Try to execute:\n" + formatSql(statement));
 
             ResultSet resultSet = statement.executeQuery();
-            BookSqlDao bookSqlDao = new BookSqlDao(connection);
+            BookSqlDao bookSqlDao = new BookSqlDao(dataSource);
             while (resultSet.next()) {
                 Book book = bookSqlDao.find(resultSet.getInt("book_id")).get();
                 books.add(book);
             }
         } catch (SQLException e) {
             log.warn(e.getMessage());
+            throw new DaoException(e);
         }
         return books;
     }
 
     @Override
     public void saveBooks(Receipt receipt) {
-        try {
-            connection.setAutoCommit(false);
-            saveBooksInSession(receipt, connection);
-            connection.commit();
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            tryToRollBack();
-        }
+        dmlOperation(ReceiptSqlDao::saveBooksInTransaction, receipt);
     }
 
     @Override
     public void updateBooks(Receipt receipt) {
-        try {
-            connection.setAutoCommit(false);
-            updateBooksInSession(receipt, connection);
-            connection.commit();
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            tryToRollBack();
-        }
+        dmlOperation(ReceiptSqlDao::updateBooksInTransaction, receipt);
     }
 
     @Override
     public void deleteBooks(Integer id) {
-        try {
-            connection.setAutoCommit(false);
-            deleteBooksInSession(id, connection);
-            connection.commit();
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            tryToRollBack();
-        }
+        dmlOperation(ReceiptSqlDao::deleteBooksInTransaction, id);
     }
 
-    static void saveBooksInSession(Receipt receipt, Connection connection) throws SQLException {
+    static void saveBooksInTransaction(Receipt receipt, Connection connection) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(SQL_INSERT_RECEIPT_BOOK);
         for (Book book : receipt.getBooks()) {
             fillPreparedStatement(statement,
@@ -230,12 +194,12 @@ public class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements R
         }
     }
 
-    static void updateBooksInSession(Receipt receipt, Connection connection) throws SQLException {
-        deleteBooksInSession(receipt.getId(), connection);
-        saveBooksInSession(receipt, connection);
+    static void updateBooksInTransaction(Receipt receipt, Connection connection) throws SQLException {
+        deleteBooksInTransaction(receipt.getId(), connection);
+        saveBooksInTransaction(receipt, connection);
     }
 
-    static void deleteBooksInSession(Integer id, Connection connection) throws SQLException {
+    static void deleteBooksInTransaction(Integer id, Connection connection) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(SQL_DELETE_RECEIPTS_BOOKS);
         fillPreparedStatement(statement, id);
         log.info("Try to execute:\n" + formatSql(statement));

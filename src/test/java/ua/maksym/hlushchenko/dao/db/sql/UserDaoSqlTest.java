@@ -13,11 +13,10 @@ import java.util.Optional;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class UserDaoSqlTest {
-    private static Connection connection;
     private static UserSqlDao dao;
-    private static UserImpl user;
+    private static User user;
 
-    static UserImpl createUser() {
+    static User createUser() {
         UserImpl user = new UserImpl();
         user.setLogin("test");
         user.setPassword("test");
@@ -27,8 +26,7 @@ class UserDaoSqlTest {
     @SneakyThrows
     @BeforeAll
     static void init() {
-        connection = HikariCPDataSource.getConnection();
-        dao = new UserSqlDao(connection);
+        dao = new UserSqlDao(HikariCPDataSource.getInstance());
         user = createUser();
     }
 
@@ -69,11 +67,5 @@ class UserDaoSqlTest {
         dao.delete(user.getLogin());
         Optional<User> userInDb = dao.find(user.getLogin());
         Assertions.assertTrue(userInDb.isEmpty());
-    }
-
-    @SneakyThrows
-    @AfterAll
-    static void destroy() {
-        connection.close();
     }
 }

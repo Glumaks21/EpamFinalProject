@@ -6,6 +6,7 @@ import ua.maksym.hlushchenko.dao.PublisherDao;
 import ua.maksym.hlushchenko.dao.entity.Publisher;
 import ua.maksym.hlushchenko.dao.entity.impl.PublisherImpl;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.*;
 
@@ -24,11 +25,12 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
 
     private static final Logger log = LoggerFactory.getLogger(PublisherSqlDao.class);
 
-    public PublisherSqlDao(Connection connection) {
-        super(connection);
+    public PublisherSqlDao(DataSource dataSource) {
+        super(dataSource);
     }
 
-    PublisherImpl mapToPublisher(ResultSet resultSet) throws SQLException {
+    @Override
+    protected PublisherImpl mapToEntity(ResultSet resultSet) throws SQLException {
         PublisherImpl publisher = new PublisherImpl();
         publisher.setIsbn(resultSet.getString("isbn"));
         publisher.setName(resultSet.getString("name"));
@@ -38,13 +40,13 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
     @Override
     public List<Publisher> findAll() {
         List<Publisher> publishers = new ArrayList<>();
-        try {
+        try (Connection connection = dataSource.getConnection()) {
             Statement statement = connection.createStatement();
             log.info("Try to execute:\n" + formatSql(SQL_SELECT_ALL));
             ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
 
             while (resultSet.next()) {
-                Publisher publisher = mapToPublisher(resultSet);
+                Publisher publisher = mapToEntity(resultSet);
                 publishers.add(publisher);
             }
         } catch (SQLException e) {
@@ -56,14 +58,14 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
     @Override
     public Optional<Publisher> find(String isbn) {
         Publisher publisher = null;
-        try {
+        try (Connection connection = dataSource.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_ISBN);
             fillPreparedStatement(statement, isbn);
 
             log.info("Try to execute:\n" + formatSql(statement));
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {
-                publisher = mapToPublisher(resultSet);
+                publisher = mapToEntity(resultSet);
             }
         } catch (SQLException e) {
             log.warn(e.getMessage());
@@ -73,14 +75,7 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
 
     @Override
     public void save(Publisher publisher) {
-        try {
-            connection.setAutoCommit(false);
-            saveInSession(publisher, connection);
-            connection.commit();
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            tryToRollBack();
-        }
+        dmlOperation(PublisherSqlDao::saveInSession, publisher);
     }
 
     @Override
@@ -89,14 +84,7 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
 
     @Override
     public void delete(String isbn) {
-        try {
-            connection.setAutoCommit(false);
-            deleteInSession(isbn, connection);
-            connection.commit();
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            tryToRollBack();
-        }
+        dmlOperation(PublisherSqlDao::deleteByIsbnInTransaction, isbn);
     }
 
     static void saveInSession(Publisher publisher, Connection connection) throws SQLException {
@@ -106,17 +94,24 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
         statement.executeUpdate();
     }
 
+    static void deleteByIsbnInTransaction(String isbn, Connection connection) throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_ISBN);
+        fillPreparedStatement(statement, isbn);
+        log.info("Try to execute:\n" + formatSql(statement));
+        statement.executeUpdate();
+    }
+
     @Override
     public Optional<Publisher> findByName(String name) {
         Publisher publisher = null;
-        try {
+        try (Connection connection = dataSource.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_NAME);
             fillPreparedStatement(statement, name);
 
             log.info("Try to execute:\n" + formatSql(statement));
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {
-                publisher = mapToPublisher(resultSet);
+                publisher = mapToEntity(resultSet);
             }
         } catch (SQLException e) {
             log.warn(e.getMessage());
@@ -126,24 +121,10 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
 
     @Override
     public void deleteByName(String name) {
-        try {
-            connection.setAutoCommit(false);
-            deleteInSessionByName(name, connection);
-            connection.commit();
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            tryToRollBack();
-        }
+        dmlOperation(PublisherSqlDao::deleteByNameInTransaction, name);
     }
 
-    static void deleteInSession(String isbn, Connection connection) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_ISBN);
-        fillPreparedStatement(statement, isbn);
-        log.info("Try to execute:\n" + formatSql(statement));
-        statement.executeUpdate();
-    }
-
-    static void deleteInSessionByName(String name, Connection connection) throws SQLException {
+    static void deleteByNameInTransaction(String name, Connection connection) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_NAME);
         fillPreparedStatement(statement, name);
         log.info("Try to execute:\n" + formatSql(statement));

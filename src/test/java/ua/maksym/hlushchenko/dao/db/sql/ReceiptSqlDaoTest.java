@@ -17,10 +17,9 @@ class ReceiptSqlDaoTest {
     private static ReceiptSqlDao dao;
     private static ReaderSqlDao readerSqlDao;
 
-    private static ReceiptImpl receipt;
+    private static Receipt receipt;
 
-
-    static ReceiptImpl createReceipt() {
+    static Receipt createReceipt() {
         ReceiptImpl receipt = new ReceiptImpl();
         receipt.setReader(ReaderSqlDaoTest.createReader());
         receipt.setDateTime(LocalDateTime.of(1111, 11, 11, 11, 11, 11));
@@ -30,11 +29,10 @@ class ReceiptSqlDaoTest {
     @SneakyThrows
     @BeforeAll
     static void init() {
-        Connection connection = HikariCPDataSource.getConnection();
-        dao = new ReceiptSqlDao(connection);
-        receipt = createReceipt();
+        dao = new ReceiptSqlDao(HikariCPDataSource.getInstance());
+        readerSqlDao = new ReaderSqlDao(HikariCPDataSource.getInstance());
 
-        readerSqlDao = new ReaderSqlDao(connection);
+        receipt = createReceipt();
         readerSqlDao.save(receipt.getReader());
     }
 
@@ -80,8 +78,5 @@ class ReceiptSqlDaoTest {
     @AfterAll
     static void destroy() {
         readerSqlDao.delete(receipt.getReader().getLogin());
-
-        readerSqlDao.close();
-        dao.close();
     }
 }

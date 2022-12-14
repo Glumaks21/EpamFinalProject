@@ -1,17 +1,12 @@
 package ua.maksym.hlushchenko.dao.db;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
+import com.zaxxer.hikari.*;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.SQLException;
+import java.io.*;
 import java.util.Properties;
 
 public class HikariCPDataSource {
-    private static final HikariDataSource ds;
+    private static final HikariDataSource instance;
 
     static {
         HikariConfig config = new HikariConfig();
@@ -26,7 +21,7 @@ public class HikariCPDataSource {
             config.setJdbcUrl(properties.getProperty("db.url"));
             config.setUsername(properties.getProperty("db.user"));
             config.setPassword(properties.getProperty("db.password"));
-            ds = new HikariDataSource(config);
+            instance = new HikariDataSource(config);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -34,7 +29,7 @@ public class HikariCPDataSource {
 
     private HikariCPDataSource(){}
 
-    public static Connection getConnection() throws SQLException {
-        return ds.getConnection();
+    public static HikariDataSource getInstance() {
+        return instance;
     }
 }

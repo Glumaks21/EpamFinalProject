@@ -12,11 +12,10 @@ import java.util.Optional;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class LibrarianSqlDaoTest {
-    private static Connection connection;
     private static LibrarianSqlDao dao;
-    private static LibrarianImpl librarian;
+    private static Librarian librarian;
 
-    static LibrarianImpl createLibrarian() {
+    static Librarian createLibrarian() {
         LibrarianImpl librarian = new LibrarianImpl();
         librarian.setLogin("test");
         librarian.setPassword("test");
@@ -26,8 +25,7 @@ class LibrarianSqlDaoTest {
     @SneakyThrows
     @BeforeAll
     static void init() {
-        connection = HikariCPDataSource.getConnection();
-        dao = new LibrarianSqlDao(connection);
+        dao = new LibrarianSqlDao(HikariCPDataSource.getInstance());
         librarian = createLibrarian();
     }
 
@@ -60,11 +58,5 @@ class LibrarianSqlDaoTest {
         dao.delete(librarian.getLogin());
         Optional<Librarian> librarianInDb = dao.find(librarian.getLogin());
         Assertions.assertTrue(librarianInDb.isEmpty());
-    }
-
-    @SneakyThrows
-    @AfterAll
-    static void destroy() {
-        connection.close();
     }
 }

@@ -9,6 +9,6 @@ class HikariCPDataSourceTest {
 
     @Test
     void getConnection() throws SQLException {
-        HikariCPDataSource.getConnection();
+        HikariCPDataSource.getInstance().getConnection();
     }
 }

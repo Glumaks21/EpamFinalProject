@@ -6,6 +6,7 @@ import ua.maksym.hlushchenko.dao.*;
 import ua.maksym.hlushchenko.dao.entity.*;
 import ua.maksym.hlushchenko.dao.entity.impl.*;
 
+import javax.sql.DataSource;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -34,21 +35,22 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
 
     private static final Logger log = LoggerFactory.getLogger(BookSqlDao.class);
 
-    public BookSqlDao(Connection connection) {
+    public BookSqlDao(DataSource connection) {
         super(connection);
     }
 
-    Book mapToBook(ResultSet resultSet) throws SQLException {
+    @Override
+    protected Book mapToEntity(ResultSet resultSet) throws SQLException {
         Book book = new BookImpl();
 
         book.setId(resultSet.getInt("id"));
         book.setTitle(resultSet.getString("title"));
 
-        AuthorSqlDao authorSqlDao = new AuthorSqlDao(connection);
+        AuthorSqlDao authorSqlDao = new AuthorSqlDao(dataSource);
         Author author = authorSqlDao.find(resultSet.getInt("author_id")).get();
         book.setAuthor(author);
 
-        PublisherDao publisherDao = new PublisherSqlDao(connection);
+        PublisherDao publisherDao = new PublisherSqlDao(dataSource);
         Publisher publisher = publisherDao.find(resultSet.getString("publisher_isbn")).get();
         book.setPublisher(publisher);
 
@@ -81,13 +83,13 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
     public List<Book> findAll() {
         List<Book> books = new ArrayList<>();
 
-        try {
+        try (Connection connection = dataSource.getConnection()) {
             Statement statement = connection.createStatement();
 
             log.info("Try to execute:\n" + formatSql(SQL_SELECT_ALL));
             ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
             while (resultSet.next()) {
-                Book book = mapToBook(resultSet);
+                Book book = mapToEntity(resultSet);
                 books.add(book);
             }
         } catch (SQLException e) {
@@ -101,14 +103,14 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
     public Optional<Book> find(Integer id) {
         Book book = null;
 
-        try {
+        try (Connection connection = dataSource.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_ID);
             fillPreparedStatement(statement, id);
 
             log.info("Try to execute:\n" + formatSql(statement));
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {
-                book = mapToBook(resultSet);
+                book = mapToEntity(resultSet);
             }
         } catch (SQLException e) {
             log.warn(e.getMessage());
@@ -119,51 +121,31 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
 
     @Override
     public void save(Book book) {
-        try {
-            connection.setAutoCommit(false);
-            saveInSession(book);
-            connection.commit();
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            tryToRollBack();
-        }
+        dmlOperation(BookSqlDao::saveInTransaction, book);
     }
 
     @Override
     public void update(Book book) {
-        try {
-            connection.setAutoCommit(false);
-            updateInSession(book);
-            connection.commit();
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            tryToRollBack();
-        }
+        dmlOperation(BookSqlDao::updateInTransaction, book);
     }
 
     @Override
     public void delete(Integer id) {
-        try {
-            connection.setAutoCommit(false);
-            deleteInSession(id);
-            connection.commit();
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            tryToRollBack();
-        }
+        dmlOperation(BookSqlDao::deleteInTransaction, id);
     }
 
     @Override
     public List<Genre> findGenres(Integer id) {
         List<Genre> genres = new ArrayList<>();
 
-        try {
+        try (Connection connection = dataSource.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SQL_SELECT_GENRES_BY_BOOK_ID);
             fillPreparedStatement(statement, id);
 
             ResultSet resultSet = statement.executeQuery();
+            GenreSqlDao genreSqlDao = new GenreSqlDao(dataSource);
             while (resultSet.next()) {
-                GenreImpl genre = GenreSqlDao.mapToGenre(resultSet);
+                Genre genre = genreSqlDao.mapToEntity(resultSet);
                 genres.add(genre);
             }
         } catch (SQLException e) {
@@ -175,41 +157,20 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
 
     @Override
     public void saveGenres(Book book) {
-        try {
-            connection.setAutoCommit(false);
-            saveGenresInSession(book);
-            connection.commit();
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            tryToRollBack();
-        }
+        dmlOperation(BookSqlDao::saveGenresInTransaction, book);
     }
 
     @Override
     public void updateGenres(Book book) {
-        try {
-            connection.setAutoCommit(false);
-            updateGenresInSession(book);
-            connection.commit();
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            tryToRollBack();
-        }
+        dmlOperation(BookSqlDao::updateGenresInTransaction, book);
     }
 
     @Override
     public void deleteGenres(Integer id) {
-        try {
-            connection.setAutoCommit(false);
-            deleteGenresInSession(id);
-            connection.commit();
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            tryToRollBack();
-        }
+        dmlOperation(BookSqlDao::deleteGenresInTransaction, id);
     }
 
-    void saveInSession(Book book) throws SQLException {
+    static void saveInTransaction(Book book, Connection connection) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(SQL_INSERT,
                 Statement.RETURN_GENERATED_KEYS);
         fillPreparedStatement(statement,
@@ -225,10 +186,10 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
             book.setId(resultSet.getInt(1));
         }
 
-        saveGenresInSession(book);
+        saveGenresInTransaction(book, connection);
     }
 
-    void updateInSession(Book book) throws SQLException {
+    static void updateInTransaction(Book book, Connection connection) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(SQL_UPDATE_BY_ID);
         fillPreparedStatement(statement,
                 book.getTitle(),
@@ -239,11 +200,11 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
         log.info("Try to execute:\n" + formatSql(statement));
         statement.executeUpdate();
 
-        updateGenresInSession(book);
+        updateGenresInTransaction(book, connection);
     }
 
-    void deleteInSession(Integer id) throws SQLException {
-        deleteGenresInSession(id);
+    static void deleteInTransaction(Integer id, Connection connection) throws SQLException {
+        deleteGenresInTransaction(id, connection);
 
         PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_ID);
         fillPreparedStatement(statement, id);
@@ -251,7 +212,7 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
         statement.executeUpdate();
     }
 
-    void saveGenresInSession(Book book) throws SQLException {
+    static void saveGenresInTransaction(Book book, Connection connection) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(SQL_INSERT_BOOK_GENRE);
         List<Genre> genres = book.getGenres();
         for (Genre genre : genres) {
@@ -263,12 +224,12 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
         }
     }
 
-    void updateGenresInSession(Book book) throws SQLException {
-        deleteGenresInSession(book.getId());
-        saveGenresInSession(book);
+    static void updateGenresInTransaction(Book book, Connection connection) throws SQLException {
+        deleteGenresInTransaction(book.getId(), connection);
+        saveGenresInTransaction(book, connection);
     }
 
-    void deleteGenresInSession(Integer id) throws SQLException {
+    static void deleteGenresInTransaction(Integer id, Connection connection) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(SQL_DELETE_ALL_GENRES_BY_BOOK_ID);
         fillPreparedStatement(statement, id);
         log.info("Try to execute:\n" + formatSql(statement));

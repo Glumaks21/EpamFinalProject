@@ -6,6 +6,7 @@ import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.dao.entity.Subscription;
 import ua.maksym.hlushchenko.dao.entity.impl.SubscriptionImpl;
 
+import javax.sql.DataSource;
 import java.time.LocalDate;
 import java.sql.Connection;
 import java.util.*;
@@ -35,12 +36,12 @@ class SubscriptionSqlDaoTest {
     @SneakyThrows
     @BeforeAll
     static void init() {
-        Connection connection = HikariCPDataSource.getConnection();
-        dao = new SubscriptionSqlDao(connection);
-        readerSqlDao = new ReaderSqlDao(connection);
-        bookSqlDao = new BookSqlDao(connection);
-        authorSqlDao = new AuthorSqlDao(connection);
-        publisherSqlDao = new PublisherSqlDao(connection);
+        DataSource ds = HikariCPDataSource.getInstance();
+        dao = new SubscriptionSqlDao(ds);
+        readerSqlDao = new ReaderSqlDao(ds);
+        bookSqlDao = new BookSqlDao(ds);
+        authorSqlDao = new AuthorSqlDao(ds);
+        publisherSqlDao = new PublisherSqlDao(ds);
 
         subscription = createSubscription();
         readerSqlDao.save(subscription.getReader());
@@ -96,9 +97,5 @@ class SubscriptionSqlDaoTest {
         authorSqlDao.delete(subscription.getBook().getAuthor().getId());
         publisherSqlDao.delete(subscription.getBook().getPublisher().getIsbn());
         readerSqlDao.delete(subscription.getReader().getLogin());
-
-        readerSqlDao.close();
-        bookSqlDao.close();
-        dao.close();
     }
 }

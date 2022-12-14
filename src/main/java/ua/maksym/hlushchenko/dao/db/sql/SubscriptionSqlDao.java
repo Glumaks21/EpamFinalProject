@@ -7,6 +7,7 @@ import ua.maksym.hlushchenko.dao.entity.*;
 import ua.maksym.hlushchenko.dao.entity.impl.SubscriptionImpl;
 import ua.maksym.hlushchenko.dao.entity.role.Reader;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.sql.Date;
 import java.util.*;
@@ -32,19 +33,19 @@ public class SubscriptionSqlDao extends AbstractSqlDao<Integer, Subscription> im
 
     private static final Logger log = LoggerFactory.getLogger(SubscriptionSqlDao.class);
 
-    public SubscriptionSqlDao(Connection connection) {
-        super(connection);
+    public SubscriptionSqlDao(DataSource dataSource) {
+        super(dataSource);
     }
 
-    Subscription mapToSubscription(ResultSet resultSet) throws SQLException {
+    protected Subscription mapToEntity(ResultSet resultSet) throws SQLException {
         Subscription subscription = new SubscriptionImpl();
         subscription.setId(resultSet.getInt("id"));
 
-        ReaderDao readerDao = new ReaderSqlDao(connection);
+        ReaderDao readerDao = new ReaderSqlDao(dataSource);
         Reader reader = readerDao.find(resultSet.getString("reader_login")).get();
         subscription.setReader(reader);
 
-        BookDao bookDao = new BookSqlDao(connection);
+        BookDao bookDao = new BookSqlDao(dataSource);
         Book book = bookDao.find(resultSet.getInt("book_id")).get();
         subscription.setBook(book);
 
@@ -57,13 +58,13 @@ public class SubscriptionSqlDao extends AbstractSqlDao<Integer, Subscription> im
     @Override
     public List<Subscription> findAll() {
         List<Subscription> subscriptions = new ArrayList<>();
-        try {
+        try (Connection connection = dataSource.getConnection()) {
             Statement statement = connection.createStatement();
             log.info("Try to execute:\n" + formatSql(statement));
 
             ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
             while (resultSet.next()) {
-                Subscription subscription = mapToSubscription(resultSet);
+                Subscription subscription = mapToEntity(resultSet);
                 subscriptions.add(subscription);
             }
         } catch (SQLException e) {
@@ -75,14 +76,14 @@ public class SubscriptionSqlDao extends AbstractSqlDao<Integer, Subscription> im
     @Override
     public Optional<Subscription> find(Integer id) {
         Subscription subscription = null;
-        try {
+        try (Connection connection = dataSource.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_ID);
             fillPreparedStatement(statement, id);
             log.info("Try to execute:\n" + formatSql(statement));
 
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {
-                subscription = mapToSubscription(resultSet);
+                subscription = mapToEntity(resultSet);
             }
         } catch (SQLException e) {
             log.warn(e.getMessage());
@@ -92,38 +93,20 @@ public class SubscriptionSqlDao extends AbstractSqlDao<Integer, Subscription> im
 
     @Override
     public void save(Subscription subscription) {
-        try {
-            connection.setAutoCommit(false);
-            saveInSession(subscription, connection);
-            connection.commit();
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-        }
+        dmlOperation(SubscriptionSqlDao::saveInTransaction, subscription);
     }
 
     @Override
     public void update(Subscription subscription) {
-        try {
-            connection.setAutoCommit(false);
-            updateInSession(subscription, connection);
-            connection.commit();
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-        }
+        dmlOperation(SubscriptionSqlDao::updateInTransaction, subscription);
     }
 
     @Override
     public void delete(Integer id) {
-        try {
-            connection.setAutoCommit(false);
-            deleteInSession(id, connection);
-            connection.commit();
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-        }
+        dmlOperation(SubscriptionSqlDao::deleteInTransaction, id);
     }
 
-    static void saveInSession(Subscription subscription, Connection connection) throws SQLException {
+    static void saveInTransaction(Subscription subscription, Connection connection) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(SQL_INSERT,
                 Statement.RETURN_GENERATED_KEYS);
         fillPreparedStatement(statement,
@@ -141,7 +124,7 @@ public class SubscriptionSqlDao extends AbstractSqlDao<Integer, Subscription> im
         }
     }
 
-    static void updateInSession(Subscription subscription, Connection connection) throws SQLException {
+    static void updateInTransaction(Subscription subscription, Connection connection) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(SQL_UPDATE_BY_ID);
         fillPreparedStatement(statement,
                 subscription.getReader().getLogin(),
@@ -154,7 +137,7 @@ public class SubscriptionSqlDao extends AbstractSqlDao<Integer, Subscription> im
         statement.executeUpdate();
     }
 
-    static void deleteInSession(Integer id, Connection connection) throws SQLException {
+    static void deleteInTransaction(Integer id, Connection connection) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_ID);
         fillPreparedStatement(statement, id);
         log.info("Try to execute:\n" + formatSql(statement));
@@ -164,14 +147,14 @@ public class SubscriptionSqlDao extends AbstractSqlDao<Integer, Subscription> im
     @Override
     public List<Subscription> findByReaderLogin(String login) {
         List<Subscription> subscriptions = new ArrayList<>();
-        try {
+        try (Connection connection = dataSource.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_READER_LOGIN);
             fillPreparedStatement(statement, login);
             log.info("Try to execute:\n" + formatSql(statement));
 
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {
-                Subscription subscription = mapToSubscription(resultSet);
+                Subscription subscription = mapToEntity(resultSet);
                 subscriptions.add(subscription);
             }
         } catch (SQLException e) {
@@ -182,16 +165,10 @@ public class SubscriptionSqlDao extends AbstractSqlDao<Integer, Subscription> im
 
     @Override
     public void deleteByReaderLogin(String login) {
-        try {
-            connection.setAutoCommit(false);
-            deleteByReaderLoginInSession(login, connection);
-            connection.commit();
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-        }
+        dmlOperation(SubscriptionSqlDao::deleteByReaderLoginInTransaction, login);
     }
 
-    static void deleteByReaderLoginInSession(String login, Connection connection) throws SQLException {
+    static void deleteByReaderLoginInTransaction(String login, Connection connection) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_READER_LOGIN);
         fillPreparedStatement(statement, login);
         log.info("Try to execute:\n" + formatSql(statement));

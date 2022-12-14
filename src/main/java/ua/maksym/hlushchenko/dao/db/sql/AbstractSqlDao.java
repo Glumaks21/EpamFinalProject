@@ -1,53 +1,72 @@
 package ua.maksym.hlushchenko.dao.db.sql;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import ua.maksym.hlushchenko.dao.Dao;
+import org.slf4j.*;
 
+import ua.maksym.hlushchenko.dao.Dao;
+import ua.maksym.hlushchenko.exception.DaoException;
+
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.*;
 
-
-
-public abstract class AbstractSqlDao<K, T> implements Dao<K, T>, AutoCloseable {
-    protected Connection connection;
+public abstract class AbstractSqlDao<K, T> implements Dao<K, T> {
+    protected final DataSource dataSource;
 
     private static final Logger log = LoggerFactory.getLogger(AbstractSqlDao.class);
 
-    public AbstractSqlDao(Connection connection) {
-        Objects.requireNonNull(connection);
-        this.connection = connection;
+    public AbstractSqlDao(DataSource dataSource) {
+        Objects.requireNonNull(dataSource);
+        this.dataSource = dataSource;
     }
 
-    @Override
-    public abstract List<T> findAll();
+    protected abstract T mapToEntity(ResultSet resultSet) throws SQLException;
 
-    @Override
-    public abstract Optional<T> find(K id);
+    protected <V> void dmlOperation(SqlThrowableBiConsumer<V> methodWithQueriesInTransaction, V initArg) {
+        Connection connection = null;
+        try {
+            connection = dataSource.getConnection();
+            connection.setAutoCommit(false);
 
-    @Override
-    public abstract void save(T entity);
+            methodWithQueriesInTransaction.accept(initArg, connection);
 
-    @Override
-    public abstract void update(T entity);
+            connection.commit();
+        } catch (SQLException e) {
+            log.warn(e.getMessage());
+            tryToRollBack(connection);
+            throw new DaoException(e);
+        } finally {
+            tryToClose(connection);
+        }
+    }
 
-    @Override
-    public abstract void delete(K id);
-
-
-    protected void tryToRollBack() {
+    protected void tryToRollBack(Connection connection) {
         if (connection != null) {
-            log.info("Try to roll back");
+            log.info("Try to roll back: " + connection);
             try {
                 connection.rollback();
             } catch (SQLException e) {
                 log.warn(e.getMessage());
+                throw new DaoException(e);
             }
             log.info("Roll back successful");
         }
     }
 
-    protected static void fillPreparedStatement(PreparedStatement statement, Object... args) throws SQLException {
+    protected void tryToClose(Connection connection)  {
+        if (connection != null) {
+            log.info("Try to close: " + connection);
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                log.warn(e.getMessage());
+                throw new DaoException(e);
+            }
+            log.info("Connection is closed successfully");
+        }
+    }
+
+    protected static void fillPreparedStatement(PreparedStatement statement, Object... args)
+            throws SQLException {
         for (int i = 0; i < args.length; i++) {
             statement.setObject(i + 1, args[i]);
         }
@@ -81,10 +100,5 @@ public abstract class AbstractSqlDao<K, T> implements Dao<K, T>, AutoCloseable {
 
         strb.append(words[words.length - 1]);
         return strb.toString();
-    }
-
-    @Override
-    public void close() throws Exception {
-        connection.close();
     }
 }

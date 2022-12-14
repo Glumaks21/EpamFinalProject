@@ -12,11 +12,10 @@ import java.util.Optional;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class AuthorSqlDaoTest {
-    private static Connection connection;
     private static AuthorSqlDao dao;
-    private static AuthorImpl author;
+    private static Author author;
 
-    static AuthorImpl createAuthor() {
+    static Author createAuthor() {
         AuthorImpl author = new AuthorImpl();
         author.setName("Barak");
         author.setSurname("Obama");
@@ -26,8 +25,7 @@ class AuthorSqlDaoTest {
     @SneakyThrows
     @BeforeAll
     static void init() {
-        connection = HikariCPDataSource.getConnection();
-        dao = new AuthorSqlDao(connection);
+        dao = new AuthorSqlDao(HikariCPDataSource.getInstance());
         author = createAuthor();
     }
 
@@ -70,11 +68,5 @@ class AuthorSqlDaoTest {
         dao.delete(author.getId());
         Optional<Author> optionalAuthorInDb = dao.find(author.getId());
         Assertions.assertTrue(optionalAuthorInDb.isEmpty());
-    }
-
-    @SneakyThrows
-    @AfterAll
-    static void destroy() {
-        connection.close();
     }
 }

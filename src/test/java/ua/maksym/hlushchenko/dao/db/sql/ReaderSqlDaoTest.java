@@ -8,6 +8,7 @@ import ua.maksym.hlushchenko.dao.entity.*;
 import ua.maksym.hlushchenko.dao.entity.impl.role.ReaderImpl;
 import ua.maksym.hlushchenko.dao.entity.role.Reader;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.util.*;
 
@@ -35,13 +36,13 @@ class ReaderSqlDaoTest {
     @SneakyThrows
     @BeforeAll
     static void init() {
-        Connection connection = HikariCPDataSource.getConnection();
-        dao = new ReaderSqlDao(connection);
-        receiptSqlDao = new ReceiptSqlDao(connection);
-        subscriptionSqlDao = new SubscriptionSqlDao(connection);
-        authorSqlDao = new AuthorSqlDao(connection);
-        publisherSqlDao = new PublisherSqlDao(connection);
-        bookSqlDao = new BookSqlDao(connection);
+        DataSource ds = HikariCPDataSource.getInstance();
+        dao = new ReaderSqlDao(ds);
+        receiptSqlDao = new ReceiptSqlDao(ds);
+        subscriptionSqlDao = new SubscriptionSqlDao(ds);
+        authorSqlDao = new AuthorSqlDao(ds);
+        publisherSqlDao = new PublisherSqlDao(ds);
+        bookSqlDao = new BookSqlDao(ds);
 
         reader = createReader();
     }
@@ -196,6 +197,5 @@ class ReaderSqlDaoTest {
         publisherSqlDao.delete(reader.getSubscriptions().
                 get(0).getBook().getPublisher().getIsbn());
 
-        dao.close();
     }
 }

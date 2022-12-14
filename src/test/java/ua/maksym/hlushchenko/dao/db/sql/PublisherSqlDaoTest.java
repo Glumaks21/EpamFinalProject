@@ -12,12 +12,11 @@ import java.util.Optional;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class PublisherSqlDaoTest {
-    private static Connection connection;
     private static PublisherSqlDao dao;
-    private static PublisherImpl publisher;
+    private static Publisher publisher;
 
-    static PublisherImpl createPublisher() {
-        PublisherImpl publisher = new PublisherImpl();
+    static Publisher createPublisher() {
+        Publisher publisher = new PublisherImpl();
         publisher.setIsbn("1234567890123");
         publisher.setName("Test company");
         return publisher;
@@ -26,8 +25,7 @@ class PublisherSqlDaoTest {
     @SneakyThrows
     @BeforeAll
     static void init() {
-        connection = HikariCPDataSource.getConnection();
-        dao = new PublisherSqlDao(connection);
+        dao = new PublisherSqlDao(HikariCPDataSource.getInstance());
         publisher = createPublisher();
     }
 
@@ -77,11 +75,5 @@ class PublisherSqlDaoTest {
         dao.deleteByName(publisher.getName());
         Optional<Publisher> optionalPublisherInDb = dao.find(publisher.getIsbn());
         Assertions.assertTrue(optionalPublisherInDb.isEmpty());
-    }
-
-    @SneakyThrows
-    @AfterAll
-    static void destroy() {
-        connection.close();
     }
 }

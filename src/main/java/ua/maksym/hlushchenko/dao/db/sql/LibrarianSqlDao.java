@@ -5,6 +5,7 @@ import org.slf4j.*;
 import ua.maksym.hlushchenko.dao.entity.impl.role.LibrarianImpl;
 import ua.maksym.hlushchenko.dao.entity.role.Librarian;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.*;
 
@@ -22,11 +23,12 @@ public class LibrarianSqlDao extends AbstractSqlDao<String, Librarian> {
 
     private static final Logger log = LoggerFactory.getLogger(LibrarianSqlDao.class);
 
-    public LibrarianSqlDao(Connection connection) {
-        super(connection);
+    public LibrarianSqlDao(DataSource dataSource) {
+        super(dataSource);
     }
 
-    LibrarianImpl mapToLibrarian(ResultSet resultSet) throws SQLException {
+    @Override
+    protected LibrarianImpl mapToEntity(ResultSet resultSet) throws SQLException {
         LibrarianImpl librarian = new LibrarianImpl();
         librarian.setLogin(resultSet.getString("login"));
         librarian.setPassword(resultSet.getString("password"));
@@ -36,13 +38,13 @@ public class LibrarianSqlDao extends AbstractSqlDao<String, Librarian> {
     @Override
     public List<Librarian> findAll() {
         List<Librarian> librarians = new ArrayList<>();
-        try {
+        try (Connection connection = dataSource.getConnection()) {
             Statement statement = connection.createStatement();
 
             log.info("Try to execute:\n" + formatSql(SQL_SELECT_ALL));
             ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
             while (resultSet.next()) {
-                Librarian librarian = mapToLibrarian(resultSet);
+                Librarian librarian = mapToEntity(resultSet);
                 librarians.add(librarian);
             }
         } catch (SQLException e) {
@@ -55,14 +57,14 @@ public class LibrarianSqlDao extends AbstractSqlDao<String, Librarian> {
     @Override
     public Optional<Librarian> find(String id) {
         LibrarianImpl librarian = null;
-        try {
+        try (Connection connection = dataSource.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_LOGIN);
             fillPreparedStatement(statement, id);
 
             log.info("Try to execute:\n" + formatSql(statement));
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {
-                librarian = mapToLibrarian(resultSet);
+                librarian = mapToEntity(resultSet);
             }
         } catch (SQLException e) {
             log.warn(e.getMessage());
@@ -73,14 +75,7 @@ public class LibrarianSqlDao extends AbstractSqlDao<String, Librarian> {
 
     @Override
     public void save(Librarian librarian) {
-        try {
-            connection.setAutoCommit(false);
-            saveInSession(librarian, connection);
-            connection.commit();
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            tryToRollBack();
-        }
+        dmlOperation(LibrarianSqlDao::saveInTransaction, librarian);
     }
 
     @Override
@@ -88,18 +83,11 @@ public class LibrarianSqlDao extends AbstractSqlDao<String, Librarian> {
 
     @Override
     public void delete(String id) {
-        try {
-            connection.setAutoCommit(false);
-            deleteInSession(id, connection);
-            connection.commit();
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            tryToRollBack();
-        }
+        dmlOperation(LibrarianSqlDao::deleteInTransaction, id);
     }
 
-    static void saveInSession(Librarian librarian, Connection connection) throws SQLException {
-        UserSqlDao.saveInSession(librarian, connection);
+    static void saveInTransaction(Librarian librarian, Connection connection) throws SQLException {
+        UserSqlDao.saveInTransaction(librarian, connection);
 
         PreparedStatement statement = connection.prepareStatement(SQL_INSERT);
         fillPreparedStatement(statement, librarian.getLogin());
@@ -107,12 +95,12 @@ public class LibrarianSqlDao extends AbstractSqlDao<String, Librarian> {
         statement.executeUpdate();
     }
 
-    static void deleteInSession(String login, Connection connection) throws SQLException {
+    static void deleteInTransaction(String login, Connection connection) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_LOGIN);
         fillPreparedStatement(statement, login);
         log.info("Try to execute:\n" + formatSql(statement));
         statement.executeUpdate();
 
-        UserSqlDao.deleteInSession(login, connection);
+        UserSqlDao.deleteInTransaction(login, connection);
     }
 }

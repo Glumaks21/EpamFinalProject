@@ -12,7 +12,6 @@ import java.util.Optional;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class GenreSqlDaoTest {
-    private static Connection connection;
     private static GenreSqlDao dao;
     private static GenreImpl genre;
 
@@ -25,8 +24,7 @@ class GenreSqlDaoTest {
     @SneakyThrows
     @BeforeAll
     static void init() {
-        connection = HikariCPDataSource.getConnection();
-        dao = new GenreSqlDao(connection);
+        dao = new GenreSqlDao(HikariCPDataSource.getInstance());
         genre = createGenre();
     }
 
@@ -67,11 +65,5 @@ class GenreSqlDaoTest {
         dao.delete(genre.getId());
         Optional<Genre> optionalGenreInDb = dao.find(genre.getId());
         Assertions.assertTrue(optionalGenreInDb.isEmpty());
-    }
-
-    @SneakyThrows
-    @AfterAll
-    static void destroy() {
-        connection.close();
     }
 }
