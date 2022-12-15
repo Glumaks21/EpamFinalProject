@@ -37,40 +37,16 @@ public class UserSqlDao extends AbstractSqlDao<String, User> {
 
     @Override
     public List<User> findAll() {
-        List<User> users = new ArrayList<>();
-        try (Connection connection = dataSource.getConnection()) {
-            Statement statement = connection.createStatement();
-            log.info("Try to execute:\n" + formatSql(SQL_SELECT_ALL));
-
-            ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
-            while (resultSet.next()) {
-                User user = mapToEntity(resultSet);
-                users.add(user);
-            }
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-        }
-
-        return users;
+        return mappedQueryResult(SQL_SELECT_ALL);
     }
 
     @Override
-    public Optional<User> find(String id) {
-        User user = null;
-        try (Connection connection = dataSource.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_LOGIN);
-            fillPreparedStatement(statement, id);
-            log.info("Try to execute:\n" + formatSql(statement));
-
-            ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                user = mapToEntity(resultSet);
-            }
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
+    public Optional<User> find(String login) {
+        List<User> users = mappedQueryResult(SQL_SELECT_BY_LOGIN, login);
+        if (users.isEmpty()) {
+            return Optional.empty();
         }
-
-        return Optional.ofNullable(user);
+        return Optional.of(users.get(0));
     }
 
     @Override

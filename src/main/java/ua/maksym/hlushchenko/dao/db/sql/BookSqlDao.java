@@ -81,42 +81,16 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
 
     @Override
     public List<Book> findAll() {
-        List<Book> books = new ArrayList<>();
-
-        try (Connection connection = dataSource.getConnection()) {
-            Statement statement = connection.createStatement();
-
-            log.info("Try to execute:\n" + formatSql(SQL_SELECT_ALL));
-            ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
-            while (resultSet.next()) {
-                Book book = mapToEntity(resultSet);
-                books.add(book);
-            }
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-        }
-
-        return books;
+        return mappedQueryResult(SQL_SELECT_ALL);
     }
 
     @Override
     public Optional<Book> find(Integer id) {
-        Book book = null;
-
-        try (Connection connection = dataSource.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_ID);
-            fillPreparedStatement(statement, id);
-
-            log.info("Try to execute:\n" + formatSql(statement));
-            ResultSet resultSet = statement.executeQuery();
-            while (resultSet.next()) {
-                book = mapToEntity(resultSet);
-            }
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
+        List<Book> books = mappedQueryResult(SQL_SELECT_BY_ID, id);
+        if (books.isEmpty()) {
+            return Optional.empty();
         }
-
-        return Optional.ofNullable(book);
+        return Optional.of(books.get(0));
     }
 
     @Override
@@ -136,23 +110,8 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
 
     @Override
     public List<Genre> findGenres(Integer id) {
-        List<Genre> genres = new ArrayList<>();
-
-        try (Connection connection = dataSource.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(SQL_SELECT_GENRES_BY_BOOK_ID);
-            fillPreparedStatement(statement, id);
-
-            ResultSet resultSet = statement.executeQuery();
-            GenreSqlDao genreSqlDao = new GenreSqlDao(dataSource);
-            while (resultSet.next()) {
-                Genre genre = genreSqlDao.mapToEntity(resultSet);
-                genres.add(genre);
-            }
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-        }
-
-        return genres;
+        GenreSqlDao genreSqlDao = new GenreSqlDao(dataSource);
+        return mappedQueryResult(genreSqlDao::mapToEntity, SQL_SELECT_GENRES_BY_BOOK_ID, id);
     }
 
     @Override

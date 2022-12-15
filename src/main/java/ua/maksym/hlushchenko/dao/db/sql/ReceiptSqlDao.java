@@ -5,6 +5,7 @@ import org.slf4j.*;
 import ua.maksym.hlushchenko.dao.ReceiptDao;
 import ua.maksym.hlushchenko.dao.entity.*;
 import ua.maksym.hlushchenko.dao.entity.impl.ReceiptImpl;
+import ua.maksym.hlushchenko.dao.entity.role.Reader;
 import ua.maksym.hlushchenko.exception.DaoException;
 
 import javax.sql.DataSource;
@@ -59,39 +60,16 @@ public class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements R
 
     @Override
     public List<Receipt> findAll() {
-        List<Receipt> receipts = new ArrayList<>();
-        try (Connection connection = dataSource.getConnection()) {
-            Statement statement = connection.createStatement();
-            log.info("Try to execute:\n" + formatSql(SQL_SELECT_ALL));
-
-            ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
-            while (resultSet.next()) {
-                receipts.add(mapToEntity(resultSet));
-            }
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            throw new DaoException(e);
-        }
-        return receipts;
+        return mappedQueryResult(SQL_SELECT_ALL);
     }
 
     @Override
     public Optional<Receipt> find(Integer id) {
-        Receipt receipt = null;
-        try (Connection connection = dataSource.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_ID);
-            fillPreparedStatement(statement, id);
-            log.info("Try to execute:\n" + formatSql(statement));
-
-            ResultSet resultSet = statement.executeQuery();
-            while (resultSet.next()) {
-                receipt = mapToEntity(resultSet);
-            }
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            throw new DaoException(e);
+        List<Receipt> receipts = mappedQueryResult(SQL_SELECT_BY_ID, id);
+        if (receipts.isEmpty()) {
+            return Optional.empty();
         }
-        return Optional.ofNullable(receipt);
+        return Optional.of(receipts.get(0));
     }
 
     @Override
@@ -149,23 +127,8 @@ public class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements R
 
     @Override
     public List<Book> findBooks(Integer id) {
-        List<Book> books = new ArrayList<>();
-        try (Connection connection = dataSource.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(SQL_SELECT_RECEIPT_BOOKS);
-            fillPreparedStatement(statement, id);
-            log.info("Try to execute:\n" + formatSql(statement));
-
-            ResultSet resultSet = statement.executeQuery();
-            BookSqlDao bookSqlDao = new BookSqlDao(dataSource);
-            while (resultSet.next()) {
-                Book book = bookSqlDao.find(resultSet.getInt("book_id")).get();
-                books.add(book);
-            }
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            throw new DaoException(e);
-        }
-        return books;
+        BookSqlDao bookSqlDao = new BookSqlDao(dataSource);
+        return mappedQueryResult(bookSqlDao::mapToEntity, SQL_SELECT_RECEIPT_BOOKS, id);
     }
 
     @Override

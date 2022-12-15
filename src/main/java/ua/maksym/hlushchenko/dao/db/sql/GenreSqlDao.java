@@ -2,6 +2,7 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ua.maksym.hlushchenko.dao.entity.Book;
 import ua.maksym.hlushchenko.dao.entity.Genre;
 import ua.maksym.hlushchenko.dao.entity.impl.GenreImpl;
 import ua.maksym.hlushchenko.exception.DaoException;
@@ -39,42 +40,16 @@ public class GenreSqlDao extends AbstractSqlDao<Integer, Genre> {
 
     @Override
     public List<Genre> findAll() {
-        try (Connection connection = dataSource.getConnection()) {
-            Statement statement = connection.createStatement();
-            log.info("Try to execute:\n" + formatSql(SQL_SELECT_ALL));
-
-            ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
-            List<Genre> genres = new ArrayList<>();
-            while (resultSet.next()) {
-                GenreImpl genre = mapToEntity(resultSet);
-                genres.add(genre);
-            }
-
-            return genres;
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            throw new DaoException(e);
-        }
+        return mappedQueryResult(SQL_SELECT_ALL);
     }
 
     @Override
     public Optional<Genre> find(Integer id) {
-        try (Connection connection = dataSource.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_ID);
-            fillPreparedStatement(statement, id);
-            log.info("Try to execute:\n" + formatSql(statement));
-
-            ResultSet resultSet = statement.executeQuery();
-            Genre genre = null;
-            if (resultSet.next()) {
-                genre = mapToEntity(resultSet);
-            }
-
-            return Optional.ofNullable(genre);
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            throw new DaoException(e);
+        List<Genre> genres = mappedQueryResult(SQL_SELECT_BY_ID, id);
+        if (genres.isEmpty()) {
+            return Optional.empty();
         }
+        return Optional.of(genres.get(0));
     }
 
     @Override

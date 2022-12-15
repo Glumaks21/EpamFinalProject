@@ -2,6 +2,7 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import org.slf4j.*;
 
+import ua.maksym.hlushchenko.dao.entity.Genre;
 import ua.maksym.hlushchenko.dao.entity.impl.role.LibrarianImpl;
 import ua.maksym.hlushchenko.dao.entity.role.Librarian;
 
@@ -37,40 +38,16 @@ public class LibrarianSqlDao extends AbstractSqlDao<String, Librarian> {
 
     @Override
     public List<Librarian> findAll() {
-        List<Librarian> librarians = new ArrayList<>();
-        try (Connection connection = dataSource.getConnection()) {
-            Statement statement = connection.createStatement();
-
-            log.info("Try to execute:\n" + formatSql(SQL_SELECT_ALL));
-            ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
-            while (resultSet.next()) {
-                Librarian librarian = mapToEntity(resultSet);
-                librarians.add(librarian);
-            }
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-        }
-
-        return librarians;
+        return mappedQueryResult(SQL_SELECT_ALL);
     }
 
     @Override
-    public Optional<Librarian> find(String id) {
-        LibrarianImpl librarian = null;
-        try (Connection connection = dataSource.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_LOGIN);
-            fillPreparedStatement(statement, id);
-
-            log.info("Try to execute:\n" + formatSql(statement));
-            ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                librarian = mapToEntity(resultSet);
-            }
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
+    public Optional<Librarian> find(String login) {
+        List<Librarian > librarians = mappedQueryResult(SQL_SELECT_BY_LOGIN, login);
+        if (librarians.isEmpty()) {
+            return Optional.empty();
         }
-
-        return Optional.ofNullable(librarian);
+        return Optional.of(librarians.get(0));
     }
 
     @Override

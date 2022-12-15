@@ -5,6 +5,7 @@ import org.slf4j.*;
 import ua.maksym.hlushchenko.dao.PublisherDao;
 import ua.maksym.hlushchenko.dao.entity.Publisher;
 import ua.maksym.hlushchenko.dao.entity.impl.PublisherImpl;
+import ua.maksym.hlushchenko.dao.entity.role.Librarian;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -39,38 +40,16 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
 
     @Override
     public List<Publisher> findAll() {
-        List<Publisher> publishers = new ArrayList<>();
-        try (Connection connection = dataSource.getConnection()) {
-            Statement statement = connection.createStatement();
-            log.info("Try to execute:\n" + formatSql(SQL_SELECT_ALL));
-            ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
-
-            while (resultSet.next()) {
-                Publisher publisher = mapToEntity(resultSet);
-                publishers.add(publisher);
-            }
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-        }
-        return publishers;
+        return mappedQueryResult(SQL_SELECT_ALL);
     }
 
     @Override
     public Optional<Publisher> find(String isbn) {
-        Publisher publisher = null;
-        try (Connection connection = dataSource.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_ISBN);
-            fillPreparedStatement(statement, isbn);
-
-            log.info("Try to execute:\n" + formatSql(statement));
-            ResultSet resultSet = statement.executeQuery();
-            while (resultSet.next()) {
-                publisher = mapToEntity(resultSet);
-            }
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
+        List<Publisher> publishers = mappedQueryResult(SQL_SELECT_BY_ISBN, isbn);
+        if (publishers.isEmpty()) {
+            return Optional.empty();
         }
-        return Optional.ofNullable(publisher);
+        return Optional.of(publishers.get(0));
     }
 
     @Override
@@ -103,20 +82,11 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
 
     @Override
     public Optional<Publisher> findByName(String name) {
-        Publisher publisher = null;
-        try (Connection connection = dataSource.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_NAME);
-            fillPreparedStatement(statement, name);
-
-            log.info("Try to execute:\n" + formatSql(statement));
-            ResultSet resultSet = statement.executeQuery();
-            while (resultSet.next()) {
-                publisher = mapToEntity(resultSet);
-            }
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
+        List<Publisher> publishers = mappedQueryResult(SQL_SELECT_BY_NAME, name);
+        if (publishers.isEmpty()) {
+            return Optional.empty();
         }
-        return Optional.ofNullable(publisher);
+        return Optional.ofNullable(publishers.get(0));
     }
 
     @Override

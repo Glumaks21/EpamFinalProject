@@ -37,39 +37,16 @@ public class AuthorSqlDao extends AbstractSqlDao<Integer, Author> {
 
     @Override
     public List<Author> findAll() {
-        List<Author> authors = new ArrayList<>();
-        try (Connection connection = dataSource.getConnection()) {
-            Statement statement = connection.createStatement();
-
-            log.info("Try to execute:\n" + formatSql(SQL_SELECT_ALL));
-            ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
-            while (resultSet.next()) {
-                Author author = mapToEntity(resultSet);
-                authors.add(author);
-            }
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-        }
-        return authors;
+        return mappedQueryResult(SQL_SELECT_ALL);
     }
 
     @Override
     public Optional<Author> find(Integer id) {
-        Author author = null;
-        try (Connection connection = dataSource.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_ID);
-            fillPreparedStatement(statement, id);
-            log.info("Try to execute:\n" + formatSql(statement));
-
-            ResultSet resultSet = statement.executeQuery();
-            while (resultSet.next()) {
-                author = mapToEntity(resultSet);
-            }
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
+        List<Author> authors = mappedQueryResult(SQL_SELECT_BY_ID, id);
+        if (authors.isEmpty()) {
+            return Optional.empty();
         }
-
-        return Optional.ofNullable(author);
+        return Optional.of(authors.get(0));
     }
 
     @Override

@@ -36,38 +36,16 @@ public class AdminSqlDao extends AbstractSqlDao<String, Admin> {
 
     @Override
     public List<Admin> findAll() {
-        List<Admin> admins = new ArrayList<>();
-        try (Connection connection = dataSource.getConnection()) {
-            Statement statement = connection.createStatement();
-            log.info("Try to execute:\n" + formatSql(SQL_SELECT_ALL));
-
-            ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
-            while (resultSet.next()) {
-                Admin admin = mapToEntity(resultSet);
-                admins.add(admin);
-            }
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-        }
-        return admins;
+        return mappedQueryResult(SQL_SELECT_ALL);
     }
 
     @Override
-    public Optional<Admin> find(String id) {
-        Admin admin = null;
-        try (Connection connection = dataSource.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_LOGIN);
-            fillPreparedStatement(statement, id);
-            log.info("Try to execute:\n" + formatSql(statement));
-
-            ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                admin = mapToEntity(resultSet);
-            }
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
+    public Optional<Admin> find(String login) {
+        List<Admin> admins = mappedQueryResult(SQL_SELECT_BY_LOGIN, login);
+        if (admins.isEmpty()) {
+            return Optional.empty();
         }
-        return Optional.ofNullable(admin);
+        return Optional.of(admins.get(0));
     }
 
     @Override

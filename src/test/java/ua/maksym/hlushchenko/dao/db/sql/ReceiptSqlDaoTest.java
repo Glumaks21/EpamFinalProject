@@ -6,7 +6,6 @@ import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.dao.entity.Receipt;
 import ua.maksym.hlushchenko.dao.entity.impl.ReceiptImpl;
 
-import java.sql.Connection;
 import java.time.LocalDateTime;
 import java.util.*;
 

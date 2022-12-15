@@ -21,7 +21,34 @@ public abstract class AbstractSqlDao<K, T> implements Dao<K, T> {
 
     protected abstract T mapToEntity(ResultSet resultSet) throws SQLException;
 
-    protected <V> void dmlOperation(SqlThrowableBiConsumer<V> methodWithQueriesInTransaction, V initArg) {
+    protected List<T> mappedQueryResult(String query, Object... args) {
+        return mappedQueryResult(this::mapToEntity, query, args);
+    }
+
+    protected <U> List<U> mappedQueryResult(Mapper<U> mapper, String query, Object... args) {
+        try (Connection connection = dataSource.getConnection()) {
+            PreparedStatement statement = connection.prepareStatement(query);
+            fillPreparedStatement(statement, args);
+            log.info("Try to execute:\n" + formatSql(statement));
+
+            ResultSet resultSet = statement.executeQuery();
+            return mapFromResultSet(mapper, resultSet);
+        } catch (SQLException e) {
+            log.warn(e.getMessage());
+            throw new DaoException(e);
+        }
+    }
+
+    private <U> List<U> mapFromResultSet(Mapper<U> mapper, ResultSet resultSet) throws SQLException {
+        List<U> entities = new ArrayList<>();
+        while (resultSet.next()) {
+            U entity = mapper.map(resultSet);
+            entities.add(entity);
+        }
+        return entities;
+    }
+
+    protected <U> void dmlOperation(SqlThrowableBiConsumer<U> methodWithQueriesInTransaction, U initArg) {
         Connection connection = null;
         try {
             connection = dataSource.getConnection();

@@ -76,41 +76,16 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
 
     @Override
     public List<Reader> findAll() {
-        List<Reader> readers = new ArrayList<>();
-
-        try (Connection connection = dataSource.getConnection()) {
-            Statement statement = connection.createStatement();
-            log.info("Try to execute:\n" + formatSql(SQL_SELECT_ALL));
-            ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
-
-            while (resultSet.next()) {
-                Reader reader = mapToEntity(resultSet);
-                readers.add(reader);
-            }
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-        }
-
-        return readers;
+        return mappedQueryResult(SQL_SELECT_ALL);
     }
 
     @Override
-    public Optional<Reader> find(String id) {
-        Reader reader = null;
-        try (Connection connection = dataSource.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_LOGIN);
-            fillPreparedStatement(statement, id);
-
-            log.info("Try to execute:\n" + formatSql(statement));
-            ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                reader = mapToEntity(resultSet);
-            }
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
+    public Optional<Reader> find(String login) {
+        List<Reader> readers = mappedQueryResult(SQL_SELECT_BY_LOGIN, login);
+        if (readers.isEmpty()) {
+            return Optional.empty();
         }
-
-        return Optional.ofNullable(reader);
+        return Optional.of(readers.get(0));
     }
 
     @Override
@@ -170,24 +145,8 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
 
     @Override
     public List<Receipt> findReceipts(String login) {
-        List<Receipt> receipts = new ArrayList<>();
-
-        try (Connection connection = dataSource.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(SQL_SELECT_READER_RECEIPTS);
-            fillPreparedStatement(statement, login);
-            log.info("Try to execute:\n" + formatSql(statement));
-
-            ResultSet resultSet = statement.executeQuery();
-            ReceiptSqlDao receiptSqlDao = new ReceiptSqlDao(dataSource);
-            while (resultSet.next()) {
-                Receipt receipt = receiptSqlDao.mapToEntity(resultSet);
-                receipts.add(receipt);
-            }
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-        }
-
-        return receipts;
+        ReceiptSqlDao receiptSqlDao = new ReceiptSqlDao(dataSource);
+        return mappedQueryResult(receiptSqlDao::mapToEntity, SQL_SELECT_READER_RECEIPTS, login);
     }
 
     @Override

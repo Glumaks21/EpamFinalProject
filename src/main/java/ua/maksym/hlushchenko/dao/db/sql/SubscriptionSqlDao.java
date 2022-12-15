@@ -57,38 +57,16 @@ public class SubscriptionSqlDao extends AbstractSqlDao<Integer, Subscription> im
 
     @Override
     public List<Subscription> findAll() {
-        List<Subscription> subscriptions = new ArrayList<>();
-        try (Connection connection = dataSource.getConnection()) {
-            Statement statement = connection.createStatement();
-            log.info("Try to execute:\n" + formatSql(statement));
-
-            ResultSet resultSet = statement.executeQuery(SQL_SELECT_ALL);
-            while (resultSet.next()) {
-                Subscription subscription = mapToEntity(resultSet);
-                subscriptions.add(subscription);
-            }
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-        }
-        return subscriptions;
+        return mappedQueryResult(SQL_SELECT_ALL);
     }
 
     @Override
     public Optional<Subscription> find(Integer id) {
-        Subscription subscription = null;
-        try (Connection connection = dataSource.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_ID);
-            fillPreparedStatement(statement, id);
-            log.info("Try to execute:\n" + formatSql(statement));
-
-            ResultSet resultSet = statement.executeQuery();
-            while (resultSet.next()) {
-                subscription = mapToEntity(resultSet);
-            }
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
+        List<Subscription> subscriptions = mappedQueryResult(SQL_SELECT_ALL);
+        if (subscriptions.isEmpty()) {
+            return Optional.empty();
         }
-        return Optional.ofNullable(subscription);
+        return Optional.of(subscriptions.get(0));
     }
 
     @Override
@@ -146,21 +124,7 @@ public class SubscriptionSqlDao extends AbstractSqlDao<Integer, Subscription> im
 
     @Override
     public List<Subscription> findByReaderLogin(String login) {
-        List<Subscription> subscriptions = new ArrayList<>();
-        try (Connection connection = dataSource.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(SQL_SELECT_BY_READER_LOGIN);
-            fillPreparedStatement(statement, login);
-            log.info("Try to execute:\n" + formatSql(statement));
-
-            ResultSet resultSet = statement.executeQuery();
-            while (resultSet.next()) {
-                Subscription subscription = mapToEntity(resultSet);
-                subscriptions.add(subscription);
-            }
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-        }
-        return subscriptions;
+        return mappedQueryResult(SQL_SELECT_BY_READER_LOGIN, login);
     }
 
     @Override
