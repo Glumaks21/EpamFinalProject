@@ -50,7 +50,7 @@ public class AdminSqlDao extends AbstractSqlDao<String, Admin> {
 
     @Override
     public void save(Admin admin) {
-        dmlOperation(AdminSqlDao::saveInTransaction, admin);
+        updateInTransaction(AdminSqlDao::saveInTransaction, admin);
     }
 
     @Override
@@ -58,7 +58,7 @@ public class AdminSqlDao extends AbstractSqlDao<String, Admin> {
 
     @Override
     public void delete(String id) {
-        dmlOperation(AdminSqlDao::deleteInTransaction, id);
+        updateInTransaction(AdminSqlDao::deleteInTransaction, id);
     }
 
     static void saveInTransaction(Admin admin, Connection connection) throws SQLException {

@@ -1,15 +1,18 @@
 package ua.maksym.hlushchenko.servlets;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.*;
+import ua.maksym.hlushchenko.dao.Dao;
+import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
+import ua.maksym.hlushchenko.dao.db.sql.UserSqlDao;
+import ua.maksym.hlushchenko.dao.entity.role.User;
+import ua.maksym.hlushchenko.exception.ParamsValidationException;
+import ua.maksym.hlushchenko.util.ParamsValidator;
 
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.*;
 import java.io.IOException;
-
+import java.util.Optional;
 
 @WebServlet("/profile/login")
 public class LoginServlet extends HttpServlet {
@@ -18,18 +21,27 @@ public class LoginServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        getServletContext().getRequestDispatcher("/static/html/login_page.html").
+        getServletContext().getRequestDispatcher("/static/html/login.html").
                 forward(req, resp);
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        if ("submit".equals(req.getParameter("action"))) {
-            String login = req.getParameter("login");
-            String password = req.getParameter("password");
+        try {
+            String loginParam = ParamsValidator.getRequiredParam(req, "login");
+            String passwordParam = ParamsValidator.getRequiredParam(req, "password");
+
+            Dao<String, User> dao = new UserSqlDao(HikariCPDataSource.getInstance());
+            Optional<User> optionalUser = dao.find(loginParam);
+            if (optionalUser.isEmpty() || !optionalUser.get().getLogin().equals(loginParam)) {
+                throw new ParamsValidationException();
+            }
 
 
+        } catch (ParamsValidationException e) {
+            log.warn(e.getMessage());
+            resp.sendRedirect("/static/html/error.html");
         }
     }
 }

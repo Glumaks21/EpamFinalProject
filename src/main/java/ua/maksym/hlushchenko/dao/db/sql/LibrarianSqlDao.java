@@ -2,7 +2,6 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import org.slf4j.*;
 
-import ua.maksym.hlushchenko.dao.entity.Genre;
 import ua.maksym.hlushchenko.dao.entity.impl.role.LibrarianImpl;
 import ua.maksym.hlushchenko.dao.entity.role.Librarian;
 
@@ -52,7 +51,7 @@ public class LibrarianSqlDao extends AbstractSqlDao<String, Librarian> {
 
     @Override
     public void save(Librarian librarian) {
-        dmlOperation(LibrarianSqlDao::saveInTransaction, librarian);
+        updateInTransaction(LibrarianSqlDao::saveInTransaction, librarian);
     }
 
     @Override
@@ -60,7 +59,7 @@ public class LibrarianSqlDao extends AbstractSqlDao<String, Librarian> {
 
     @Override
     public void delete(String id) {
-        dmlOperation(LibrarianSqlDao::deleteInTransaction, id);
+        updateInTransaction(LibrarianSqlDao::deleteInTransaction, id);
     }
 
     static void saveInTransaction(Librarian librarian, Connection connection) throws SQLException {

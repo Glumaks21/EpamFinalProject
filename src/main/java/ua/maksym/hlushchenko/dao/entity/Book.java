@@ -8,6 +8,8 @@ public interface Book {
     void setId(int id);
     String getTitle();
     void setTitle(String title);
+    String getDescription();
+    void setDescription(String description);
     Author getAuthor();
     void setAuthor(Author author);
     Publisher getPublisher();

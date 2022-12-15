@@ -71,17 +71,17 @@ public class SubscriptionSqlDao extends AbstractSqlDao<Integer, Subscription> im
 
     @Override
     public void save(Subscription subscription) {
-        dmlOperation(SubscriptionSqlDao::saveInTransaction, subscription);
+        updateInTransaction(SubscriptionSqlDao::saveInTransaction, subscription);
     }
 
     @Override
     public void update(Subscription subscription) {
-        dmlOperation(SubscriptionSqlDao::updateInTransaction, subscription);
+        updateInTransaction(SubscriptionSqlDao::updateInTransaction, subscription);
     }
 
     @Override
     public void delete(Integer id) {
-        dmlOperation(SubscriptionSqlDao::deleteInTransaction, id);
+        updateInTransaction(SubscriptionSqlDao::deleteInTransaction, id);
     }
 
     static void saveInTransaction(Subscription subscription, Connection connection) throws SQLException {
@@ -129,7 +129,7 @@ public class SubscriptionSqlDao extends AbstractSqlDao<Integer, Subscription> im
 
     @Override
     public void deleteByReaderLogin(String login) {
-        dmlOperation(SubscriptionSqlDao::deleteByReaderLoginInTransaction, login);
+        updateInTransaction(SubscriptionSqlDao::deleteByReaderLoginInTransaction, login);
     }
 
     static void deleteByReaderLoginInTransaction(String login, Connection connection) throws SQLException {

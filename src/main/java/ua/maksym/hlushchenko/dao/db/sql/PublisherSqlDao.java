@@ -5,7 +5,6 @@ import org.slf4j.*;
 import ua.maksym.hlushchenko.dao.PublisherDao;
 import ua.maksym.hlushchenko.dao.entity.Publisher;
 import ua.maksym.hlushchenko.dao.entity.impl.PublisherImpl;
-import ua.maksym.hlushchenko.dao.entity.role.Librarian;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -54,7 +53,7 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
 
     @Override
     public void save(Publisher publisher) {
-        dmlOperation(PublisherSqlDao::saveInSession, publisher);
+        updateInTransaction(PublisherSqlDao::saveInSession, publisher);
     }
 
     @Override
@@ -63,7 +62,7 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
 
     @Override
     public void delete(String isbn) {
-        dmlOperation(PublisherSqlDao::deleteByIsbnInTransaction, isbn);
+        updateInTransaction(PublisherSqlDao::deleteByIsbnInTransaction, isbn);
     }
 
     static void saveInSession(Publisher publisher, Connection connection) throws SQLException {
@@ -91,7 +90,7 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
 
     @Override
     public void deleteByName(String name) {
-        dmlOperation(PublisherSqlDao::deleteByNameInTransaction, name);
+        updateInTransaction(PublisherSqlDao::deleteByNameInTransaction, name);
     }
 
     static void deleteByNameInTransaction(String name, Connection connection) throws SQLException {

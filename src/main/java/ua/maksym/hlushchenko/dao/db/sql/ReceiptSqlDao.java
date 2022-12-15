@@ -5,8 +5,6 @@ import org.slf4j.*;
 import ua.maksym.hlushchenko.dao.ReceiptDao;
 import ua.maksym.hlushchenko.dao.entity.*;
 import ua.maksym.hlushchenko.dao.entity.impl.ReceiptImpl;
-import ua.maksym.hlushchenko.dao.entity.role.Reader;
-import ua.maksym.hlushchenko.exception.DaoException;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Proxy;
@@ -74,17 +72,17 @@ public class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements R
 
     @Override
     public void save(Receipt receipt) {
-        dmlOperation(ReceiptSqlDao::saveInTransaction, receipt);
+        updateInTransaction(ReceiptSqlDao::saveInTransaction, receipt);
     }
 
     @Override
     public void update(Receipt receipt) {
-        dmlOperation(ReceiptSqlDao::updateInTransaction, receipt);
+        updateInTransaction(ReceiptSqlDao::updateInTransaction, receipt);
     }
 
     @Override
     public void delete(Integer id) {
-        dmlOperation(ReceiptSqlDao::deleteInTransaction, id);
+        updateInTransaction(ReceiptSqlDao::deleteInTransaction, id);
     }
 
     static void saveInTransaction(Receipt receipt, Connection connection) throws SQLException {
@@ -133,17 +131,17 @@ public class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements R
 
     @Override
     public void saveBooks(Receipt receipt) {
-        dmlOperation(ReceiptSqlDao::saveBooksInTransaction, receipt);
+        updateInTransaction(ReceiptSqlDao::saveBooksInTransaction, receipt);
     }
 
     @Override
     public void updateBooks(Receipt receipt) {
-        dmlOperation(ReceiptSqlDao::updateBooksInTransaction, receipt);
+        updateInTransaction(ReceiptSqlDao::updateBooksInTransaction, receipt);
     }
 
     @Override
     public void deleteBooks(Integer id) {
-        dmlOperation(ReceiptSqlDao::deleteBooksInTransaction, id);
+        updateInTransaction(ReceiptSqlDao::deleteBooksInTransaction, id);
     }
 
     static void saveBooksInTransaction(Receipt receipt, Connection connection) throws SQLException {

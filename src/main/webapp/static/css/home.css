@@ -1,0 +1,29 @@
+body {
+    background: url(/static/images/home_background.jpg) 100% no-repeat;
+}
+
+.profile {
+    font-size: 40px;
+    color: white;
+}
+
+table {
+    margin: auto;
+    background: rgba(222, 184, 135, 0.5);
+    border-collapse: collapse;
+}
+
+tr {
+    border: 3px solid white;
+}
+
+th {
+    color: rgb(48, 39, 31);
+    font-size: 40px;
+}
+
+td {
+    padding: 22px;
+    color: rgb(48, 39, 31);
+    font-size: 36px;
+}

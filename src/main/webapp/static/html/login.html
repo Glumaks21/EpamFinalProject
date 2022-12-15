@@ -1,20 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="UTF-8">
     <title>Login</title>
 </head>
 <body>
-    <a href="/library/"></a>
+    <a href="/">Home</a>
     <h1>Login</h1>
-    <form method="POST" action="submit">
+    <form method="POST" action="/profile/login">
         <label>
             <input type="text" name="login">
         </label>
         <label>
             <input type="password" name="password">
         </label>
+        <input type="submit"/>
     </form>
-    <a href="/library/profile/registration">I haven't an account</a>
+    <a href="/profile/registration">I haven't an account</a>
 </body>
 </html>

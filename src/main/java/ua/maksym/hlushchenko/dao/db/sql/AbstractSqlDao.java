@@ -25,7 +25,7 @@ public abstract class AbstractSqlDao<K, T> implements Dao<K, T> {
         return mappedQueryResult(this::mapToEntity, query, args);
     }
 
-    protected <U> List<U> mappedQueryResult(Mapper<U> mapper, String query, Object... args) {
+    protected <U> List<U> mappedQueryResult(SqlMapper<U> mapper, String query, Object... args) {
         try (Connection connection = dataSource.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(query);
             fillPreparedStatement(statement, args);
@@ -39,7 +39,7 @@ public abstract class AbstractSqlDao<K, T> implements Dao<K, T> {
         }
     }
 
-    private <U> List<U> mapFromResultSet(Mapper<U> mapper, ResultSet resultSet) throws SQLException {
+    private <U> List<U> mapFromResultSet(SqlMapper<U> mapper, ResultSet resultSet) throws SQLException {
         List<U> entities = new ArrayList<>();
         while (resultSet.next()) {
             U entity = mapper.map(resultSet);
@@ -48,7 +48,7 @@ public abstract class AbstractSqlDao<K, T> implements Dao<K, T> {
         return entities;
     }
 
-    protected <U> void dmlOperation(SqlThrowableBiConsumer<U> methodWithQueriesInTransaction, U initArg) {
+    protected <U> void updateInTransaction(SqlBiConsumer<U> methodWithQueriesInTransaction, U initArg) {
         Connection connection = null;
         try {
             connection = dataSource.getConnection();

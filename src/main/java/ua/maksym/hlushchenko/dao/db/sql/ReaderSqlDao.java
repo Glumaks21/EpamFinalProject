@@ -90,17 +90,17 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
 
     @Override
     public void save(Reader reader) {
-        dmlOperation(ReaderSqlDao::saveInSession, reader);
+        updateInTransaction(ReaderSqlDao::saveInSession, reader);
     }
 
     @Override
     public void update(Reader reader) {
-        dmlOperation(ReaderSqlDao::updateInSession, reader);
+        updateInTransaction(ReaderSqlDao::updateInSession, reader);
     }
 
     @Override
     public void delete(String login) {
-        dmlOperation(ReaderSqlDao::deleteInSession, login);
+        updateInTransaction(ReaderSqlDao::deleteInSession, login);
     }
 
     static void saveInSession(Reader reader, Connection connection) throws SQLException {
@@ -151,17 +151,17 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
 
     @Override
     public void saveReceipts(Reader reader) {
-        dmlOperation(ReaderSqlDao::saveReceiptsInTransaction, reader);
+        updateInTransaction(ReaderSqlDao::saveReceiptsInTransaction, reader);
     }
 
     @Override
     public void updateReceipts(Reader reader) {
-        dmlOperation(ReaderSqlDao::updateReceiptsInTransaction, reader);
+        updateInTransaction(ReaderSqlDao::updateReceiptsInTransaction, reader);
     }
 
     @Override
     public void deleteReceipts(String login) {
-        dmlOperation(ReaderSqlDao::deleteReceiptsInTransaction, login);
+        updateInTransaction(ReaderSqlDao::deleteReceiptsInTransaction, login);
     }
 
     static void saveReceiptsInTransaction(Reader reader, Connection connection) throws SQLException {
@@ -193,17 +193,17 @@ public class ReaderSqlDao extends AbstractSqlDao<String, Reader> implements Read
 
     @Override
     public void saveSubscriptions(Reader reader) {
-        dmlOperation(ReaderSqlDao::saveSubscriptionsInTransaction, reader);
+        updateInTransaction(ReaderSqlDao::saveSubscriptionsInTransaction, reader);
     }
 
     @Override
     public void updateSubscriptions(Reader reader) {
-        dmlOperation(ReaderSqlDao::updateSubscriptionsInTransaction, reader);
+        updateInTransaction(ReaderSqlDao::updateSubscriptionsInTransaction, reader);
     }
 
     @Override
     public void deleteSubscriptions(String login) {
-        dmlOperation(ReaderSqlDao::deleteSubscriptionsInTransaction, login);
+        updateInTransaction(ReaderSqlDao::deleteSubscriptionsInTransaction, login);
     }
 
     static void saveSubscriptionsInTransaction(Reader reader, Connection connection) throws SQLException {

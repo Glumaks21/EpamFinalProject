@@ -8,9 +8,10 @@ import java.time.LocalDate;
 import java.util.*;
 
 @Data
-public class BookImpl implements Book, Serializable {
+public class BookImpl implements Book{
     private int id;
     private String title;
+    private String description;
     private Author author;
     private Publisher publisher;
     private LocalDate date;

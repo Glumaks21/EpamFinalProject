@@ -51,17 +51,17 @@ public class UserSqlDao extends AbstractSqlDao<String, User> {
 
     @Override
     public void save(User user) {
-        dmlOperation(UserSqlDao::saveInTransaction, user);
+        updateInTransaction(UserSqlDao::saveInTransaction, user);
     }
 
     @Override
     public void update(User user) {
-        dmlOperation(UserSqlDao::updateInTransaction, user);
+        updateInTransaction(UserSqlDao::updateInTransaction, user);
     }
 
     @Override
     public void delete(String id) {
-        dmlOperation(UserSqlDao::deleteInTransaction, id);
+        updateInTransaction(UserSqlDao::deleteInTransaction, id);
     }
 
     static void saveInTransaction(User user, Connection connection) throws SQLException {

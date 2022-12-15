@@ -2,14 +2,11 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ua.maksym.hlushchenko.dao.entity.Book;
 import ua.maksym.hlushchenko.dao.entity.Genre;
 import ua.maksym.hlushchenko.dao.entity.impl.GenreImpl;
-import ua.maksym.hlushchenko.exception.DaoException;
 
 import javax.sql.DataSource;
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -54,17 +51,17 @@ public class GenreSqlDao extends AbstractSqlDao<Integer, Genre> {
 
     @Override
     public void save(Genre genre) {
-        dmlOperation(GenreSqlDao::saveInTransaction, genre);
+        updateInTransaction(GenreSqlDao::saveInTransaction, genre);
     }
 
     @Override
     public void update(Genre genre) {
-        dmlOperation(GenreSqlDao::updateInTransaction, genre);
+        updateInTransaction(GenreSqlDao::updateInTransaction, genre);
     }
 
     @Override
     public void delete(Integer id) {
-        dmlOperation(GenreSqlDao::deleteInTransaction, id);
+        updateInTransaction(GenreSqlDao::deleteInTransaction, id);
     }
 
     static void saveInTransaction(Genre genre, Connection connection) throws SQLException {

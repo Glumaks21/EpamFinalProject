@@ -1,34 +1,39 @@
 package ua.maksym.hlushchenko.servlets;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.*;
 import ua.maksym.hlushchenko.dao.BookDao;
 import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.dao.db.sql.BookSqlDao;
 import ua.maksym.hlushchenko.dao.entity.Book;
+import ua.maksym.hlushchenko.util.ParamsValidator;
 
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.*;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.*;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.List;
 
-@WebServlet("/")
+@WebServlet("/home")
 public class HomeServlet extends HttpServlet {
     private static final Logger log = LoggerFactory.getLogger(HomeServlet.class);
 
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        try {
-            BookDao dao = new BookSqlDao(HikariCPDataSource.getConnection());
-            List<Book> books = dao.findAll();
-            request.setAttribute("books", books);
 
-            getServletContext().getRequestDispatcher("/library_page.jsp").
-                    forward(request, response);
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
+        BookDao dao = new BookSqlDao(HikariCPDataSource.getInstance());
+        List<Book> books = dao.findAll();
+
+        String author_id = ParamsValidator.getOptionalParam(req, "author_id");
+        if (author_id != null) {
+            books.removeIf(book -> {
+                String bookAuthorId = String.valueOf(book.getAuthor().getId());
+                return !bookAuthorId.equals(author_id);
+            });
         }
+
+        req.setAttribute("books", books);
+
+        getServletContext().getRequestDispatcher("/home.jsp").
+                forward(req, resp);
     }
 }

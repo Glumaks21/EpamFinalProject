@@ -45,6 +45,7 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
 
         book.setId(resultSet.getInt("id"));
         book.setTitle(resultSet.getString("title"));
+        book.setDescription(resultSet.getString("description"));
 
         AuthorSqlDao authorSqlDao = new AuthorSqlDao(dataSource);
         Author author = authorSqlDao.find(resultSet.getInt("author_id")).get();
@@ -95,17 +96,17 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
 
     @Override
     public void save(Book book) {
-        dmlOperation(BookSqlDao::saveInTransaction, book);
+        updateInTransaction(BookSqlDao::saveInTransaction, book);
     }
 
     @Override
     public void update(Book book) {
-        dmlOperation(BookSqlDao::updateInTransaction, book);
+        updateInTransaction(BookSqlDao::updateInTransaction, book);
     }
 
     @Override
     public void delete(Integer id) {
-        dmlOperation(BookSqlDao::deleteInTransaction, id);
+        updateInTransaction(BookSqlDao::deleteInTransaction, id);
     }
 
     @Override
@@ -116,17 +117,17 @@ public class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao
 
     @Override
     public void saveGenres(Book book) {
-        dmlOperation(BookSqlDao::saveGenresInTransaction, book);
+        updateInTransaction(BookSqlDao::saveGenresInTransaction, book);
     }
 
     @Override
     public void updateGenres(Book book) {
-        dmlOperation(BookSqlDao::updateGenresInTransaction, book);
+        updateInTransaction(BookSqlDao::updateGenresInTransaction, book);
     }
 
     @Override
     public void deleteGenres(Integer id) {
-        dmlOperation(BookSqlDao::deleteGenresInTransaction, id);
+        updateInTransaction(BookSqlDao::deleteGenresInTransaction, id);
     }
 
     static void saveInTransaction(Book book, Connection connection) throws SQLException {

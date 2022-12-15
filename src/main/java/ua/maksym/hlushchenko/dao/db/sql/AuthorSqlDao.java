@@ -51,17 +51,17 @@ public class AuthorSqlDao extends AbstractSqlDao<Integer, Author> {
 
     @Override
     public void save(Author author) {
-        dmlOperation(AuthorSqlDao::saveInTransaction, author);
+        updateInTransaction(AuthorSqlDao::saveInTransaction, author);
     }
 
     @Override
     public void update(Author author) {
-        dmlOperation(AuthorSqlDao::updateInTransaction, author);
+        updateInTransaction(AuthorSqlDao::updateInTransaction, author);
     }
 
     @Override
     public void delete(Integer id) {
-        dmlOperation(AuthorSqlDao::deleteInTransaction, id);
+        updateInTransaction(AuthorSqlDao::deleteInTransaction, id);
     }
 
     static void saveInTransaction(Author author, Connection connection) throws SQLException {
