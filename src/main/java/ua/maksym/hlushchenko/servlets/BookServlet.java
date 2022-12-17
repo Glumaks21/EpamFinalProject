@@ -7,7 +7,6 @@ import org.slf4j.*;
 
 import ua.maksym.hlushchenko.dao.BookDao;
 import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.dao.db.sql.BookSqlDao;
 import ua.maksym.hlushchenko.dao.entity.Book;
 import ua.maksym.hlushchenko.exception.ParamsValidationException;
 import ua.maksym.hlushchenko.util.ParamsValidator;
@@ -24,10 +23,10 @@ public class BookServlet extends HttpServlet {
         try {
             String idParam = ParamsValidator.getRequiredParam(req, "id");
 
-            BookDao bookDao = new BookSqlDao(HikariCPDataSource.getInstance());
-            Optional<Book> optionalBook = bookDao.find(Integer.parseInt(idParam));
-            Book book = optionalBook.get();
-            req.setAttribute("book", book);
+//            BookDao bookDao = new BookEnSqlDao(HikariCPDataSource.getInstance());
+//            Optional<Book> optionalBook = bookDao.find(Integer.parseInt(idParam));
+//            Book book = optionalBook.get();
+//            req.setAttribute("book", book);
 
             getServletContext().getRequestDispatcher("/book.jsp").
                     forward(req, resp);

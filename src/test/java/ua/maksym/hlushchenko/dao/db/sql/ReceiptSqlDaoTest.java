@@ -76,6 +76,6 @@ class ReceiptSqlDaoTest {
     @SneakyThrows
     @AfterAll
     static void destroy() {
-        readerSqlDao.delete(receipt.getReader().getLogin());
+        readerSqlDao.delete(receipt.getReader().getId());
     }
 }

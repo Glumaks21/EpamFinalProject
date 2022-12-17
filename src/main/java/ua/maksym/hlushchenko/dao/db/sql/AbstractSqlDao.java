@@ -12,7 +12,7 @@ import java.util.*;
 public abstract class AbstractSqlDao<K, T> implements Dao<K, T> {
     protected final DataSource dataSource;
 
-    private static final Logger log = LoggerFactory.getLogger(AbstractSqlDao.class);
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     public AbstractSqlDao(DataSource dataSource) {
         Objects.requireNonNull(dataSource);

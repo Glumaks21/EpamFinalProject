@@ -3,7 +3,6 @@ package ua.maksym.hlushchenko.dao.entity.impl;
 import lombok.Data;
 import ua.maksym.hlushchenko.dao.entity.*;
 
-import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.*;
 

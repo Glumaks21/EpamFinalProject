@@ -2,16 +2,19 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import org.slf4j.*;
 
+import ua.maksym.hlushchenko.dao.Dao;
+import ua.maksym.hlushchenko.dao.DaoFactory;
 import ua.maksym.hlushchenko.dao.ReceiptDao;
 import ua.maksym.hlushchenko.dao.entity.*;
 import ua.maksym.hlushchenko.dao.entity.impl.ReceiptImpl;
+import ua.maksym.hlushchenko.dao.entity.role.Reader;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Proxy;
 import java.sql.*;
 import java.util.*;
 
-public class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements ReceiptDao {
+public class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements ReceiptDao<Integer> {
     private static final String SQL_SELECT_ALL = "SELECT * FROM receipt";
     private static final String SQL_SELECT_BY_ID = "SELECT * FROM receipt " +
             "WHERE id = ?";
@@ -36,8 +39,9 @@ public class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements R
         Receipt receipt = new ReceiptImpl();
         receipt.setId(resultSet.getInt("id"));
 
-        ReaderSqlDao readerDao = new ReaderSqlDao(dataSource);
-        receipt.setReader(readerDao.find(resultSet.getString("reader_login")).get());
+        DaoFactory daoFactory = new SqlDaoFactory();
+        Dao<Integer, Reader> readerDao = daoFactory.createReaderDao();
+        receipt.setReader(readerDao.find(resultSet.getInt("reader_id")).get());
 
         receipt.setDateTime(resultSet.getTimestamp("time").toLocalDateTime());
         return (Receipt) Proxy.newProxyInstance(ReceiptSqlDao.class.getClassLoader(),
@@ -125,7 +129,8 @@ public class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements R
 
     @Override
     public List<Book> findBooks(Integer id) {
-        BookSqlDao bookSqlDao = new BookSqlDao(dataSource);
+        SqlDaoFactory sqlDaoFactory = new SqlDaoFactory();
+        BookEnSqlDao bookSqlDao = sqlDaoFactory.createBookDao(Locale.ENGLISH);
         return mappedQueryResult(bookSqlDao::mapToEntity, SQL_SELECT_RECEIPT_BOOKS, id);
     }
 

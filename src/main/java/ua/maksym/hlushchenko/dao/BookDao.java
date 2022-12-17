@@ -5,9 +5,9 @@ import ua.maksym.hlushchenko.dao.entity.Genre;
 
 import java.util.List;
 
-public interface BookDao extends Dao<Integer, Book> {
-    List<Genre> findGenres(Integer id);
+public interface BookDao<K> extends Dao<K, Book> {
+    List<Genre> findGenres(K id);
     void saveGenres(Book book);
     void updateGenres(Book book);
-    void deleteGenres(Integer id);
+    void deleteGenres(K id);
 }

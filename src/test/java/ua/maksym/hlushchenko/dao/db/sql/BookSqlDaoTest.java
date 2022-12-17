@@ -6,7 +6,6 @@ import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.dao.entity.*;
 import ua.maksym.hlushchenko.dao.entity.impl.*;
 
-import java.sql.Connection;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -14,18 +13,18 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class BookSqlDaoTest {
-    private static BookSqlDao dao;
+    private static BookEnSqlDao dao;
     private static BookImpl book;
 
-    private static AuthorSqlDao authorDao;
+    private static AuthorEnSqlDao authorDao;
     private static PublisherSqlDao publisherDao;
-    private static GenreSqlDao genreDao;
+    private static GenreEnSqlDao genreDao;
 
     static BookImpl createBook() {
         BookImpl book = new BookImpl();
         book.setTitle("test");
 
-        Author author = AuthorSqlDaoTest.createAuthor();
+        Author author = AuthorUaSqlDaoTest.createAuthor();
         book.setAuthor(author);
 
         Publisher publisher = PublisherSqlDaoTest.createPublisher();
@@ -38,12 +37,13 @@ class BookSqlDaoTest {
     @SneakyThrows
     @BeforeAll
     static void init() {
-        dao = new BookSqlDao(HikariCPDataSource.getInstance());
+        SqlDaoFactory sqlDaoFactory = new SqlDaoFactory();
+        dao = sqlDaoFactory.createBookDao(Locale.ENGLISH);
         book = createBook();
 
-        authorDao = new AuthorSqlDao(HikariCPDataSource.getInstance());
+        authorDao = sqlDaoFactory.createAuthorDao(Locale.ENGLISH);
         publisherDao = new PublisherSqlDao(HikariCPDataSource.getInstance());
-        genreDao = new GenreSqlDao(HikariCPDataSource.getInstance());
+        genreDao = new GenreEnSqlDao(HikariCPDataSource.getInstance());
 
         authorDao.save(book.getAuthor());
         publisherDao.save(book.getPublisher());

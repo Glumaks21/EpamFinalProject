@@ -8,7 +8,6 @@ import ua.maksym.hlushchenko.dao.entity.impl.SubscriptionImpl;
 
 import javax.sql.DataSource;
 import java.time.LocalDate;
-import java.sql.Connection;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -17,8 +16,8 @@ import static org.junit.jupiter.api.Assertions.*;
 class SubscriptionSqlDaoTest {
     private static SubscriptionSqlDao dao;
     private static ReaderSqlDao readerSqlDao;
-    private static BookSqlDao bookSqlDao;
-    private static AuthorSqlDao authorSqlDao;
+    private static BookEnSqlDao bookSqlDao;
+    private static AuthorEnSqlDao authorSqlDao;
     private static PublisherSqlDao publisherSqlDao;
 
     private static Subscription subscription;
@@ -39,8 +38,8 @@ class SubscriptionSqlDaoTest {
         DataSource ds = HikariCPDataSource.getInstance();
         dao = new SubscriptionSqlDao(ds);
         readerSqlDao = new ReaderSqlDao(ds);
-        bookSqlDao = new BookSqlDao(ds);
-        authorSqlDao = new AuthorSqlDao(ds);
+        bookSqlDao = new BookEnSqlDao(ds);
+        authorSqlDao = new AuthorEnSqlDao(ds);
         publisherSqlDao = new PublisherSqlDao(ds);
 
         subscription = createSubscription();
@@ -96,6 +95,6 @@ class SubscriptionSqlDaoTest {
         bookSqlDao.delete(subscription.getBook().getId());
         authorSqlDao.delete(subscription.getBook().getAuthor().getId());
         publisherSqlDao.delete(subscription.getBook().getPublisher().getIsbn());
-        readerSqlDao.delete(subscription.getReader().getLogin());
+        readerSqlDao.delete(subscription.getReader().getId());
     }
 }

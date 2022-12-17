@@ -7,9 +7,9 @@ import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.dao.entity.*;
 import ua.maksym.hlushchenko.dao.entity.impl.role.ReaderImpl;
 import ua.maksym.hlushchenko.dao.entity.role.Reader;
+import ua.maksym.hlushchenko.util.Sha256Encoder;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -19,8 +19,8 @@ class ReaderSqlDaoTest {
     private static ReaderSqlDao dao;
     private static ReceiptSqlDao receiptSqlDao;
     private static SubscriptionSqlDao subscriptionSqlDao;
-    private static BookSqlDao bookSqlDao;
-    private static AuthorSqlDao authorSqlDao;
+    private static BookEnSqlDao bookSqlDao;
+    private static AuthorEnSqlDao authorSqlDao;
     private static PublisherSqlDao publisherSqlDao;
 
     private static Reader reader;
@@ -28,7 +28,7 @@ class ReaderSqlDaoTest {
     static Reader createReader() {
         ReaderImpl reader = new ReaderImpl();
         reader.setLogin("test");
-        reader.setPassword("test");
+        reader.setPasswordHash(Sha256Encoder.encode("test"));
         reader.setBlocked(false);
         return reader;
     }
@@ -40,9 +40,9 @@ class ReaderSqlDaoTest {
         dao = new ReaderSqlDao(ds);
         receiptSqlDao = new ReceiptSqlDao(ds);
         subscriptionSqlDao = new SubscriptionSqlDao(ds);
-        authorSqlDao = new AuthorSqlDao(ds);
+        authorSqlDao = new AuthorEnSqlDao(ds);
         publisherSqlDao = new PublisherSqlDao(ds);
-        bookSqlDao = new BookSqlDao(ds);
+        bookSqlDao = new BookEnSqlDao(ds);
 
         reader = createReader();
     }
@@ -63,7 +63,7 @@ class ReaderSqlDaoTest {
     @Order(3)
     @Test
     void find() {
-        Optional<Reader> optionalReaderInDb = dao.find(reader.getLogin());
+        Optional<Reader> optionalReaderInDb = dao.find(reader.getId());
         assertTrue(optionalReaderInDb.isPresent());
         Reader readerInDb = optionalReaderInDb.get();
         assertEquals(reader, readerInDb);
@@ -97,7 +97,7 @@ class ReaderSqlDaoTest {
     @Order(6)
     @Test
     void findReceipts() {
-        List<Receipt> receipts = dao.findReceipts(reader.getLogin());
+        List<Receipt> receipts = dao.findReceipts(reader.getId());
         assertEquals(reader.getReceipts(), receipts);
     }
 
@@ -118,8 +118,8 @@ class ReaderSqlDaoTest {
     @Order(8)
     @Test
     void deleteReceipts() {
-        dao.deleteReceipts(reader.getLogin());
-        assertTrue(dao.findReceipts(reader.getLogin()).isEmpty());
+        dao.deleteReceipts(reader.getId());
+        assertTrue(dao.findReceipts(reader.getId()).isEmpty());
         reader.getReceipts().forEach(
                 receipt -> receiptSqlDao.delete(receipt.getId())
         );
@@ -154,7 +154,7 @@ class ReaderSqlDaoTest {
     @Order(10)
     @Test
     void findSubscriptions() {
-        List<Subscription> subscriptions = dao.findSubscriptions(reader.getLogin());
+        List<Subscription> subscriptions = dao.findSubscriptions(reader.getId());
         assertEquals(reader.getSubscriptions(), subscriptions);
     }
 
@@ -176,15 +176,15 @@ class ReaderSqlDaoTest {
     @Order(12)
     @Test
     void deleteSubscriptions() {
-        dao.deleteSubscriptions(reader.getLogin());
-        assertTrue(dao.findSubscriptions(reader.getLogin()).isEmpty());
+        dao.deleteSubscriptions(reader.getId());
+        assertTrue(dao.findSubscriptions(reader.getId()).isEmpty());
     }
 
     @Order(13)
     @Test
     void delete() {
-        dao.delete(reader.getLogin());
-        assertTrue(dao.find(reader.getLogin()).isEmpty());
+        dao.delete(reader.getId());
+        assertTrue(dao.find(reader.getId()).isEmpty());
     }
 
     @SneakyThrows

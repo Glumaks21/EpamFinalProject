@@ -10,11 +10,11 @@ import javax.sql.DataSource;
 import java.sql.*;
 import java.util.*;
 
-public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implements PublisherDao {
-    private static final String SQL_SELECT_ALL = "SELECT * FROM publisher";
-    private static final String SQL_SELECT_BY_ISBN = "SELECT * FROM publisher " +
+public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implements PublisherDao<String> {
+    private static final String SQL_SELECT_ALL = "SELECT isbn, name FROM publisher";
+    private static final String SQL_SELECT_BY_ISBN = "SELECT isbn, name FROM publisher " +
             "WHERE isbn = ?";
-    private static final String SQL_SELECT_BY_NAME = "SELECT * FROM publisher " +
+    private static final String SQL_SELECT_BY_NAME = "SELECT isbn, name FROM publisher " +
             "WHERE name = ?";
     private static final String SQL_INSERT = "INSERT INTO publisher(isbn, name) " +
             "VALUES(?, ?)";

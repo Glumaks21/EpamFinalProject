@@ -45,14 +45,14 @@ public class RegistrationServlet extends HttpServlet {
             }
 
             UserSqlDao userSqlDao = new UserSqlDao(HikariCPDataSource.getInstance());
-            if (userSqlDao.find(loginParam).isPresent()) {
-                throw new ParamsValidationException("Login " + loginParam + " is already registered");
-            }
+//            if (userSqlDao.find(loginParam).isPresent()) {
+//                throw new ParamsValidationException("Login " + loginParam + " is already registered");
+//            }
 
             ReaderDao readerDao = new ReaderSqlDao(HikariCPDataSource.getInstance());
             Reader reader = new ReaderImpl();
             reader.setLogin(loginParam);
-            reader.setPassword(passwordParam);
+//            reader.setPassword(passwordParam);
             readerDao.save(reader);
 
             resp.sendRedirect("/");

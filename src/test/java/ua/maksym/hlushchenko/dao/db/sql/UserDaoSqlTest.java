@@ -5,6 +5,7 @@ import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.dao.entity.impl.role.UserImpl;
 import ua.maksym.hlushchenko.dao.entity.role.User;
+import ua.maksym.hlushchenko.util.Sha256Encoder;
 
 
 import java.sql.Connection;
@@ -19,7 +20,7 @@ class UserDaoSqlTest {
     static User createUser() {
         UserImpl user = new UserImpl();
         user.setLogin("test");
-        user.setPassword("test");
+        user.setPasswordHash(Sha256Encoder.encode("test"));
         return user;
     }
 
@@ -47,7 +48,7 @@ class UserDaoSqlTest {
     @Order(3)
     @Test
     void find() {
-        Optional<User> optionalUserInDb = dao.find(user.getLogin());
+        Optional<User> optionalUserInDb = dao.find(user.getId());
         Assertions.assertTrue(optionalUserInDb.isPresent());
         User userInDb = optionalUserInDb.get();
         Assertions.assertEquals(userInDb, user);
@@ -56,7 +57,7 @@ class UserDaoSqlTest {
     @Order(4)
     @Test
     void update() {
-        user.setPassword("ne_test");
+        user.setPasswordHash(Sha256Encoder.encode("ne_test"));
         dao.update(user);
         find();
     }
@@ -64,8 +65,8 @@ class UserDaoSqlTest {
     @Order(5)
     @Test
     void delete() {
-        dao.delete(user.getLogin());
-        Optional<User> userInDb = dao.find(user.getLogin());
+        dao.delete(user.getId());
+        Optional<User> userInDb = dao.find(user.getId());
         Assertions.assertTrue(userInDb.isEmpty());
     }
 }

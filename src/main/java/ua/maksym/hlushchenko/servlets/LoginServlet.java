@@ -32,13 +32,16 @@ public class LoginServlet extends HttpServlet {
             String loginParam = ParamsValidator.getRequiredParam(req, "login");
             String passwordParam = ParamsValidator.getRequiredParam(req, "password");
 
-            Dao<String, User> dao = new UserSqlDao(HikariCPDataSource.getInstance());
-            Optional<User> optionalUser = dao.find(loginParam);
-            if (optionalUser.isEmpty() || !optionalUser.get().getLogin().equals(loginParam)) {
-                throw new ParamsValidationException();
-            }
+//            Dao<String, User> dao = new UserSqlDao(HikariCPDataSource.getInstance());
+//            Optional<User> optionalUser = dao.find(loginParam);
+//            if (optionalUser.isEmpty() || !optionalUser.get().getLogin().equals(loginParam)) {
+//                throw new ParamsValidationException();
+//            }
+//            User user = optionalUser.get();
 
-
+//            HttpSession session = req.getSession(true);
+//            session.setAttribute("user_id", user.getLogin());
+            resp.sendRedirect("/");
         } catch (ParamsValidationException e) {
             log.warn(e.getMessage());
             resp.sendRedirect("/static/html/error.html");

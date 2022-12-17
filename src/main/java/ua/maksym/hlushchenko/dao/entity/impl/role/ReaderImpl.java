@@ -25,6 +25,6 @@ public class ReaderImpl extends UserImpl implements Reader {
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), isBlocked(), getReceipts(), getSubscriptions());
+        return Objects.hash(super.hashCode(), isBlocked());
     }
 }

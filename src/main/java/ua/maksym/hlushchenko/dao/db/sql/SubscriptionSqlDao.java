@@ -13,7 +13,7 @@ import java.sql.Date;
 import java.util.*;
 
 
-public class SubscriptionSqlDao extends AbstractSqlDao<Integer, Subscription> implements SubscriptionDao {
+public class SubscriptionSqlDao extends AbstractSqlDao<Integer, Subscription> implements SubscriptionDao<Integer> {
     private static final String SQL_SELECT_ALL = "SELECT * FROM subscription";
     private static final String SQL_SELECT_BY_ID = "SELECT * FROM subscription " +
             "WHERE id = ?";
@@ -41,11 +41,13 @@ public class SubscriptionSqlDao extends AbstractSqlDao<Integer, Subscription> im
         Subscription subscription = new SubscriptionImpl();
         subscription.setId(resultSet.getInt("id"));
 
-        ReaderDao readerDao = new ReaderSqlDao(dataSource);
-        Reader reader = readerDao.find(resultSet.getString("reader_login")).get();
+        DaoFactory daoFactory = new SqlDaoFactory();
+
+        Dao<Integer, Reader> readerDao = daoFactory.createReaderDao();
+        Reader reader = readerDao.find(resultSet.getInt("reader_id")).get();
         subscription.setReader(reader);
 
-        BookDao bookDao = new BookSqlDao(dataSource);
+        Dao<Integer, Book> bookDao = daoFactory.createBookDao(Locale.ENGLISH);
         Book book = bookDao.find(resultSet.getInt("book_id")).get();
         subscription.setBook(book);
 
@@ -123,16 +125,16 @@ public class SubscriptionSqlDao extends AbstractSqlDao<Integer, Subscription> im
     }
 
     @Override
-    public List<Subscription> findByReaderLogin(String login) {
-        return mappedQueryResult(SQL_SELECT_BY_READER_LOGIN, login);
+    public List<Subscription> findByReaderId(Integer id) {
+        return mappedQueryResult(SQL_SELECT_BY_READER_LOGIN, id);
     }
 
     @Override
-    public void deleteByReaderLogin(String login) {
-        updateInTransaction(SubscriptionSqlDao::deleteByReaderLoginInTransaction, login);
+    public void deleteByReaderId(Integer id) {
+        updateInTransaction(SubscriptionSqlDao::deleteByReaderIdInTransaction, id);
     }
 
-    static void deleteByReaderLoginInTransaction(String login, Connection connection) throws SQLException {
+    static void deleteByReaderIdInTransaction(Integer login, Connection connection) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_READER_LOGIN);
         fillPreparedStatement(statement, login);
         log.info("Try to execute:\n" + formatSql(statement));

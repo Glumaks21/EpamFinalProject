@@ -2,16 +2,13 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
-import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.dao.entity.Author;
 import ua.maksym.hlushchenko.dao.entity.impl.AuthorImpl;
 
-import java.sql.Connection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class AuthorSqlDaoTest {
+class AuthorEnSqlDaoTest {
     private static AuthorSqlDao dao;
     private static Author author;
 
@@ -25,7 +22,8 @@ class AuthorSqlDaoTest {
     @SneakyThrows
     @BeforeAll
     static void init() {
-        dao = new AuthorSqlDao(HikariCPDataSource.getInstance());
+        SqlDaoFactory daoFactory = new SqlDaoFactory();
+        dao = daoFactory.createAuthorDao(Locale.ENGLISH);
         author = createAuthor();
     }
 

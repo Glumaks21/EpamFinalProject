@@ -6,13 +6,12 @@ import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.dao.entity.Genre;
 import ua.maksym.hlushchenko.dao.entity.impl.GenreImpl;
 
-import java.sql.Connection;
 import java.util.List;
 import java.util.Optional;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class GenreSqlDaoTest {
-    private static GenreSqlDao dao;
+    private static GenreEnSqlDao dao;
     private static GenreImpl genre;
 
     static GenreImpl createGenre() {
@@ -24,7 +23,7 @@ class GenreSqlDaoTest {
     @SneakyThrows
     @BeforeAll
     static void init() {
-        dao = new GenreSqlDao(HikariCPDataSource.getInstance());
+        dao = new GenreEnSqlDao(HikariCPDataSource.getInstance());
         genre = createGenre();
     }
 
