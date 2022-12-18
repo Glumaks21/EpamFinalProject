@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ReceiptSqlDaoTest {
+    private static SqlDaoFactory sqlDaoFactory;
     private static ReceiptSqlDao dao;
     private static ReaderSqlDao readerSqlDao;
 
@@ -28,8 +29,9 @@ class ReceiptSqlDaoTest {
     @SneakyThrows
     @BeforeAll
     static void init() {
-        dao = new ReceiptSqlDao(HikariCPDataSource.getInstance());
-        readerSqlDao = new ReaderSqlDao(HikariCPDataSource.getInstance());
+        sqlDaoFactory = new SqlDaoFactory();
+        dao = sqlDaoFactory.createReceiptDao();
+        readerSqlDao = sqlDaoFactory.createReaderDao();
 
         receipt = createReceipt();
         readerSqlDao.save(receipt.getReader());
@@ -76,6 +78,6 @@ class ReceiptSqlDaoTest {
     @SneakyThrows
     @AfterAll
     static void destroy() {
-        readerSqlDao.delete(receipt.getReader().getId());
+        sqlDaoFactory.close();
     }
 }

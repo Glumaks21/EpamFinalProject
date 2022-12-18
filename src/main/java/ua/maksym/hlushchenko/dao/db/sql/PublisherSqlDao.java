@@ -5,16 +5,20 @@ import org.slf4j.*;
 import ua.maksym.hlushchenko.dao.PublisherDao;
 import ua.maksym.hlushchenko.dao.entity.Publisher;
 import ua.maksym.hlushchenko.dao.entity.impl.PublisherImpl;
+import ua.maksym.hlushchenko.exception.MappingException;
 
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.*;
 
 public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implements PublisherDao<String> {
-    private static final String SQL_SELECT_ALL = "SELECT isbn, name FROM publisher";
-    private static final String SQL_SELECT_BY_ISBN = "SELECT isbn, name FROM publisher " +
+    private static final String SQL_SELECT_ALL = "SELECT isbn, name " +
+            "FROM publisher";
+    private static final String SQL_SELECT_BY_ISBN = "SELECT isbn, name " +
+            "FROM publisher " +
             "WHERE isbn = ?";
-    private static final String SQL_SELECT_BY_NAME = "SELECT isbn, name FROM publisher " +
+    private static final String SQL_SELECT_BY_NAME = "SELECT isbn, name " +
+            "FROM publisher " +
             "WHERE name = ?";
     private static final String SQL_INSERT = "INSERT INTO publisher(isbn, name) " +
             "VALUES(?, ?)";
@@ -25,16 +29,20 @@ public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implement
 
     private static final Logger log = LoggerFactory.getLogger(PublisherSqlDao.class);
 
-    public PublisherSqlDao(DataSource dataSource) {
-        super(dataSource);
+    public PublisherSqlDao(Connection connection) {
+        super(connection);
     }
 
     @Override
-    protected PublisherImpl mapToEntity(ResultSet resultSet) throws SQLException {
-        PublisherImpl publisher = new PublisherImpl();
-        publisher.setIsbn(resultSet.getString("isbn"));
-        publisher.setName(resultSet.getString("name"));
-        return publisher;
+    protected PublisherImpl mapToEntity(ResultSet resultSet) {
+        try {
+            PublisherImpl publisher = new PublisherImpl();
+            publisher.setIsbn(resultSet.getString("isbn"));
+            publisher.setName(resultSet.getString("name"));
+            return publisher;
+        } catch (SQLException e) {
+            throw new MappingException(e);
+        }
     }
 
     @Override

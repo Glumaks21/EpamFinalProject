@@ -6,55 +6,60 @@ import ua.maksym.hlushchenko.dao.*;
 import ua.maksym.hlushchenko.dao.entity.*;
 import ua.maksym.hlushchenko.dao.entity.impl.SubscriptionImpl;
 import ua.maksym.hlushchenko.dao.entity.role.Reader;
+import ua.maksym.hlushchenko.exception.ConnectionException;
+import ua.maksym.hlushchenko.exception.MappingException;
 
-import javax.sql.DataSource;
 import java.sql.*;
 import java.sql.Date;
 import java.util.*;
 
 
 public class SubscriptionSqlDao extends AbstractSqlDao<Integer, Subscription> implements SubscriptionDao<Integer> {
-    private static final String SQL_SELECT_ALL = "SELECT * FROM subscription";
-    private static final String SQL_SELECT_BY_ID = "SELECT * FROM subscription " +
+    private static final String SQL_SELECT_ALL = "SELECT id, reader_id, book_id, taken_date, brought_date, fine " +
+            "FROM subscription";
+    private static final String SQL_SELECT_BY_ID = "SELECT id, reader_id, book_id, taken_date, brought_date, fine " +
+            "FROM subscription " +
             "WHERE id = ?";
-    private static final String SQL_SELECT_BY_READER_LOGIN = "SELECT * FROM subscription " +
-            "WHERE reader_login = ?";
+    private static final String SQL_SELECT_BY_READER_ID = "SELECT id, reader_id, book_id, taken_date, brought_date, fine " +
+            "FROM subscription " +
+            "WHERE reader_id = ?";
     private static final String SQL_INSERT = "INSERT INTO " +
-            "subscription(reader_login, book_id, taken_date, brought_date, fine) " +
+            "subscription(reader_id, book_id, taken_date, brought_date, fine) " +
             "VALUE(?, ?, ?, ?, ?)";
-    private static final String SQL_UPDATE_BY_ID = "UPDATE subscription SET " +
-            "reader_login = ?, book_id = ?, taken_date = ?, brought_date = ?, fine = ? " +
+    private static final String SQL_UPDATE_BY_ID = "UPDATE subscription " +
+            "SET reader_id = ?, book_id = ?, taken_date = ?, brought_date = ?, fine = ? " +
             "WHERE id = ?";
     private static final String SQL_DELETE_BY_ID = "DELETE FROM subscription " +
             "WHERE id = ?";
-    private static final String SQL_DELETE_BY_READER_LOGIN = "DELETE FROM subscription " +
-            "WHERE reader_login = ?";
-
+    private static final String SQL_DELETE_BY_READER_ID = "DELETE FROM subscription " +
+            "WHERE reader_id = ?";
 
     private static final Logger log = LoggerFactory.getLogger(SubscriptionSqlDao.class);
 
-    public SubscriptionSqlDao(DataSource dataSource) {
-        super(dataSource);
+    public SubscriptionSqlDao(Connection connection) {
+        super(connection);
     }
 
-    protected Subscription mapToEntity(ResultSet resultSet) throws SQLException {
-        Subscription subscription = new SubscriptionImpl();
-        subscription.setId(resultSet.getInt("id"));
+    protected Subscription mapToEntity(ResultSet resultSet) {
+        try (SqlDaoFactory sqlDaoFactory = new SqlDaoFactory()) {
+            Subscription subscription = new SubscriptionImpl();
+            subscription.setId(resultSet.getInt("id"));
 
-        DaoFactory daoFactory = new SqlDaoFactory();
+            ReaderSqlDao readerSqlDao = sqlDaoFactory.createReaderDao();
+            Reader reader = readerSqlDao.find(resultSet.getInt("reader_id")).get();
+            subscription.setReader(reader);
 
-        Dao<Integer, Reader> readerDao = daoFactory.createReaderDao();
-        Reader reader = readerDao.find(resultSet.getInt("reader_id")).get();
-        subscription.setReader(reader);
+            BookSqlDao bookSqlDao = sqlDaoFactory.createBookDao(Locale.ENGLISH);
+            Book book = bookSqlDao.find(resultSet.getInt("book_id")).get();
+            subscription.setBook(book);
 
-        Dao<Integer, Book> bookDao = daoFactory.createBookDao(Locale.ENGLISH);
-        Book book = bookDao.find(resultSet.getInt("book_id")).get();
-        subscription.setBook(book);
-
-        subscription.setTakenDate(resultSet.getDate("taken_date").toLocalDate());
-        subscription.setBroughtDate(resultSet.getDate("brought_date").toLocalDate());
-        subscription.setFine(resultSet.getDouble("fine"));
-        return subscription;
+            subscription.setTakenDate(resultSet.getDate("taken_date").toLocalDate());
+            subscription.setBroughtDate(resultSet.getDate("brought_date").toLocalDate());
+            subscription.setFine(resultSet.getDouble("fine"));
+            return subscription;
+        } catch (SQLException | ConnectionException | NoSuchElementException e) {
+            throw new MappingException(e);
+        }
     }
 
     @Override
@@ -64,7 +69,7 @@ public class SubscriptionSqlDao extends AbstractSqlDao<Integer, Subscription> im
 
     @Override
     public Optional<Subscription> find(Integer id) {
-        List<Subscription> subscriptions = mappedQueryResult(SQL_SELECT_ALL);
+        List<Subscription> subscriptions = mappedQueryResult(SQL_SELECT_BY_ID, id);
         if (subscriptions.isEmpty()) {
             return Optional.empty();
         }
@@ -126,7 +131,7 @@ public class SubscriptionSqlDao extends AbstractSqlDao<Integer, Subscription> im
 
     @Override
     public List<Subscription> findByReaderId(Integer id) {
-        return mappedQueryResult(SQL_SELECT_BY_READER_LOGIN, id);
+        return mappedQueryResult(SQL_SELECT_BY_READER_ID, id);
     }
 
     @Override
@@ -134,9 +139,9 @@ public class SubscriptionSqlDao extends AbstractSqlDao<Integer, Subscription> im
         updateInTransaction(SubscriptionSqlDao::deleteByReaderIdInTransaction, id);
     }
 
-    static void deleteByReaderIdInTransaction(Integer login, Connection connection) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_READER_LOGIN);
-        fillPreparedStatement(statement, login);
+    static void deleteByReaderIdInTransaction(Integer id, Connection connection) throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_READER_ID);
+        fillPreparedStatement(statement, id);
         log.info("Try to execute:\n" + formatSql(statement));
         statement.executeUpdate();
     }

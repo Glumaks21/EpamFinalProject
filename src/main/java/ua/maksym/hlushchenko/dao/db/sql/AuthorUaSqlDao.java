@@ -2,16 +2,14 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import org.slf4j.*;
 import ua.maksym.hlushchenko.dao.entity.Author;
-import ua.maksym.hlushchenko.dao.entity.impl.AuthorImpl;
 
-import javax.sql.DataSource;
 import java.sql.*;
 import java.util.*;
 
 public class AuthorUaSqlDao extends AuthorSqlDao {
-    private static final String SQL_SELECT_ALL = "SELECT author_id, name, surname " +
+    private static final String SQL_SELECT_ALL = "SELECT author_id as id, name, surname " +
             "FROM author_ua";
-    private static final String SQL_SELECT_BY_ID = "SELECT author_id, name, surname " +
+    private static final String SQL_SELECT_BY_ID = "SELECT author_id as id, name, surname " +
             "FROM author_ua " +
             "WHERE author_id = ?";
     private static final String SQL_INSERT = "INSERT INTO author_ua(author_id, name, surname) " +
@@ -24,17 +22,8 @@ public class AuthorUaSqlDao extends AuthorSqlDao {
 
     private static final Logger log = LoggerFactory.getLogger(AuthorUaSqlDao.class);
 
-    public AuthorUaSqlDao(DataSource dataSource) {
-        super(dataSource);
-    }
-
-    @Override
-    protected Author mapToEntity(ResultSet resultSet) throws SQLException {
-        Author author = new AuthorImpl();
-        author.setId(resultSet.getInt("id"));
-        author.setName(resultSet.getString("name"));
-        author.setSurname(resultSet.getString("surname"));
-        return author;
+    public AuthorUaSqlDao(Connection connection) {
+        super(connection);
     }
 
     @Override

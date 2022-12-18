@@ -16,11 +16,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ReaderSqlDaoTest {
+    private static SqlDaoFactory sqlDaoFactory;
     private static ReaderSqlDao dao;
     private static ReceiptSqlDao receiptSqlDao;
     private static SubscriptionSqlDao subscriptionSqlDao;
-    private static BookEnSqlDao bookSqlDao;
-    private static AuthorEnSqlDao authorSqlDao;
+    private static BookSqlDao bookSqlDao;
+    private static AuthorSqlDao authorSqlDao;
     private static PublisherSqlDao publisherSqlDao;
 
     private static Reader reader;
@@ -36,13 +37,13 @@ class ReaderSqlDaoTest {
     @SneakyThrows
     @BeforeAll
     static void init() {
-        DataSource ds = HikariCPDataSource.getInstance();
-        dao = new ReaderSqlDao(ds);
-        receiptSqlDao = new ReceiptSqlDao(ds);
-        subscriptionSqlDao = new SubscriptionSqlDao(ds);
-        authorSqlDao = new AuthorEnSqlDao(ds);
-        publisherSqlDao = new PublisherSqlDao(ds);
-        bookSqlDao = new BookEnSqlDao(ds);
+        sqlDaoFactory = new SqlDaoFactory();
+        dao = sqlDaoFactory.createReaderDao();
+        receiptSqlDao = sqlDaoFactory.createReceiptDao();
+        subscriptionSqlDao = sqlDaoFactory.createSubscriptionDao();
+        authorSqlDao = sqlDaoFactory.createAuthorDao(Locale.ENGLISH);
+        publisherSqlDao = sqlDaoFactory.createPublisherDao();
+        bookSqlDao = sqlDaoFactory.createBookDao(Locale.ENGLISH);
 
         reader = createReader();
     }
@@ -120,9 +121,6 @@ class ReaderSqlDaoTest {
     void deleteReceipts() {
         dao.deleteReceipts(reader.getId());
         assertTrue(dao.findReceipts(reader.getId()).isEmpty());
-        reader.getReceipts().forEach(
-                receipt -> receiptSqlDao.delete(receipt.getId())
-        );
     }
 
     @Order(9)
@@ -196,6 +194,5 @@ class ReaderSqlDaoTest {
                 get(0).getBook().getAuthor().getId());
         publisherSqlDao.delete(reader.getSubscriptions().
                 get(0).getBook().getPublisher().getIsbn());
-
     }
 }

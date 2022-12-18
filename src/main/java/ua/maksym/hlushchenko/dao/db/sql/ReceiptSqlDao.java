@@ -8,6 +8,8 @@ import ua.maksym.hlushchenko.dao.ReceiptDao;
 import ua.maksym.hlushchenko.dao.entity.*;
 import ua.maksym.hlushchenko.dao.entity.impl.ReceiptImpl;
 import ua.maksym.hlushchenko.dao.entity.role.Reader;
+import ua.maksym.hlushchenko.exception.ConnectionException;
+import ua.maksym.hlushchenko.exception.MappingException;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Proxy;
@@ -15,17 +17,22 @@ import java.sql.*;
 import java.util.*;
 
 public class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements ReceiptDao<Integer> {
-    private static final String SQL_SELECT_ALL = "SELECT * FROM receipt";
-    private static final String SQL_SELECT_BY_ID = "SELECT * FROM receipt " +
+    private static final String SQL_SELECT_ALL = "SELECT id, reader_id, time " +
+            "FROM receipt";
+    private static final String SQL_SELECT_BY_ID = "SELECT id, reader_id, time " +
+            "FROM receipt " +
             "WHERE id = ?";
-    private static final String SQL_SELECT_RECEIPT_BOOKS = "SELECT * FROM receipt_has_book " +
-            "WHERE receipt_id = ?";
-    private static final String SQL_INSERT = "INSERT INTO receipt(reader_login, time) " +
+    private static final String SQL_SELECT_RECEIPT_BOOKS =
+            "SELECT id, title, author_id, publisher_isbn, date, description, cover_id " +
+            "FROM book b " +
+            "JOIN receipt_has_book rhb ON rhb.book_id = b.id" +
+            "WHERE rhb.receipt_id = ?";
+    private static final String SQL_INSERT = "INSERT INTO receipt(reader_id, time) " +
             "VALUES(?, ?)";
     private static final String SQL_INSERT_RECEIPT_BOOK = "INSERT INTO receipt_has_book(receipt_id, book_id) " +
             "VALUES(?, ?)";
     private static final String SQL_UPDATE_BY_ID = "UPDATE receipt SET " +
-            "reader_login = ?, time = ? " +
+            "reader_id = ?, time = ? " +
             "WHERE id = ?";
     private static final String SQL_DELETE_BY_ID = "DELETE FROM receipt " +
             "WHERE id = ?";
@@ -35,29 +42,32 @@ public class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements R
     private static final Logger log = LoggerFactory.getLogger(ReceiptSqlDao.class);
 
     @Override
-    protected Receipt mapToEntity(ResultSet resultSet) throws SQLException {
-        Receipt receipt = new ReceiptImpl();
-        receipt.setId(resultSet.getInt("id"));
+    protected Receipt mapToEntity(ResultSet resultSet) {
+        try (SqlDaoFactory sqlDaoFactory = new SqlDaoFactory()) {
+            Receipt receipt = new ReceiptImpl();
+            receipt.setId(resultSet.getInt("id"));
 
-        DaoFactory daoFactory = new SqlDaoFactory();
-        Dao<Integer, Reader> readerDao = daoFactory.createReaderDao();
-        receipt.setReader(readerDao.find(resultSet.getInt("reader_id")).get());
+            ReaderSqlDao readerSqlDao = sqlDaoFactory.createReaderDao();
+            receipt.setReader(readerSqlDao.find(resultSet.getInt("reader_id")).get());
 
-        receipt.setDateTime(resultSet.getTimestamp("time").toLocalDateTime());
-        return (Receipt) Proxy.newProxyInstance(ReceiptSqlDao.class.getClassLoader(),
-                new Class[]{Receipt.class},
-                (proxy, method, args) -> {
-                    if (method.getName().equals("getBooks") &&
-                            receipt.getBooks() == null) {
-                        receipt.setBooks(findBooks(receipt.getId()));
-                    }
+            receipt.setDateTime(resultSet.getTimestamp("time").toLocalDateTime());
+            return (Receipt) Proxy.newProxyInstance(ReceiptSqlDao.class.getClassLoader(),
+                    new Class[]{Receipt.class},
+                    (proxy, method, args) -> {
+                        if (method.getName().equals("getBooks") &&
+                                receipt.getBooks() == null) {
+                            receipt.setBooks(findBooks(receipt.getId()));
+                        }
 
-                    return method.invoke(receipt, args);
-                });
+                        return method.invoke(receipt, args);
+                    });
+        } catch (SQLException | ConnectionException | NoSuchElementException e) {
+            throw new MappingException(e);
+        }
     }
 
-    public ReceiptSqlDao(DataSource dataSource) {
-        super(dataSource);
+    public ReceiptSqlDao(Connection connection) {
+        super(connection);
     }
 
     @Override
@@ -99,7 +109,7 @@ public class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements R
         statement.executeUpdate();
 
         ResultSet resultSet = statement.getGeneratedKeys();
-        while (resultSet.next()) {
+        if (resultSet.next()) {
             receipt.setId(resultSet.getInt(1));
         }
 
@@ -130,8 +140,9 @@ public class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements R
     @Override
     public List<Book> findBooks(Integer id) {
         SqlDaoFactory sqlDaoFactory = new SqlDaoFactory();
-        BookEnSqlDao bookSqlDao = sqlDaoFactory.createBookDao(Locale.ENGLISH);
-        return mappedQueryResult(bookSqlDao::mapToEntity, SQL_SELECT_RECEIPT_BOOKS, id);
+            BookSqlDao bookSqlDao = sqlDaoFactory.createBookDao(Locale.ENGLISH);
+            return mappedQueryResult(bookSqlDao::mapToEntity, SQL_SELECT_RECEIPT_BOOKS, id);
+
     }
 
     @Override

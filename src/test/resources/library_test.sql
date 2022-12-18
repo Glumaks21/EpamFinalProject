@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 8.0.29, for Linux (x86_64)
 --
--- Host: 127.0.0.1    Database: library
+-- Host: 127.0.0.1    Database: library_test
 -- ------------------------------------------------------
 -- Server version	8.0.31-0ubuntu0.22.04.1
 
@@ -31,15 +31,6 @@ CREATE TABLE `author` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `author`
---
-
-LOCK TABLES `author` WRITE;
-/*!40000 ALTER TABLE `author` DISABLE KEYS */;
-INSERT INTO `author` VALUES (430,'George','Orwell');
-/*!40000 ALTER TABLE `author` ENABLE KEYS */;
-UNLOCK TABLES;
-
 --
 -- Table structure for table `author_ua`
 --
@@ -89,16 +80,6 @@ CREATE TABLE `book` (
                         CONSTRAINT `fk_book_publisher_isbn` FOREIGN KEY (`publisher_isbn`) REFERENCES `publisher` (`isbn`)
 ) ENGINE=InnoDB AUTO_INCREMENT=229 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `book`
---
-
-LOCK TABLES `book` WRITE;
-/*!40000 ALTER TABLE `book` DISABLE KEYS */;
-INSERT INTO `book` VALUES (205,'Nineteen Eighty-Four',430,'978-3-16-148410-0','1949-06-08','Without description',NULL);
-/*!40000 ALTER TABLE `book` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `book_has_genre`
@@ -227,16 +208,6 @@ CREATE TABLE `genre` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `genre`
---
-
-LOCK TABLES `genre` WRITE;
-/*!40000 ALTER TABLE `genre` DISABLE KEYS */;
-INSERT INTO `genre` VALUES (1446,'	dystopian'),(1447,' political fiction'),(1448,'social science fiction');
-/*!40000 ALTER TABLE `genre` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `genre_ua`
 --
 
@@ -275,16 +246,6 @@ CREATE TABLE `publisher` (
                              UNIQUE KEY `isbn_UNIQUE` (`isbn`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `publisher`
---
-
-LOCK TABLES `publisher` WRITE;
-/*!40000 ALTER TABLE `publisher` DISABLE KEYS */;
-INSERT INTO `publisher` VALUES ('978-3-16-148410-0','Secker & Warburg');
-/*!40000 ALTER TABLE `publisher` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `reader`
@@ -404,16 +365,6 @@ CREATE TABLE `role` (
                         UNIQUE KEY `name_UNIQUE` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `role`
---
-
-LOCK TABLES `role` WRITE;
-/*!40000 ALTER TABLE `role` DISABLE KEYS */;
-INSERT INTO `role` VALUES (3,'admin'),(2,'librarian'),(1,'reader');
-/*!40000 ALTER TABLE `role` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `stock`

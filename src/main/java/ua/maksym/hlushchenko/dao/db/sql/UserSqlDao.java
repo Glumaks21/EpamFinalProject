@@ -7,6 +7,8 @@ import ua.maksym.hlushchenko.dao.DaoFactory;
 import ua.maksym.hlushchenko.dao.entity.impl.role.UserImpl;
 import ua.maksym.hlushchenko.dao.entity.role.Role;
 import ua.maksym.hlushchenko.dao.entity.role.User;
+import ua.maksym.hlushchenko.exception.ConnectionException;
+import ua.maksym.hlushchenko.exception.MappingException;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -18,30 +20,34 @@ public class UserSqlDao extends AbstractSqlDao<Integer, User> {
             "WHERE id = ?";
     private static final String SQL_INSERT = "INSERT INTO user(login, password_hash, role_id) " +
             "VALUES(?, ?, ?)";
-    private static final String SQL_UPDATE_BY_ID = "UPDATE user SET " +
-            "password_hash = ?, role_id = ? " +
+    private static final String SQL_UPDATE_BY_ID = "UPDATE user " +
+            "SET password_hash = ?, role_id = ? " +
             "WHERE id = ?";
     private static final String SQL_DELETE_BY_ID = "DELETE FROM user " +
             "WHERE id = ?";
 
     private static final Logger log = LoggerFactory.getLogger(UserSqlDao.class);
 
-    public UserSqlDao(DataSource dataSource) {
-        super(dataSource);
+    public UserSqlDao(Connection connection) {
+        super(connection);
     }
 
     @Override
-    protected User mapToEntity(ResultSet resultSet) throws SQLException {
-        User user = new UserImpl();
-        user.setId(resultSet.getInt("id"));
-        user.setLogin(resultSet.getString("login"));
-        user.setPasswordHash(resultSet.getString("password_hash"));
+    protected User mapToEntity(ResultSet resultSet) {
+        try (SqlDaoFactory sqlDaoFactory = new SqlDaoFactory()) {
+            User user = new UserImpl();
 
-        DaoFactory daoFactory = new SqlDaoFactory();
-        Dao<Integer, Role> userDao = daoFactory.createRoleDao();
-        Role role = userDao.find(resultSet.getInt("role_id")).get();
-        user.setRole(role);
-        return user;
+            user.setId(resultSet.getInt("id"));
+            user.setLogin(resultSet.getString("login"));
+            user.setPasswordHash(resultSet.getString("password_hash"));
+
+            RoleSqlDao roleSqlDao = sqlDaoFactory.createRoleDao();
+            Role role = roleSqlDao.find(resultSet.getInt("role_id")).get();
+            user.setRole(role);
+            return user;
+        } catch (SQLException | ConnectionException | NoSuchElementException e) {
+            throw new MappingException(e);
+        }
     }
 
     @Override
@@ -74,13 +80,19 @@ public class UserSqlDao extends AbstractSqlDao<Integer, User> {
     }
 
     static void saveInTransaction(User user, Connection connection) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(SQL_INSERT);
+        PreparedStatement statement = connection.prepareStatement(SQL_INSERT,
+                Statement.RETURN_GENERATED_KEYS);
         fillPreparedStatement(statement,
                 user.getLogin(),
                 user.getPasswordHash(),
                 user.getRole().getId());
         log.info("Try to execute:\n" + formatSql(statement));
         statement.executeUpdate();
+
+        ResultSet resultSet = statement.getGeneratedKeys();
+        if (resultSet.next()) {
+            user.setId(resultSet.getInt(1));
+        }
     }
 
     static void updateInTransaction(User user, Connection connection) throws SQLException {

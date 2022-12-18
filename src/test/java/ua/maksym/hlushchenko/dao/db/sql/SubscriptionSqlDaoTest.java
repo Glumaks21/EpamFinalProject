@@ -14,10 +14,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class SubscriptionSqlDaoTest {
+    private static SqlDaoFactory sqlDaoFactory;
     private static SubscriptionSqlDao dao;
     private static ReaderSqlDao readerSqlDao;
-    private static BookEnSqlDao bookSqlDao;
-    private static AuthorEnSqlDao authorSqlDao;
+    private static BookSqlDao bookSqlDao;
+    private static AuthorSqlDao authorSqlDao;
     private static PublisherSqlDao publisherSqlDao;
 
     private static Subscription subscription;
@@ -25,7 +26,7 @@ class SubscriptionSqlDaoTest {
     static Subscription createSubscription() {
         Subscription subscription = new SubscriptionImpl();
         subscription.setReader(ReaderSqlDaoTest.createReader());
-        subscription.setBook(BookSqlDaoTest.createBook());
+        subscription.setBook(BookEnSqlDaoTest.createBook());
         subscription.setTakenDate(LocalDate.of(1111, 11, 11));
         subscription.setBroughtDate(LocalDate.of(1112, 12, 12));
         subscription.setFine(777.0);
@@ -35,12 +36,12 @@ class SubscriptionSqlDaoTest {
     @SneakyThrows
     @BeforeAll
     static void init() {
-        DataSource ds = HikariCPDataSource.getInstance();
-        dao = new SubscriptionSqlDao(ds);
-        readerSqlDao = new ReaderSqlDao(ds);
-        bookSqlDao = new BookEnSqlDao(ds);
-        authorSqlDao = new AuthorEnSqlDao(ds);
-        publisherSqlDao = new PublisherSqlDao(ds);
+        sqlDaoFactory = new SqlDaoFactory();
+        dao = sqlDaoFactory.createSubscriptionDao();
+        readerSqlDao = sqlDaoFactory.createReaderDao();
+        bookSqlDao = sqlDaoFactory.createBookDao(Locale.ENGLISH);
+        authorSqlDao = sqlDaoFactory.createAuthorDao(Locale.ENGLISH);
+        publisherSqlDao = sqlDaoFactory.createPublisherDao();
 
         subscription = createSubscription();
         readerSqlDao.save(subscription.getReader());
@@ -92,9 +93,6 @@ class SubscriptionSqlDaoTest {
     @SneakyThrows
     @AfterAll
     static void destroy() {
-        bookSqlDao.delete(subscription.getBook().getId());
-        authorSqlDao.delete(subscription.getBook().getAuthor().getId());
-        publisherSqlDao.delete(subscription.getBook().getPublisher().getIsbn());
-        readerSqlDao.delete(subscription.getReader().getId());
+        sqlDaoFactory.close();
     }
 }

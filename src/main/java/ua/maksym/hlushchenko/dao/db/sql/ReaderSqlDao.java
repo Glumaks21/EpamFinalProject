@@ -6,50 +6,60 @@ import ua.maksym.hlushchenko.dao.ReaderDao;
 import ua.maksym.hlushchenko.dao.entity.*;
 import ua.maksym.hlushchenko.dao.entity.impl.role.ReaderImpl;
 import ua.maksym.hlushchenko.dao.entity.role.Reader;
+import ua.maksym.hlushchenko.exception.ConnectionException;
+import ua.maksym.hlushchenko.exception.DaoException;
+import ua.maksym.hlushchenko.exception.MappingException;
 
-import javax.sql.DataSource;
 import java.lang.reflect.*;
 import java.sql.*;
 import java.util.*;
 
 public class ReaderSqlDao extends AbstractSqlDao<Integer, Reader> implements ReaderDao<Integer> {
-    private static final String SQL_SELECT_ALL = "SELECT id, login FROM reader r " +
-            "JOIN user u ON r.user_login = u.login";
-    private static final String SQL_SELECT_BY_LOGIN = "SELECT * FROM reader r " +
-            "JOIN user u ON r.user_login = u.login " +
-            "WHERE id = ?";
-    private static final String SQL_SELECT_READER_RECEIPTS = "SELECT * FROM receipt r " +
-            "JOIN reader_has_receipt rhr ON r.id = rhr.receipt_id " +
-            "WHERE rhr.reader_login = ?";
-    private static final String SQL_INSERT = "INSERT INTO reader(user_login, blocked) " +
+    private static final String SQL_SELECT_ALL = "SELECT id, login, blocked " +
+            "FROM reader r " +
+            "JOIN user u ON r.used_id = u.login";
+    private static final String SQL_SELECT_BY_LOGIN = "SELECT id, login, blocked " +
+            "FROM reader r " +
+            "JOIN user u ON r.user_id = u.id " +
+            "WHERE user_id = ?";
+    private static final String SQL_SELECT_READER_RECEIPTS = "SELECT id, reader_id, time " +
+            "FROM receipt r " +
+            "JOIN reader_has_receipt rhr ON rhr.receipt_id = r.id" +
+            "WHERE rhr.reader_id = ?";
+    private static final String SQL_INSERT = "INSERT INTO reader" +
+            "(user_id, blocked) " +
             "VALUES(?, ?)";
-    private static final String SQL_INSERT_READER_RECEIPT = "INSERT INTO reader_has_receipt(reader_login, receipt_id) " +
+    private static final String SQL_INSERT_READER_RECEIPT = "INSERT INTO reader_has_receipt" +
+            "(reader_id, receipt_id) " +
             "VALUES(?, ?)";
-    private static final String SQL_UPDATE_BY_LOGIN = "UPDATE reader SET " +
-            "blocked = ? " +
-            "WHERE user_login = ?";
+    private static final String SQL_UPDATE_BY_LOGIN = "UPDATE reader " +
+            "SET blocked = ? " +
+            "WHERE user_id = ?";
     private static final String SQL_DELETE_BY_LOGIN = "DELETE FROM reader " +
-            "WHERE user_login = ?";
+            "WHERE user_id = ?";
     private static final String SQL_DELETE_READER_RECEIPTS = "DELETE FROM reader_has_receipt " +
-            "WHERE reader_login = ?";
-
+            "WHERE reader_id = ?";
 
     private static final Logger log = LoggerFactory.getLogger(ReaderSqlDao.class);
 
-    public ReaderSqlDao(DataSource dataSource) {
-        super(dataSource);
+    public ReaderSqlDao(Connection connection) {
+        super(connection);
     }
 
     @Override
-    protected Reader mapToEntity(ResultSet resultSet) throws SQLException {
-        ReaderImpl reader = new ReaderImpl();
-        reader.setLogin(resultSet.getString("login"));
-        reader.setPasswordHash(resultSet.getString("password"));
-        reader.setBlocked(resultSet.getBoolean("blocked"));
-        return (Reader) Proxy.newProxyInstance(
-                ReaderSqlDao.class.getClassLoader(),
-                new Class[]{Reader.class},
-                new LazyInitializationHandler(reader));
+    protected Reader mapToEntity(ResultSet resultSet) {
+        try {
+            Reader reader = new ReaderImpl();
+            reader.setLogin(resultSet.getString("login"));
+            reader.setPasswordHash(resultSet.getString("password_hash"));
+            reader.setBlocked(resultSet.getBoolean("blocked"));
+            return (Reader) Proxy.newProxyInstance(
+                    ReaderSqlDao.class.getClassLoader(),
+                    new Class[]{Reader.class},
+                    new LazyInitializationHandler(reader));
+        } catch (SQLException e) {
+            throw new MappingException(e);
+        }
     }
 
     private class LazyInitializationHandler implements InvocationHandler {
@@ -108,7 +118,7 @@ public class ReaderSqlDao extends AbstractSqlDao<Integer, Reader> implements Rea
 
         PreparedStatement statement = connection.prepareStatement(SQL_INSERT);
         fillPreparedStatement(statement,
-                reader.getLogin(),
+                reader.getId(),
                 reader.isBlocked());
         log.info("Try to execute:\n" + formatSql(statement));
         statement.executeUpdate();
@@ -123,7 +133,7 @@ public class ReaderSqlDao extends AbstractSqlDao<Integer, Reader> implements Rea
         PreparedStatement statement = connection.prepareStatement(SQL_UPDATE_BY_LOGIN);
         fillPreparedStatement(statement,
                 reader.isBlocked(),
-                reader.getLogin());
+                reader.getId());
         log.info("Try to execute:\n" + formatSql(statement));
         statement.executeUpdate();
 
@@ -145,8 +155,12 @@ public class ReaderSqlDao extends AbstractSqlDao<Integer, Reader> implements Rea
 
     @Override
     public List<Receipt> findReceipts(Integer id) {
-        ReceiptSqlDao receiptSqlDao = new ReceiptSqlDao(dataSource);
-        return mappedQueryResult(receiptSqlDao::mapToEntity, SQL_SELECT_READER_RECEIPTS, id);
+        try (SqlDaoFactory sqlDaoFactory = new SqlDaoFactory()) {
+            ReceiptSqlDao receiptSqlDao = sqlDaoFactory.createReceiptDao();
+            return mappedQueryResult(receiptSqlDao::mapToEntity, SQL_SELECT_READER_RECEIPTS, id);
+        } catch (ConnectionException e) {
+            throw new DaoException(e);
+        }
     }
 
     @Override
@@ -167,7 +181,10 @@ public class ReaderSqlDao extends AbstractSqlDao<Integer, Reader> implements Rea
     static void saveReceiptsInTransaction(Reader reader, Connection connection) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(SQL_INSERT_READER_RECEIPT);
         for (Receipt receipt : reader.getReceipts()) {
-            fillPreparedStatement(statement, reader.getLogin(), receipt.getId());
+            receipt.setReader(reader);
+            ReceiptSqlDao.saveInTransaction(receipt, connection);
+
+            fillPreparedStatement(statement, reader.getId(), receipt.getId());
             log.info("Try to execute:\n" + formatSql(statement));
             statement.executeUpdate();
         }
@@ -183,11 +200,13 @@ public class ReaderSqlDao extends AbstractSqlDao<Integer, Reader> implements Rea
         fillPreparedStatement(statement, id);
         log.info("Try to execute:\n" + formatSql(statement));
         statement.executeUpdate();
+
+        ReceiptSqlDao.deleteInTransaction(id, connection);
     }
 
     @Override
     public List<Subscription> findSubscriptions(Integer id) {
-        SubscriptionSqlDao subscriptionSqlDao = new SubscriptionSqlDao(dataSource);
+        SubscriptionSqlDao subscriptionSqlDao = new SubscriptionSqlDao(connection);
         return  subscriptionSqlDao.findByReaderId(id);
     }
 
@@ -208,6 +227,7 @@ public class ReaderSqlDao extends AbstractSqlDao<Integer, Reader> implements Rea
 
     static void saveSubscriptionsInTransaction(Reader reader, Connection connection) throws SQLException {
         for (Subscription subscription : reader.getSubscriptions()) {
+            subscription.setReader(reader);
             SubscriptionSqlDao.saveInTransaction(subscription, connection);
         }
     }

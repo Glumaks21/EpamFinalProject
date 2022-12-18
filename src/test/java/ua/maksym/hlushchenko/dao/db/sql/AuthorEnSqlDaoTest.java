@@ -2,13 +2,16 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
+import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.dao.entity.Author;
 import ua.maksym.hlushchenko.dao.entity.impl.AuthorImpl;
 
+import java.sql.*;
 import java.util.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class AuthorEnSqlDaoTest {
+    private static SqlDaoFactory sqlDaoFactory;
     private static AuthorSqlDao dao;
     private static Author author;
 
@@ -22,9 +25,26 @@ class AuthorEnSqlDaoTest {
     @SneakyThrows
     @BeforeAll
     static void init() {
-        SqlDaoFactory daoFactory = new SqlDaoFactory();
-        dao = daoFactory.createAuthorDao(Locale.ENGLISH);
+        setUpTables();
+        sqlDaoFactory = new SqlDaoFactory();
+        dao = sqlDaoFactory.createAuthorDao(Locale.ENGLISH);
         author = createAuthor();
+    }
+
+    @SneakyThrows
+    static void setUpTables() {
+        String dropQuery = "DROP TABLE IF EXISTS `author`";
+        String createQuery = "CREATE TABLE `author` (\n" +
+                "                          `id` int NOT NULL AUTO_INCREMENT,\n" +
+                "                          `name` varchar(45) NOT NULL,\n" +
+                "                          `surname` varchar(45) NOT NULL,\n" +
+                "                          PRIMARY KEY (`id`)\n" +
+                ") ENGINE=InnoDB AUTO_INCREMENT=469 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci";
+
+        Connection connection = HikariCPDataSource.getInstance().getConnection();
+        Statement statement = connection.createStatement();
+        statement.executeUpdate(dropQuery);
+        statement.executeUpdate(createQuery);
     }
 
 
@@ -66,5 +86,20 @@ class AuthorEnSqlDaoTest {
         dao.delete(author.getId());
         Optional<Author> optionalAuthorInDb = dao.find(author.getId());
         Assertions.assertTrue(optionalAuthorInDb.isEmpty());
+    }
+
+    @SneakyThrows
+    @AfterAll
+    static void destroy() {
+        dropTables();
+        sqlDaoFactory.close();
+    }
+
+    @SneakyThrows
+    static void dropTables() {
+        String dropQuery = "DROP TABLE `author`";
+        Connection connection = HikariCPDataSource.getInstance().getConnection();
+        Statement statement = connection.createStatement();
+        statement.executeUpdate(dropQuery);
     }
 }

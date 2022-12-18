@@ -18,6 +18,16 @@ public class BookImpl implements Book{
     private List<Genre> genres = new ArrayList<>();
 
     @Override
+    public List<Genre> getGenres() {
+        return new ArrayList<>(genres);
+    }
+
+    @Override
+    public void setGenres(List<Genre> genres) {
+        this.genres = new ArrayList<>(genres);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Book)) return false;

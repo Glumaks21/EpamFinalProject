@@ -5,28 +5,27 @@ import org.slf4j.*;
 import ua.maksym.hlushchenko.dao.Dao;
 import ua.maksym.hlushchenko.exception.DaoException;
 
-import javax.sql.DataSource;
 import java.sql.*;
 import java.util.*;
 
 public abstract class AbstractSqlDao<K, T> implements Dao<K, T> {
-    protected final DataSource dataSource;
+    protected final Connection connection;
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    public AbstractSqlDao(DataSource dataSource) {
-        Objects.requireNonNull(dataSource);
-        this.dataSource = dataSource;
+    public AbstractSqlDao(Connection Connection) {
+        Objects.requireNonNull(Connection);
+        this.connection = Connection;
     }
 
-    protected abstract T mapToEntity(ResultSet resultSet) throws SQLException;
+    protected abstract T mapToEntity(ResultSet resultSet);
 
     protected List<T> mappedQueryResult(String query, Object... args) {
         return mappedQueryResult(this::mapToEntity, query, args);
     }
 
     protected <U> List<U> mappedQueryResult(SqlMapper<U> mapper, String query, Object... args) {
-        try (Connection connection = dataSource.getConnection()) {
+        try {
             PreparedStatement statement = connection.prepareStatement(query);
             fillPreparedStatement(statement, args);
             log.info("Try to execute:\n" + formatSql(statement));
@@ -49,9 +48,7 @@ public abstract class AbstractSqlDao<K, T> implements Dao<K, T> {
     }
 
     protected <U> void updateInTransaction(SqlBiConsumer<U> methodWithQueriesInTransaction, U initArg) {
-        Connection connection = null;
         try {
-            connection = dataSource.getConnection();
             connection.setAutoCommit(false);
 
             methodWithQueriesInTransaction.accept(initArg, connection);
@@ -59,37 +56,20 @@ public abstract class AbstractSqlDao<K, T> implements Dao<K, T> {
             connection.commit();
         } catch (SQLException e) {
             log.warn(e.getMessage());
-            tryToRollBack(connection);
+            tryToRollBack();
             throw new DaoException(e);
-        } finally {
-            tryToClose(connection);
         }
     }
 
-    protected void tryToRollBack(Connection connection) {
-        if (connection != null) {
-            log.info("Try to roll back: " + connection);
-            try {
-                connection.rollback();
-            } catch (SQLException e) {
-                log.warn(e.getMessage());
-                throw new DaoException(e);
-            }
-            log.info("Roll back successful");
+    private void tryToRollBack() {
+        log.info("Try to roll back: " + connection);
+        try {
+            connection.rollback();
+        } catch (SQLException e) {
+            log.warn("Roll back failed: " + e.getMessage());
+            throw new DaoException(e);
         }
-    }
-
-    protected void tryToClose(Connection connection)  {
-        if (connection != null) {
-            log.info("Try to close: " + connection);
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                log.warn(e.getMessage());
-                throw new DaoException(e);
-            }
-            log.info("Connection is closed successfully");
-        }
+        log.info("Roll back successful");
     }
 
     protected static void fillPreparedStatement(PreparedStatement statement, Object... args)

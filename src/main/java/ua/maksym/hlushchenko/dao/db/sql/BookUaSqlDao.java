@@ -19,12 +19,12 @@ public class BookUaSqlDao extends BookSqlDao {
             "JOIN book_has_genre bg ON g.id = bg.genre_id " +
             "WHERE bg.book_id = ?";
     private static final String SQL_INSERT = "INSERT INTO book_ua" +
-            "(book_id, title, author_ua_id, publisher_isbn, description, date, cover_id)" +
-            "VALUES(?, ?, ?, ?, ?, ?, ?)";
+            "(book_id, title, author_ua_id, publisher_isbn, description, date)" +
+            "VALUES(?, ?, ?, ?, ?, ?)";
     private static final String SQL_INSERT_BOOK_GENRE = "INSERT INTO book_ua_has_genre_ua(book_ua_id, genre_ua_id) " +
             "VALUES(?, ?)";
     private static final String SQL_UPDATE_BY_ID = "UPDATE book_ua " +
-            "SET title = ?, author_ua_id = ?, publisher_isbn = ?, description = ?, date = ?, cover_id = ? " +
+            "SET title = ?, author_ua_id = ?, publisher_isbn = ?, description = ?, date = ? " +
             "WHERE book_id = ?";
     private static final String SQL_DELETE_BY_ID = "DELETE FROM book_ua " +
             "WHERE book_id = ?";
@@ -33,8 +33,8 @@ public class BookUaSqlDao extends BookSqlDao {
 
     private static final Logger log = LoggerFactory.getLogger(BookUaSqlDao.class);
 
-    public BookUaSqlDao(DataSource dataSource) {
-        super(dataSource);
+    public BookUaSqlDao(Connection connection) {
+        super(connection, new Locale("uk", "ua"));
     }
 
     @Override

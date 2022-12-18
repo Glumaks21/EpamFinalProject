@@ -8,7 +8,7 @@ import javax.sql.DataSource;
 import java.sql.*;
 import java.util.*;
 
-public class GenreEnSqlDao extends AbstractSqlDao<Integer, Genre> {
+public class GenreEnSqlDao extends GenreSqlDao {
     private static final String SQL_SELECT_ALL = "SELECT id, name " +
             "FROM genre";
     private static final String SQL_SELECT_BY_ID = "SELECT id, name " +
@@ -24,16 +24,8 @@ public class GenreEnSqlDao extends AbstractSqlDao<Integer, Genre> {
 
     private static final Logger log = LoggerFactory.getLogger(GenreEnSqlDao.class);
 
-    public GenreEnSqlDao(DataSource dataSource) {
-        super(dataSource);
-    }
-
-    @Override
-    protected GenreImpl mapToEntity(ResultSet resultSet) throws SQLException {
-        GenreImpl genre = new GenreImpl();
-        genre.setId(resultSet.getInt("id"));
-        genre.setName(resultSet.getString("name"));
-        return genre;
+    public GenreEnSqlDao(Connection connection) {
+        super(connection);
     }
 
     @Override

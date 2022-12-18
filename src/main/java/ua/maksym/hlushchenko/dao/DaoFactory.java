@@ -1,21 +1,18 @@
 package ua.maksym.hlushchenko.dao;
 
 import ua.maksym.hlushchenko.dao.entity.*;
-import ua.maksym.hlushchenko.dao.entity.role.Role;
-import ua.maksym.hlushchenko.dao.entity.role.User;
+import ua.maksym.hlushchenko.dao.entity.role.*;
 
 import java.util.Locale;
 
 public interface DaoFactory {
-    <D extends Dao<K, T>, K, T  extends Entity> D createDao(Class<T> entityClass);
-
-    <K> Dao<K, Role> createRoleDao();
-    <K> Dao<K, User> createUserDao();
-    <K> ReaderDao<K> createReaderDao();
-    <K> Dao<K, Author> createAuthorDao(Locale locale);
-    <K> PublisherDao<K> createPublisherDao();
-    <K> Dao<K, Genre>  createGenreDao(Locale locale);
-    <K> BookDao<K> createBookDao(Locale locale);
-    <K> SubscriptionDao<K> createSubscriptionDao();
-    <K> ReceiptDao<K> createReceiptDao();
+    Dao<Integer, Role> createRoleDao();
+    Dao<Integer, User> createUserDao();
+    ReaderDao<Integer>  createReaderDao();
+    Dao<Integer, Author> createAuthorDao(Locale locale);
+    PublisherDao<String> createPublisherDao();
+    Dao<Integer, Genre> createGenreDao(Locale locale);
+    BookDao<Integer> createBookDao(Locale locale);
+    SubscriptionDao<Integer> createSubscriptionDao();
+    ReceiptDao<Integer> createReceiptDao();
 }

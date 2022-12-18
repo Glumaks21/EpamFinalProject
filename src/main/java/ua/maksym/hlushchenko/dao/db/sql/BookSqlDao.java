@@ -1,49 +1,48 @@
 package ua.maksym.hlushchenko.dao.db.sql;
 
 import ua.maksym.hlushchenko.dao.BookDao;
-import ua.maksym.hlushchenko.dao.Dao;
-import ua.maksym.hlushchenko.dao.DaoFactory;
-import ua.maksym.hlushchenko.dao.PublisherDao;
-import ua.maksym.hlushchenko.dao.entity.Author;
-import ua.maksym.hlushchenko.dao.entity.Book;
-import ua.maksym.hlushchenko.dao.entity.Publisher;
+import ua.maksym.hlushchenko.dao.entity.*;
 import ua.maksym.hlushchenko.dao.entity.impl.BookImpl;
+import ua.maksym.hlushchenko.exception.ConnectionException;
+import ua.maksym.hlushchenko.exception.MappingException;
 
-import javax.sql.DataSource;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.lang.reflect.*;
+import java.sql.*;
 import java.util.Locale;
+import java.util.NoSuchElementException;
 
 public abstract class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao<Integer> {
-    public BookSqlDao(DataSource dataSource) {
-        super(dataSource);
+    private final Locale locale;
+
+    public BookSqlDao(Connection connection, Locale locale) {
+        super(connection);
+        this.locale = locale;
     }
     @Override
-    protected Book mapToEntity(ResultSet resultSet) throws SQLException {
-        Book book = new BookImpl();
+    protected Book mapToEntity(ResultSet resultSet) {
+        try (SqlDaoFactory sqlDaoFactory = new SqlDaoFactory()) {
+            Book book = new BookImpl();
 
-        book.setId(resultSet.getInt("id"));
-        book.setTitle(resultSet.getString("title"));
-        book.setDescription(resultSet.getString("description"));
+            book.setId(resultSet.getInt("id"));
+            book.setTitle(resultSet.getString("title"));
+            book.setDescription(resultSet.getString("description"));
 
-        DaoFactory daoFactory = new SqlDaoFactory();
+            AuthorSqlDao authorSqlDao = sqlDaoFactory.createAuthorDao(locale);
+            Author author = authorSqlDao.find(resultSet.getInt("author_id")).get();
+            book.setAuthor(author);
 
-        Dao<Integer, Author> authorSqlDao = daoFactory.createAuthorDao(Locale.ENGLISH);
-        Author author = authorSqlDao.find(resultSet.getInt("author_id")).get();
-        book.setAuthor(author);
+            PublisherSqlDao publisherSqlDao = sqlDaoFactory.createPublisherDao();
+            Publisher publisher = publisherSqlDao.find(resultSet.getString("publisher_isbn")).get();
+            book.setPublisher(publisher);
 
-        PublisherDao<String> publisherDao = daoFactory.createPublisherDao();
-        Publisher publisher = publisherDao.find(resultSet.getString("publisher_isbn")).get();
-        book.setPublisher(publisher);
-
-        book.setDate(resultSet.getDate("date").toLocalDate());
-        return (Book) Proxy.newProxyInstance(
-                BookUaSqlDao.class.getClassLoader(),
-                new Class[]{Book.class},
-                new LazyInitializationHandler(book));
+            book.setDate(resultSet.getDate("date").toLocalDate());
+            return (Book) Proxy.newProxyInstance(
+                    BookSqlDao.class.getClassLoader(),
+                    new Class[]{Book.class},
+                    new LazyInitializationHandler(book));
+        } catch (SQLException | ConnectionException | NoSuchElementException e) {
+            throw new MappingException(e);
+        }
     }
 
     private class LazyInitializationHandler implements InvocationHandler {

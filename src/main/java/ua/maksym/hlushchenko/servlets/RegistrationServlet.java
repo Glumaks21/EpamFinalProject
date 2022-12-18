@@ -40,20 +40,20 @@ public class RegistrationServlet extends HttpServlet {
             String passwordParam = ParamsValidator.getRequiredParam(req, "password");
             String passwordConfirmationParam = ParamsValidator.getRequiredParam(req, "password_confirmation");
 
-            if (!passwordParam.equals(passwordConfirmationParam)) {
-                throw new ParamsValidationException("Password are not the same");
-            }
-
-            UserSqlDao userSqlDao = new UserSqlDao(HikariCPDataSource.getInstance());
+//            if (!passwordParam.equals(passwordConfirmationParam)) {
+//                throw new ParamsValidationException("Password are not the same");
+//            }
+//
+//            UserSqlDao userSqlDao = new UserSqlDao(HikariCPDataSource.getInstance());
 //            if (userSqlDao.find(loginParam).isPresent()) {
 //                throw new ParamsValidationException("Login " + loginParam + " is already registered");
 //            }
-
-            ReaderDao readerDao = new ReaderSqlDao(HikariCPDataSource.getInstance());
-            Reader reader = new ReaderImpl();
-            reader.setLogin(loginParam);
-//            reader.setPassword(passwordParam);
-            readerDao.save(reader);
+//
+//            ReaderDao readerDao = new ReaderSqlDao(HikariCPDataSource.getInstance());
+//            Reader reader = new ReaderImpl();
+//            reader.setLogin(loginParam);
+////            reader.setPassword(passwordParam);
+//            readerDao.save(reader);
 
             resp.sendRedirect("/");
         } catch (ParamsValidationException e) {

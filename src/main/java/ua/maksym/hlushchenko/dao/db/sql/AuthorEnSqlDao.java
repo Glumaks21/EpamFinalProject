@@ -3,8 +3,8 @@ package ua.maksym.hlushchenko.dao.db.sql;
 import org.slf4j.*;
 import ua.maksym.hlushchenko.dao.entity.Author;
 import ua.maksym.hlushchenko.dao.entity.impl.AuthorImpl;
+import ua.maksym.hlushchenko.exception.MappingException;
 
-import javax.sql.*;
 import java.sql.*;
 import java.util.*;
 
@@ -24,16 +24,8 @@ public class AuthorEnSqlDao extends AuthorSqlDao  {
 
     private static final Logger log = LoggerFactory.getLogger(AuthorEnSqlDao.class);
 
-    public AuthorEnSqlDao(DataSource dataSource) {
-        super(dataSource);
-    }
-    @Override
-    protected Author mapToEntity(ResultSet resultSet) throws SQLException {
-        Author author = new AuthorImpl();
-        author.setId(resultSet.getInt("id"));
-        author.setName(resultSet.getString("name"));
-        author.setSurname(resultSet.getString("surname"));
-        return author;
+    public AuthorEnSqlDao(Connection connection) {
+        super(connection);
     }
 
     @Override
