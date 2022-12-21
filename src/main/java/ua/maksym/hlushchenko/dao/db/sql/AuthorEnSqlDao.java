@@ -6,18 +6,18 @@ import ua.maksym.hlushchenko.dao.entity.Author;
 import java.sql.*;
 import java.util.*;
 
-public class AuthorEnSqlDao extends AuthorSqlDao  {
-    final static String SQL_SELECT_ALL = "SELECT id, name, surname " +
+class AuthorEnSqlDao extends AuthorSqlDao  {
+    private static final String SQL_SELECT_ALL = "SELECT id, name, surname " +
             "FROM author";
-    final static String SQL_SELECT_BY_ID = "SELECT id, name, surname " +
+    private static final String SQL_SELECT_BY_ID = "SELECT id, name, surname " +
             "FROM author " +
             "WHERE id = ?";
-    final static String SQL_INSERT = "INSERT INTO author(name, surname) " +
+    private static final String SQL_INSERT = "INSERT INTO author(name, surname) " +
             "VALUES(?, ?)";
-    final static String SQL_UPDATE_BY_ID = "UPDATE author " +
+    private static final String SQL_UPDATE_BY_ID = "UPDATE author " +
             "SET name = ?, surname = ? " +
             "WHERE id = ?";
-    final static String SQL_DELETE_BY_ID = "DELETE FROM author " +
+    private static final String SQL_DELETE_BY_ID = "DELETE FROM author " +
             "WHERE id = ?";
 
     private static final Logger log = LoggerFactory.getLogger(AuthorEnSqlDao.class);

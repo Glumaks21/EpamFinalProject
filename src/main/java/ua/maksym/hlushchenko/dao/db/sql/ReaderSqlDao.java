@@ -3,7 +3,6 @@ package ua.maksym.hlushchenko.dao.db.sql;
 import org.slf4j.*;
 
 import ua.maksym.hlushchenko.dao.ReaderDao;
-import ua.maksym.hlushchenko.dao.ReceiptDao;
 import ua.maksym.hlushchenko.dao.entity.*;
 import ua.maksym.hlushchenko.dao.entity.impl.role.ReaderImpl;
 import ua.maksym.hlushchenko.dao.entity.role.Reader;
@@ -13,30 +12,30 @@ import java.lang.reflect.*;
 import java.sql.*;
 import java.util.*;
 
-public class ReaderSqlDao extends AbstractSqlDao<Integer, Reader> implements ReaderDao<Integer> {
-    static final String SQL_SELECT_ALL = "SELECT id, login, password_hash, role_id, blocked " +
+class ReaderSqlDao extends AbstractSqlDao<Integer, Reader> implements ReaderDao {
+    private static final String SQL_SELECT_ALL = "SELECT id, login, password_hash, role_id, blocked " +
             "FROM reader r " +
             "JOIN user u ON r.user_id = u.id";
-    static final String SQL_SELECT_BY_ID = "SELECT id, login, password_hash, role_id, blocked " +
+    private static final String SQL_SELECT_BY_ID = "SELECT id, login, password_hash, role_id, blocked " +
             "FROM reader r " +
             "JOIN user u ON r.user_id = u.id " +
             "WHERE user_id = ?";
-    static final String SQL_SELECT_READER_RECEIPTS = "SELECT id, r.reader_id as reader_id, time " +
+    private static final String SQL_SELECT_READER_RECEIPTS = "SELECT id, r.reader_id as reader_id, time " +
             "FROM receipt r " +
             "JOIN reader_has_receipt rhr ON rhr.receipt_id = r.id " +
             "WHERE r.reader_id = ?";
-    static final String SQL_INSERT = "INSERT INTO reader" +
+    private static final String SQL_INSERT = "INSERT INTO reader" +
             "(user_id, blocked) " +
             "VALUES(?, ?)";
-    static final String SQL_INSERT_READER_RECEIPT = "INSERT INTO reader_has_receipt" +
+    private static final String SQL_INSERT_READER_RECEIPT = "INSERT INTO reader_has_receipt" +
             "(reader_id, receipt_id) " +
             "VALUES(?, ?)";
-    static final String SQL_UPDATE_BY_ID = "UPDATE reader " +
+    private static final String SQL_UPDATE_BY_ID = "UPDATE reader " +
             "SET blocked = ? " +
             "WHERE user_id = ?";
-    static final String SQL_DELETE_BY_ID = "DELETE FROM reader " +
+    private static final String SQL_DELETE_BY_ID = "DELETE FROM reader " +
             "WHERE user_id = ?";
-    static final String SQL_DELETE_READER_RECEIPTS = "DELETE FROM reader_has_receipt " +
+    private static final String SQL_DELETE_READER_RECEIPTS = "DELETE FROM reader_has_receipt " +
             "WHERE reader_id = ?";
 
     private static final Logger log = LoggerFactory.getLogger(ReaderSqlDao.class);
@@ -47,14 +46,14 @@ public class ReaderSqlDao extends AbstractSqlDao<Integer, Reader> implements Rea
 
     @Override
     protected Reader mapToEntity(ResultSet resultSet) {
-        try (SqlDaoFactory sqlDaoFactory = new SqlDaoFactory()) {
+        try {
             Reader reader = new ReaderImpl();
             reader.setId(resultSet.getInt("id"));
             reader.setLogin(resultSet.getString("login"));
             reader.setPasswordHash(resultSet.getString("password_hash"));
             reader.setBlocked(resultSet.getBoolean("blocked"));
 
-            RoleSqlDao roleSqlDao = sqlDaoFactory.createRoleDao();
+            RoleSqlDao roleSqlDao = new RoleSqlDao(connection);
             reader.setRole(roleSqlDao.find(resultSet.getInt("role_id")).get());
             return (Reader) Proxy.newProxyInstance(
                     ReaderSqlDao.class.getClassLoader(),
@@ -126,7 +125,8 @@ public class ReaderSqlDao extends AbstractSqlDao<Integer, Reader> implements Rea
         deleteReceipts(id);
         deleteSubscriptions(id);
         updateQuery(SQL_DELETE_BY_ID, id);
-        updateQuery(UserSqlDao.SQL_DELETE_BY_ID, id);
+        UserSqlDao userSqlDao = new UserSqlDao(connection);
+        userSqlDao.delete(id);
     }
 
     @Override

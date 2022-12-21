@@ -9,7 +9,7 @@ import java.lang.reflect.*;
 import java.sql.*;
 import java.util.*;
 
-public abstract class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao<Integer> {
+abstract class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao {
     private final Locale locale;
 
     public BookSqlDao(Connection connection, Locale locale) {

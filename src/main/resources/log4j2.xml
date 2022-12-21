@@ -16,7 +16,7 @@
         <Logger name="ua.maksym.hlushchenko.dao.db.sql" level="info" additivity="false">
             <AppenderRef ref="DaoLogToFile"/>
         </Logger>
-        <Logger name="ua.maksym.hlushchenko.servlets" level="info" additivity="false">
+        <Logger name="ua.maksym.hlushchenko.web" level="info" additivity="false">
             <AppenderRef ref="WebLogToFile"/>
         </Logger>
         <Root level="error">

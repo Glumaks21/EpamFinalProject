@@ -12,18 +12,18 @@ import java.lang.reflect.Proxy;
 import java.sql.*;
 import java.util.*;
 
-public class RoleSqlDao extends AbstractSqlDao<Integer, Role> {
-    static final String SQL_SELECT_ALL = "SELECT id, name " +
+class RoleSqlDao extends AbstractSqlDao<Integer, Role> {
+    private static final String SQL_SELECT_ALL = "SELECT id, name " +
             "FROM role";
-    static final String SQL_SELECT_BY_ID = "SELECT id, name " +
+    private static final String SQL_SELECT_BY_ID = "SELECT id, name " +
             "FROM role " +
             "WHERE id = ?";
-    static final String SQL_INSERT = "INSERT INTO role(name) " +
+    private static final String SQL_INSERT = "INSERT INTO role(name) " +
             "VALUES(?)";
-    static final String SQL_UPDATE_BY_ID = "UPDATE role " +
+    private static final String SQL_UPDATE_BY_ID = "UPDATE role " +
             "SET name = ? " +
             "WHERE id = ?";
-    static final String SQL_DELETE_BY_ID = "DELETE FROM role " +
+    private static final String SQL_DELETE_BY_ID = "DELETE FROM role " +
             "WHERE id = ?";
 
     private static final Logger log = LoggerFactory.getLogger(RoleSqlDao.class);

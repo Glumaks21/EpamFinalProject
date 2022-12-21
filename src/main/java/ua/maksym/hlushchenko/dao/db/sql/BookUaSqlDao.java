@@ -6,7 +6,7 @@ import ua.maksym.hlushchenko.dao.entity.*;
 import java.sql.*;
 import java.util.*;
 
-public class BookUaSqlDao extends TranslatedBookSqlDao {
+class BookUaSqlDao extends TranslatedBookSqlDao {
     private static final String SQL_SELECT_ALL = "SELECT " +
             "id, b_u.title as title, b_u.description as description, author_id, publisher_isbn, date " +
             "FROM book_ua b_u " +

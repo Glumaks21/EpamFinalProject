@@ -3,7 +3,7 @@ package ua.maksym.hlushchenko.dao.db.sql;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
-public class LoadHandler<T> implements InvocationHandler {
+class LoadHandler<T> implements InvocationHandler {
     private final T wrapped;
     private boolean updated;
 

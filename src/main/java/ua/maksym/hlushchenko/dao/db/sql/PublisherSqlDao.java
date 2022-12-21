@@ -11,23 +11,23 @@ import java.lang.reflect.Proxy;
 import java.sql.*;
 import java.util.*;
 
-public class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implements PublisherDao<String> {
-    static final String SQL_SELECT_ALL = "SELECT isbn, name " +
+class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implements PublisherDao {
+    private static final String SQL_SELECT_ALL = "SELECT isbn, name " +
             "FROM publisher";
-    static final String SQL_SELECT_BY_ISBN = "SELECT isbn, name " +
+    private static final String SQL_SELECT_BY_ISBN = "SELECT isbn, name " +
             "FROM publisher " +
             "WHERE isbn = ?";
-    static final String SQL_UPDATE_BY_ISBN = "UPDATE publisher " +
+    private static final String SQL_UPDATE_BY_ISBN = "UPDATE publisher " +
             "SET name = ? " +
             "WHERE isbn = ?";
-    static final String SQL_SELECT_BY_NAME = "SELECT isbn, name " +
+    private static final String SQL_SELECT_BY_NAME = "SELECT isbn, name " +
             "FROM publisher " +
             "WHERE name = ?";
-    static final String SQL_INSERT = "INSERT INTO publisher(isbn, name) " +
+    private static final String SQL_INSERT = "INSERT INTO publisher(isbn, name) " +
             "VALUES(?, ?)";
-    static final String SQL_DELETE_BY_ISBN = "DELETE FROM publisher " +
+    private static final String SQL_DELETE_BY_ISBN = "DELETE FROM publisher " +
             "WHERE isbn = ?";
-    static final String SQL_DELETE_BY_NAME = "DELETE FROM publisher " +
+    private static final String SQL_DELETE_BY_NAME = "DELETE FROM publisher " +
             "WHERE name = ?";
 
     private static final Logger log = LoggerFactory.getLogger(PublisherSqlDao.class);

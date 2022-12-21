@@ -7,7 +7,7 @@ import ua.maksym.hlushchenko.exception.DaoException;
 import java.sql.*;
 import java.util.*;
 
-public class GenreEnSqlDao extends GenreSqlDao {
+class GenreEnSqlDao extends GenreSqlDao {
     private static final String SQL_SELECT_ALL = "SELECT id, name " +
             "FROM genre";
     private static final String SQL_SELECT_BY_ID = "SELECT id, name " +

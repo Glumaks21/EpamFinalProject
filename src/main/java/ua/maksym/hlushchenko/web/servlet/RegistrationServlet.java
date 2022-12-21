@@ -1,12 +1,7 @@
-package ua.maksym.hlushchenko.servlets;
+package ua.maksym.hlushchenko.web.servlet;
 
 import org.slf4j.*;
 
-import ua.maksym.hlushchenko.dao.ReaderDao;
-import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.dao.db.sql.*;
-import ua.maksym.hlushchenko.dao.entity.impl.role.ReaderImpl;
-import ua.maksym.hlushchenko.dao.entity.role.Reader;
 import ua.maksym.hlushchenko.exception.ParamsValidationException;
 import ua.maksym.hlushchenko.util.ParamsValidator;
 
@@ -15,7 +10,6 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
 
-@WebServlet("/profile/registration")
 public class RegistrationServlet extends HttpServlet {
     private static final Logger log = LoggerFactory.getLogger(RegistrationServlet.class);
 

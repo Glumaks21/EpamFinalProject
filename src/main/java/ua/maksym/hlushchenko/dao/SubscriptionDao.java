@@ -4,7 +4,7 @@ import ua.maksym.hlushchenko.dao.entity.Subscription;
 
 import java.util.List;
 
-public interface SubscriptionDao<K> extends Dao<K, Subscription> {
-    List<Subscription> findByReaderId(K id);
-    void deleteByReaderId(K id);
+public interface SubscriptionDao extends Dao<Integer, Subscription> {
+    List<Subscription> findByReaderId(Integer id);
+    void deleteByReaderId(Integer id);
 }

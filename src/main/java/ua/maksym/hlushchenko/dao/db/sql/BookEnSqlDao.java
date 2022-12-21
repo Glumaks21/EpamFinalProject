@@ -8,7 +8,7 @@ import java.sql.*;
 import java.sql.Date;
 import java.util.*;
 
-public class BookOriginalSqlDao extends BookSqlDao {
+class BookEnSqlDao extends BookSqlDao {
     private static final String SQL_SELECT_ALL = "SELECT id, title, description, author_id, publisher_isbn, date " +
             "FROM book";
     private static final String SQL_SELECT_BY_ID = "SELECT id, title, description, author_id, publisher_isbn, date " +
@@ -31,9 +31,9 @@ public class BookOriginalSqlDao extends BookSqlDao {
     private static final String SQL_DELETE_ALL_GENRES_BY_BOOK_ID = "DELETE FROM book_has_genre " +
             "WHERE book_id = ?";
 
-    private static final Logger log = LoggerFactory.getLogger(BookOriginalSqlDao.class);
+    private static final Logger log = LoggerFactory.getLogger(BookEnSqlDao.class);
 
-    public BookOriginalSqlDao(Connection connection) {
+    public BookEnSqlDao(Connection connection) {
         super(connection, Locale.ENGLISH);
     }
 

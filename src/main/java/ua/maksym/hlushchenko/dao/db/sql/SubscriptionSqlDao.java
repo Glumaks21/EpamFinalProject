@@ -16,24 +16,24 @@ import java.sql.Date;
 import java.util.*;
 
 
-public class SubscriptionSqlDao extends AbstractSqlDao<Integer, Subscription> implements SubscriptionDao<Integer> {
-    static final String SQL_SELECT_ALL = "SELECT id, reader_id, book_id, taken_date, brought_date, fine " +
+class SubscriptionSqlDao extends AbstractSqlDao<Integer, Subscription> implements SubscriptionDao {
+    private static final String SQL_SELECT_ALL = "SELECT id, reader_id, book_id, taken_date, brought_date, fine " +
             "FROM subscription";
-    static final String SQL_SELECT_BY_ID = "SELECT id, reader_id, book_id, taken_date, brought_date, fine " +
+    private static final String SQL_SELECT_BY_ID = "SELECT id, reader_id, book_id, taken_date, brought_date, fine " +
             "FROM subscription " +
             "WHERE id = ?";
-    static final String SQL_SELECT_BY_READER_ID = "SELECT id, reader_id, book_id, taken_date, brought_date, fine " +
+    private static final String SQL_SELECT_BY_READER_ID = "SELECT id, reader_id, book_id, taken_date, brought_date, fine " +
             "FROM subscription " +
             "WHERE reader_id = ?";
-    static final String SQL_INSERT = "INSERT INTO " +
+    private static final String SQL_INSERT = "INSERT INTO " +
             "subscription(reader_id, book_id, taken_date, brought_date, fine) " +
             "VALUE(?, ?, ?, ?, ?)";
-    static final String SQL_UPDATE_BY_ID = "UPDATE subscription " +
+    private static final String SQL_UPDATE_BY_ID = "UPDATE subscription " +
             "SET reader_id = ?, book_id = ?, taken_date = ?, brought_date = ?, fine = ? " +
             "WHERE id = ?";
-    static final String SQL_DELETE_BY_ID = "DELETE FROM subscription " +
+    private static final String SQL_DELETE_BY_ID = "DELETE FROM subscription " +
             "WHERE id = ?";
-    static final String SQL_DELETE_BY_READER_ID = "DELETE FROM subscription " +
+    private static final String SQL_DELETE_BY_READER_ID = "DELETE FROM subscription " +
             "WHERE reader_id = ?";
 
     private static final Logger log = LoggerFactory.getLogger(SubscriptionSqlDao.class);
@@ -43,15 +43,15 @@ public class SubscriptionSqlDao extends AbstractSqlDao<Integer, Subscription> im
     }
 
     protected Subscription mapToEntity(ResultSet resultSet) {
-        try (SqlDaoFactory sqlDaoFactory = new SqlDaoFactory()) {
+        try {
             Subscription subscription = new SubscriptionImpl();
             subscription.setId(resultSet.getInt("id"));
 
-            ReaderSqlDao readerSqlDao = sqlDaoFactory.createReaderDao();
+            ReaderSqlDao readerSqlDao = new ReaderSqlDao(connection);
             Reader reader = readerSqlDao.find(resultSet.getInt("reader_id")).get();
             subscription.setReader(reader);
 
-            BookSqlDao bookSqlDao = sqlDaoFactory.createBookDao(Locale.ENGLISH);
+            BookSqlDao bookSqlDao = new BookEnSqlDao(connection);
             Book book = bookSqlDao.find(resultSet.getInt("book_id")).get();
             subscription.setBook(book);
 

@@ -10,7 +10,7 @@ import ua.maksym.hlushchenko.exception.MappingException;
 import java.sql.*;
 import java.util.*;
 
-public abstract class AbstractSqlDao<K, T> implements Dao<K, T> {
+abstract class AbstractSqlDao<K, T> implements Dao<K, T> {
     protected final Connection connection;
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());

@@ -6,7 +6,7 @@ import ua.maksym.hlushchenko.dao.entity.Genre;
 import java.sql.*;
 import java.util.*;
 
-public class GenreUaSqlDao extends GenreSqlDao {
+class GenreUaSqlDao extends GenreSqlDao {
     private static final String SQL_SELECT_ALL = "SELECT genre_id as id, name " +
             "FROM genre_ua";
     private static final String SQL_SELECT_BY_ID = "SELECT genre_id as id, name " +

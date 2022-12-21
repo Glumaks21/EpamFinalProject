@@ -2,6 +2,7 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import org.slf4j.*;
 
+import ua.maksym.hlushchenko.dao.UserDao;
 import ua.maksym.hlushchenko.dao.entity.impl.role.UserImpl;
 import ua.maksym.hlushchenko.dao.entity.role.*;;
 import ua.maksym.hlushchenko.exception.*;
@@ -10,16 +11,22 @@ import java.lang.reflect.Proxy;
 import java.sql.*;
 import java.util.*;
 
-public class UserSqlDao extends AbstractSqlDao<Integer, User> {
-    static final String SQL_SELECT_ALL = "SELECT id, login, password_hash, role_id FROM user";
-    static final String SQL_SELECT_BY_ID = "SELECT id, login, password_hash, role_id FROM user " +
+class UserSqlDao extends AbstractSqlDao<Integer, User> implements UserDao {
+    private static final String SQL_SELECT_ALL = "SELECT id, login, password_hash, role_id " +
+            "FROM user";
+    private static final String SQL_SELECT_BY_ID = "SELECT id, login, password_hash, role_id " +
+            "FROM user " +
             "WHERE id = ?";
-    static final String SQL_INSERT = "INSERT INTO user(login, password_hash, role_id) " +
+    private static final String SQL_SELECT_BY_LOGIN_AND_PASSWORD_HASH =
+            "SELECT id, login, password_hash, role_id " +
+            "FROM user " +
+            "WHERE login = ? AND password_hash = ?";
+    private static final String SQL_INSERT = "INSERT INTO user(login, password_hash, role_id) " +
             "VALUES(?, ?, ?)";
-    static final String SQL_UPDATE_BY_ID = "UPDATE user " +
+    private static final String SQL_UPDATE_BY_ID = "UPDATE user " +
             "SET password_hash = ?, role_id = ? " +
             "WHERE id = ?";
-    static final String SQL_DELETE_BY_ID = "DELETE FROM user " +
+    private static final String SQL_DELETE_BY_ID = "DELETE FROM user " +
             "WHERE id = ?";
 
     private static final Logger log = LoggerFactory.getLogger(UserSqlDao.class);
@@ -30,21 +37,21 @@ public class UserSqlDao extends AbstractSqlDao<Integer, User> {
 
     @Override
     protected User mapToEntity(ResultSet resultSet) {
-        try (SqlDaoFactory sqlDaoFactory = new SqlDaoFactory()) {
+        try {
             User user = new UserImpl();
 
             user.setId(resultSet.getInt("id"));
             user.setLogin(resultSet.getString("login"));
             user.setPasswordHash(resultSet.getString("password_hash"));
 
-            RoleSqlDao roleSqlDao = sqlDaoFactory.createRoleDao();
+            RoleSqlDao roleSqlDao = new RoleSqlDao(connection);
             Role role = roleSqlDao.find(resultSet.getInt("role_id")).get();
             user.setRole(role);
             return (User) Proxy.newProxyInstance(
                     UserSqlDao.class.getClassLoader(),
                     new Class[]{User.class, LoadProxy.class},
                     new LoadHandler<>(user));
-        } catch (SQLException | ConnectionException | NoSuchElementException e) {
+        } catch (SQLException | NoSuchElementException e) {
             throw new MappingException(e);
         }
     }
@@ -89,6 +96,15 @@ public class UserSqlDao extends AbstractSqlDao<Integer, User> {
     @Override
     public void delete(Integer id) {
         updateQuery(SQL_DELETE_BY_ID, id);
+    }
+
+    @Override
+    public Optional<User> findByLoginAndPasswordHash(String login, String passwordHash) {
+        List<User> users = mappedQuery(SQL_SELECT_BY_LOGIN_AND_PASSWORD_HASH, login, passwordHash);
+        if (users.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(users.get(0));
     }
 }
 

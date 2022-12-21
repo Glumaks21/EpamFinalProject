@@ -5,14 +5,14 @@ import ua.maksym.hlushchenko.dao.entity.role.*;
 
 import java.util.Locale;
 
-public interface DaoFactory {
+public interface DaoFactory extends AutoCloseable {
     Dao<Integer, Role> createRoleDao();
-    Dao<Integer, User> createUserDao();
-    ReaderDao<Integer>  createReaderDao();
+    UserDao createUserDao();
+    ReaderDao  createReaderDao();
     Dao<Integer, Author> createAuthorDao(Locale locale);
-    PublisherDao<String> createPublisherDao();
+    PublisherDao createPublisherDao();
     Dao<Integer, Genre> createGenreDao(Locale locale);
-    BookDao<Integer> createBookDao(Locale locale);
-    SubscriptionDao<Integer> createSubscriptionDao();
-    ReceiptDao<Integer> createReceiptDao();
+    BookDao createBookDao(Locale locale);
+    SubscriptionDao createSubscriptionDao();
+    ReceiptDao createReceiptDao();
 }

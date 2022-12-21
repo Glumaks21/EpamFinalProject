@@ -15,7 +15,7 @@ import java.lang.reflect.Proxy;
 import java.sql.*;
 import java.util.*;
 
-public class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements ReceiptDao<Integer> {
+class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements ReceiptDao {
     static final String SQL_SELECT_ALL = "SELECT id, reader_id, time " +
             "FROM receipt";
     static final String SQL_SELECT_BY_ID = "SELECT id, reader_id, time " +
@@ -47,11 +47,11 @@ public class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements R
 
     @Override
     protected Receipt mapToEntity(ResultSet resultSet) {
-        try (SqlDaoFactory sqlDaoFactory = new SqlDaoFactory()) {
+        try {
             Receipt receipt = new ReceiptImpl();
             receipt.setId(resultSet.getInt("id"));
 
-            ReaderSqlDao readerSqlDao = sqlDaoFactory.createReaderDao();
+            ReaderSqlDao readerSqlDao = new ReaderSqlDao(connection);
             receipt.setReader(readerSqlDao.find(resultSet.getInt("reader_id")).get());
 
             receipt.setDateTime(resultSet.getTimestamp("time").toLocalDateTime());
@@ -147,7 +147,7 @@ public class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements R
 
     @Override
     public List<Book> findBooks(Integer id) {
-        BookSqlDao bookSqlDao = new BookOriginalSqlDao(connection);
+        BookSqlDao bookSqlDao = new BookEnSqlDao(connection);
         return mappedQuery(bookSqlDao::mapToEntity, SQL_SELECT_RECEIPT_BOOKS, id);
     }
 

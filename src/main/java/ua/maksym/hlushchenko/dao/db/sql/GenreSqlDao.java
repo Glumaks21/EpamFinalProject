@@ -7,7 +7,7 @@ import ua.maksym.hlushchenko.exception.MappingException;
 import java.lang.reflect.Proxy;
 import java.sql.*;
 
-public abstract class GenreSqlDao extends AbstractSqlDao<Integer, Genre> {
+abstract class GenreSqlDao extends AbstractSqlDao<Integer, Genre> {
     public GenreSqlDao(Connection connection) {
         super(connection);
     }

@@ -2,19 +2,10 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" isELIgnored="false"%>
 <html>
 <head>
-<%--    <link rel="stylesheet" href="<c:url value="/static/css/home.css"/>"/>--%>
     <link rel="icon" type="image/x-icon" href="static/images/title_icon.png">
     <title>Library</title>
 </head>
 <body>
-    <c:if test="${user_id != null}">
-        <a href="profile"><img src="/static/images/user_icon.png" alt="user_icon"></a>
-    </c:if>
-    <c:if test="${user_id == null}">
-        <a href="profile/login">Login</a>
-        <a href="profile/registration">Registration</a>
-    </c:if>
-
     <table>
         <thead>
             <tr>

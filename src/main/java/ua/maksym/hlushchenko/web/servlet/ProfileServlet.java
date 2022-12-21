@@ -1,4 +1,4 @@
-package ua.maksym.hlushchenko.servlets;
+package ua.maksym.hlushchenko.web.servlet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,7 +8,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
 
-@WebServlet("/profile")
+
 public class ProfileServlet extends HttpServlet {
     private static final Logger log = LoggerFactory.getLogger(ProfileServlet.class);
 
