@@ -29,8 +29,11 @@ public class ReceiptImpl implements Receipt {
         Receipt receipt = (Receipt) o;
         return getId() == receipt.getId() &&
                 Objects.equals(getReader(), receipt.getReader()) &&
-                Objects.equals(getDateTime(), receipt.getDateTime()) &&
-                Objects.equals(getBooks(), receipt.getBooks());
+                Objects.equals(getDateTime(), receipt.getDateTime());
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId(), getReader(), getDateTime());
+    }
 }

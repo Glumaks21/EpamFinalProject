@@ -2,14 +2,12 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
-import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
 
 import ua.maksym.hlushchenko.dao.entity.*;
 import ua.maksym.hlushchenko.dao.entity.impl.role.ReaderImpl;
-import ua.maksym.hlushchenko.dao.entity.role.Reader;
+import ua.maksym.hlushchenko.dao.entity.role.*;
 import ua.maksym.hlushchenko.util.Sha256Encoder;
 
-import javax.sql.DataSource;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -18,12 +16,6 @@ import static org.junit.jupiter.api.Assertions.*;
 class ReaderSqlDaoTest {
     private static SqlDaoFactory sqlDaoFactory;
     private static ReaderSqlDao dao;
-    private static ReceiptSqlDao receiptSqlDao;
-    private static SubscriptionSqlDao subscriptionSqlDao;
-    private static BookSqlDao bookSqlDao;
-    private static AuthorSqlDao authorSqlDao;
-    private static PublisherSqlDao publisherSqlDao;
-
     private static Reader reader;
 
     static Reader createReader() {
@@ -37,21 +29,23 @@ class ReaderSqlDaoTest {
     @SneakyThrows
     @BeforeAll
     static void init() {
+        SqlDaoTestHelper.clearTables();
         sqlDaoFactory = new SqlDaoFactory();
         dao = sqlDaoFactory.createReaderDao();
-        receiptSqlDao = sqlDaoFactory.createReceiptDao();
-        subscriptionSqlDao = sqlDaoFactory.createSubscriptionDao();
-        authorSqlDao = sqlDaoFactory.createAuthorDao(Locale.ENGLISH);
-        publisherSqlDao = sqlDaoFactory.createPublisherDao();
-        bookSqlDao = sqlDaoFactory.createBookDao(Locale.ENGLISH);
-
         reader = createReader();
+
+        Role role = RoleSqlDaoTest.createRole();
+        RoleSqlDao roleSqlDao = sqlDaoFactory.createRoleDao();
+        roleSqlDao.save(role);
+        Role savedRole = roleSqlDao.find(role.getId()).get();
+        reader.setRole(savedRole);
     }
 
     @Order(1)
     @Test
     void save() {
         dao.save(reader);
+        assertTrue(reader.getId() != 0);
     }
 
     @Order(2)
@@ -83,10 +77,6 @@ class ReaderSqlDaoTest {
     void saveReceipts() {
         Receipt receipt1 = ReceiptSqlDaoTest.createReceipt();
         Receipt receipt2 = ReceiptSqlDaoTest.createReceipt();
-        receipt1.setReader(reader);
-        receipt2.setReader(reader);
-        receiptSqlDao.save(receipt1);
-        receiptSqlDao.save(receipt2);
         List<Receipt> receipts = new ArrayList<>();
         receipts.add(receipt1);
         receipts.add(receipt2);
@@ -106,8 +96,6 @@ class ReaderSqlDaoTest {
     @Test
     void updateReceipts() {
         Receipt receipt3 = ReceiptSqlDaoTest.createReceipt();
-        receipt3.setReader(reader);
-        receiptSqlDao.save(receipt3);
         List<Receipt> receipts = reader.getReceipts();
         receipts.add(receipt3);
         reader.setReceipts(receipts);
@@ -126,20 +114,15 @@ class ReaderSqlDaoTest {
     @Order(9)
     @Test
     void saveSubscriptions() {
+        Book book = BookEnSqlDaoTest.createBook();
+        BookSqlDao bookSqlDao = sqlDaoFactory.createBookDao(Locale.ENGLISH);
+        bookSqlDao.save(book);
+        Book savedBook = bookSqlDao.find(book.getId()).get();
+
         Subscription subscription1 = SubscriptionSqlDaoTest.createSubscription();
         Subscription subscription2 = SubscriptionSqlDaoTest.createSubscription();
-        Book commonBook = subscription1.getBook();
-        Author commonAuthor = commonBook.getAuthor();
-        Publisher commonPublisher = commonBook.getPublisher();
-
-        subscription1.setReader(reader);
-        subscription2.setReader(reader);
-
-        subscription2.setBook(commonBook);
-
-        authorSqlDao.save(commonAuthor);
-        publisherSqlDao.save(commonPublisher);
-        bookSqlDao.save(commonBook);
+        subscription1.setBook(savedBook);
+        subscription2.setBook(savedBook);
 
         List<Subscription> subscriptions = new ArrayList<>();
         subscriptions.add(subscription1);
@@ -161,9 +144,7 @@ class ReaderSqlDaoTest {
     void updateSubscriptions() {
         List<Subscription> subscriptions = reader.getSubscriptions();
         Subscription subscription3 = SubscriptionSqlDaoTest.createSubscription();
-        subscription3.setReader(reader);
         subscription3.setBook(subscriptions.get(0).getBook());
-        subscriptionSqlDao.save(subscription3);
         subscriptions.add(subscription3);
         reader.setSubscriptions(subscriptions);
 
@@ -188,11 +169,7 @@ class ReaderSqlDaoTest {
     @SneakyThrows
     @AfterAll
     static void destroy() {
-        bookSqlDao.delete(reader.getSubscriptions().
-                get(0).getBook().getId());
-        authorSqlDao.delete(reader.getSubscriptions().
-                get(0).getBook().getAuthor().getId());
-        publisherSqlDao.delete(reader.getSubscriptions().
-                get(0).getBook().getPublisher().getIsbn());
+        SqlDaoTestHelper.clearTables();
+        sqlDaoFactory.close();
     }
 }

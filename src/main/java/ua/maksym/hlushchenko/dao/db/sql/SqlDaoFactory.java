@@ -63,7 +63,7 @@ public class SqlDaoFactory implements DaoFactory, AutoCloseable {
     public BookSqlDao createBookDao(Locale locale) {
         switch (locale.getLanguage()) {
             case "en":
-                return new BookEnSqlDao(reserveConnection());
+                return new BookOriginalSqlDao(reserveConnection());
             case "uk":
                 return new BookUaSqlDao(reserveConnection());
             default:

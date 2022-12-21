@@ -3,33 +3,31 @@ package ua.maksym.hlushchenko.dao.db.sql;
 import org.slf4j.*;
 import ua.maksym.hlushchenko.dao.entity.*;
 
-import javax.sql.DataSource;
 import java.sql.*;
-import java.sql.Date;
 import java.util.*;
 
-public class BookUaSqlDao extends BookSqlDao {
-    private static final String SQL_SELECT_ALL = "SELECT book_id as id, title, author_id, publisher_isbn, date, description " +
-            "FROM book_ua";
-    private static final String SQL_SELECT_BY_ID = "SELECT book_id as id, title, author_id, publisher_isbn, date, description " +
-            "FROM book_ua  " +
-            "WHERE id = ?";
-    private static final String SQL_SELECT_GENRES_BY_BOOK_ID = "SELECT id, name " +
-            "FROM genre g " +
-            "JOIN book_has_genre bg ON g.id = bg.genre_id " +
+public class BookUaSqlDao extends TranslatedBookSqlDao {
+    private static final String SQL_SELECT_ALL = "SELECT " +
+            "id, b_u.title as title, b_u.description as description, author_id, publisher_isbn, date " +
+            "FROM book_ua b_u " +
+            "JOIN book b ON b_u.book_id = b.id";
+    private static final String SQL_SELECT_BY_ID = "SELECT " +
+            "id, b_u.title as title, b_u.description as description, author_id, publisher_isbn, date " +
+            "FROM book_ua b_u " +
+            "JOIN book b ON b_u.book_id = b.id " +
+            "WHERE b.id = ?";
+    private static final String SQL_SELECT_GENRES_BY_BOOK_ID = "SELECT g.genre_id as id, name " +
+            "FROM genre_ua g " +
+            "JOIN book_has_genre bg ON g.genre_id = bg.genre_id " +
             "WHERE bg.book_id = ?";
     private static final String SQL_INSERT = "INSERT INTO book_ua" +
-            "(book_id, title, author_ua_id, publisher_isbn, description, date)" +
-            "VALUES(?, ?, ?, ?, ?, ?)";
-    private static final String SQL_INSERT_BOOK_GENRE = "INSERT INTO book_ua_has_genre_ua(book_ua_id, genre_ua_id) " +
-            "VALUES(?, ?)";
+            "(book_id, title, description) " +
+            "VALUES(?, ?, ?)";
     private static final String SQL_UPDATE_BY_ID = "UPDATE book_ua " +
-            "SET title = ?, author_ua_id = ?, publisher_isbn = ?, description = ?, date = ? " +
+            "SET title = ?, description = ? " +
             "WHERE book_id = ?";
     private static final String SQL_DELETE_BY_ID = "DELETE FROM book_ua " +
             "WHERE book_id = ?";
-    private static final String SQL_DELETE_ALL_GENRES_BY_BOOK_ID = "DELETE FROM book_ua_has_genre_ua " +
-            "WHERE book_ua_id = ?";
 
     private static final Logger log = LoggerFactory.getLogger(BookUaSqlDao.class);
 
@@ -39,12 +37,12 @@ public class BookUaSqlDao extends BookSqlDao {
 
     @Override
     public List<Book> findAll() {
-        return mappedQueryResult(SQL_SELECT_ALL);
+        return mappedQuery(SQL_SELECT_ALL);
     }
 
     @Override
     public Optional<Book> find(Integer id) {
-        List<Book> books = mappedQueryResult(SQL_SELECT_BY_ID, id);
+        List<Book> books = mappedQuery(SQL_SELECT_BY_ID, id);
         if (books.isEmpty()) {
             return Optional.empty();
         }
@@ -53,98 +51,32 @@ public class BookUaSqlDao extends BookSqlDao {
 
     @Override
     public void save(Book book) {
-        updateInTransaction(BookEnSqlDao::saveInTransaction, book);
+        updateQuery(SQL_INSERT,
+                book.getId(),
+                book.getTitle(),
+                book.getDescription());
+        saveGenres(book);
     }
 
     @Override
     public void update(Book book) {
-        updateInTransaction(BookEnSqlDao::updateInTransaction, book);
+        super.update(book);
+        updateQuery(SQL_UPDATE_BY_ID,
+                book.getTitle(),
+                book.getDescription(),
+                book.getId());
+        updateGenres(book);
     }
 
     @Override
     public void delete(Integer id) {
-        updateInTransaction(BookEnSqlDao::deleteInTransaction, id);
+        deleteGenres(id);
+        updateQuery(SQL_DELETE_BY_ID, id);
     }
 
     @Override
     public List<Genre> findGenres(Integer id) {
-        SqlDaoFactory sqlDaoFactory = new SqlDaoFactory();
-        AbstractSqlDao<Integer, Genre> genreSqlDao = sqlDaoFactory.createGenreDao(Locale.ENGLISH);
-        return mappedQueryResult(genreSqlDao::mapToEntity, SQL_SELECT_GENRES_BY_BOOK_ID, id);
-    }
-
-    @Override
-    public void saveGenres(Book book) {
-        updateInTransaction(BookEnSqlDao::saveGenresInTransaction, book);
-    }
-
-    @Override
-    public void updateGenres(Book book) {
-        updateInTransaction(BookEnSqlDao::updateGenresInTransaction, book);
-    }
-
-    @Override
-    public void deleteGenres(Integer id) {
-        updateInTransaction(BookEnSqlDao::deleteGenresInTransaction, id);
-    }
-
-    static void saveInTransaction(Book book, Connection connection) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(SQL_INSERT);
-        fillPreparedStatement(statement,
-                book.getTitle(),
-                book.getAuthor().getId(),
-                book.getPublisher().getIsbn(),
-                Date.valueOf(book.getDate()));
-        log.info("Try to execute:\n" + formatSql(statement));
-        statement.executeUpdate();
-
-        saveGenresInTransaction(book, connection);
-    }
-
-    static void updateInTransaction(Book book, Connection connection) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(SQL_UPDATE_BY_ID);
-        fillPreparedStatement(statement,
-                book.getTitle(),
-                book.getAuthor().getId(),
-                book.getPublisher().getIsbn(),
-                Date.valueOf(book.getDate()),
-                book.getId());
-        log.info("Try to execute:\n" + formatSql(statement));
-        statement.executeUpdate();
-
-        updateGenresInTransaction(book, connection);
-    }
-
-    static void deleteInTransaction(Integer id, Connection connection) throws SQLException {
-        deleteGenresInTransaction(id, connection);
-
-        PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_ID);
-        fillPreparedStatement(statement, id);
-        log.info("Try to execute:\n" + formatSql(statement));
-        statement.executeUpdate();
-    }
-
-    static void saveGenresInTransaction(Book book, Connection connection) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(SQL_INSERT_BOOK_GENRE);
-        List<Genre> genres = book.getGenres();
-        for (Genre genre : genres) {
-            fillPreparedStatement(statement,
-                    book.getId(),
-                    genre.getId());
-            log.info("Try to execute:\n" + formatSql(statement));
-            statement.executeUpdate();
-        }
-    }
-
-    static void updateGenresInTransaction(Book book, Connection connection) throws SQLException {
-        deleteGenresInTransaction(book.getId(), connection);
-        saveGenresInTransaction(book, connection);
-    }
-
-    static void deleteGenresInTransaction(Integer id, Connection connection) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(SQL_DELETE_ALL_GENRES_BY_BOOK_ID);
-        fillPreparedStatement(statement, id);
-        log.info("Try to execute:\n" + formatSql(statement));
-        statement.executeUpdate();
+        GenreUaSqlDao genreUaSqlDao = new GenreUaSqlDao(connection);
+        return mappedQuery(genreUaSqlDao::mapToEntity, SQL_SELECT_GENRES_BY_BOOK_ID, id);
     }
 }

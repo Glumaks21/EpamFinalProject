@@ -8,7 +8,7 @@ import ua.maksym.hlushchenko.dao.entity.role.Reader;
 import java.util.*;
 
 @Data
-@ToString(exclude = {"receipts", "subscriptions"})
+@ToString(callSuper = true, exclude = {"receipts", "subscriptions"})
 public class ReaderImpl extends UserImpl implements Reader {
     private boolean blocked;
 

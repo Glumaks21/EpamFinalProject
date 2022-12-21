@@ -3,7 +3,9 @@ package ua.maksym.hlushchenko.dao.db.sql;
 import org.slf4j.*;
 
 import ua.maksym.hlushchenko.dao.Dao;
+import ua.maksym.hlushchenko.exception.ConnectionException;
 import ua.maksym.hlushchenko.exception.DaoException;
+import ua.maksym.hlushchenko.exception.MappingException;
 
 import java.sql.*;
 import java.util.*;
@@ -13,50 +15,70 @@ public abstract class AbstractSqlDao<K, T> implements Dao<K, T> {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    public AbstractSqlDao(Connection Connection) {
-        Objects.requireNonNull(Connection);
-        this.connection = Connection;
+    public AbstractSqlDao(Connection connection) {
+        try {
+            if (Objects.requireNonNull(connection).isClosed()) {
+                throw new ConnectionException();
+            }
+        } catch (SQLException e) {
+            throw new ConnectionException(e);
+        }
+        this.connection = connection;
     }
 
     protected abstract T mapToEntity(ResultSet resultSet);
 
-    protected List<T> mappedQueryResult(String query, Object... args) {
-        return mappedQueryResult(this::mapToEntity, query, args);
-    }
-
-    protected <U> List<U> mappedQueryResult(SqlMapper<U> mapper, String query, Object... args) {
+    protected ResultSet query(String query, Object... args) {
         try {
             PreparedStatement statement = connection.prepareStatement(query);
             fillPreparedStatement(statement, args);
-            log.info("Try to execute:\n" + formatSql(statement));
-
-            ResultSet resultSet = statement.executeQuery();
-            return mapFromResultSet(mapper, resultSet);
+            log.info("Try to execute query:\n" + formatSql(statement));
+            return statement.executeQuery();
         } catch (SQLException e) {
             log.warn(e.getMessage());
             throw new DaoException(e);
         }
     }
 
-    private <U> List<U> mapFromResultSet(SqlMapper<U> mapper, ResultSet resultSet) throws SQLException {
-        List<U> entities = new ArrayList<>();
-        while (resultSet.next()) {
-            U entity = mapper.map(resultSet);
-            entities.add(entity);
+    protected static void fillPreparedStatement(PreparedStatement statement, Object... args)
+            throws SQLException {
+        for (int i = 0; i < args.length; i++) {
+            statement.setObject(i + 1, args[i]);
         }
-        return entities;
     }
 
-    protected <U> void updateInTransaction(SqlBiConsumer<U> methodWithQueriesInTransaction, U initArg) {
+    protected List<T> mappedQuery(String query, Object... args) {
+        return mappedQuery(this::mapToEntity, query, args);
+    }
+
+    protected <U> List<U> mappedQuery(SqlMapper<U> mapper, String query, Object... args) {
+        return mapResultSet(mapper, query(query, args));
+    }
+
+    protected  <U> List<U> mapResultSet(SqlMapper<U> mapper, ResultSet resultSet)  {
         try {
-            connection.setAutoCommit(false);
+            List<U> entities = new ArrayList<>();
+            while (resultSet.next()) {
+                U entity = mapper.map(resultSet);
+                entities.add(entity);
+            }
+            return entities;
+        } catch (SQLException | MappingException e) {
+            log.warn(e.getMessage());
+            throw new DaoException(e);
+        }
+    }
 
-            methodWithQueriesInTransaction.accept(initArg, connection);
-
-            connection.commit();
+    protected ResultSet updateQuery(String updateQuery, Object... args) {
+        try {
+            PreparedStatement statement = connection.prepareStatement(updateQuery,
+                    Statement.RETURN_GENERATED_KEYS);
+            fillPreparedStatement(statement, args);
+            log.info("Try to execute update:\n" + formatSql(statement));
+            statement.executeUpdate();
+            return statement.getGeneratedKeys();
         } catch (SQLException e) {
             log.warn(e.getMessage());
-            tryToRollBack();
             throw new DaoException(e);
         }
     }
@@ -70,13 +92,6 @@ public abstract class AbstractSqlDao<K, T> implements Dao<K, T> {
             throw new DaoException(e);
         }
         log.info("Roll back successful");
-    }
-
-    protected static void fillPreparedStatement(PreparedStatement statement, Object... args)
-            throws SQLException {
-        for (int i = 0; i < args.length; i++) {
-            statement.setObject(i + 1, args[i]);
-        }
     }
 
     protected static String formatSql(Statement statement) {

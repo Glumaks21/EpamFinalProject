@@ -28,12 +28,12 @@ public class GenreUaSqlDao extends GenreSqlDao {
 
     @Override
     public List<Genre> findAll() {
-        return mappedQueryResult(SQL_SELECT_ALL);
+        return mappedQuery(SQL_SELECT_ALL);
     }
 
     @Override
     public Optional<Genre> find(Integer id) {
-        List<Genre> genres = mappedQueryResult(SQL_SELECT_BY_ID, id);
+        List<Genre> genres = mappedQuery(SQL_SELECT_BY_ID, id);
         if (genres.isEmpty()) {
             return Optional.empty();
         }
@@ -42,42 +42,20 @@ public class GenreUaSqlDao extends GenreSqlDao {
 
     @Override
     public void save(Genre genre) {
-        updateInTransaction(GenreUaSqlDao::saveInTransaction, genre);
+        updateQuery(SQL_INSERT,
+                genre.getId(),
+                genre.getName());
     }
 
     @Override
     public void update(Genre genre) {
-        updateInTransaction(GenreUaSqlDao::updateInTransaction, genre);
+        updateQuery(SQL_UPDATE_BY_ID,
+                genre.getName(),
+                genre.getId());
     }
 
     @Override
     public void delete(Integer id) {
-        updateInTransaction(GenreUaSqlDao::deleteInTransaction, id);
-    }
-
-    static void saveInTransaction(Genre genre, Connection connection) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(SQL_INSERT);
-        fillPreparedStatement(statement,
-                genre.getId(),
-                genre.getName());
-        log.info("Try to execute:\n" + formatSql(statement));
-        statement.executeUpdate();
-    }
-
-    static void updateInTransaction(Genre genre, Connection connection) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(SQL_UPDATE_BY_ID);
-        fillPreparedStatement(statement,
-                genre.getName(),
-                genre.getId());
-        log.info("Try to execute:\n" + formatSql(statement));
-        statement.executeUpdate();
-    }
-
-
-    static void deleteInTransaction(Integer id, Connection connection) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_ID);
-        fillPreparedStatement(statement, id);
-        log.info("Try to execute:\n" + formatSql(statement));
-        statement.executeUpdate();
+       updateQuery(SQL_DELETE_BY_ID, id);
     }
 }

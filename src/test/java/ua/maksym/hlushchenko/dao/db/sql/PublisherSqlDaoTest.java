@@ -29,28 +29,12 @@ class PublisherSqlDaoTest {
     @SneakyThrows
     @BeforeAll
     static void init() {
-        setUpTables();
+        SqlDaoTestHelper.clearTables();
         sqlDaoFactory = new SqlDaoFactory();
         dao = sqlDaoFactory.createPublisherDao();
         publisher = createPublisher();
     }
 
-    @SneakyThrows
-    static void setUpTables() {
-        String dropQuery = "DROP TABLE IF EXISTS `publisher`";
-        String createQuery = "CREATE TABLE `publisher` (\n" +
-                "                             `isbn` varchar(17) NOT NULL,\n" +
-                "                             `name` varchar(45) NOT NULL,\n" +
-                "                             PRIMARY KEY (`isbn`),\n" +
-                "                             UNIQUE KEY `name_UNIQUE` (`name`),\n" +
-                "                             UNIQUE KEY `isbn_UNIQUE` (`isbn`)\n" +
-                ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci";
-
-        Connection connection = HikariCPDataSource.getInstance().getConnection();
-        Statement statement = connection.createStatement();
-        statement.executeUpdate(dropQuery);
-        statement.executeUpdate(createQuery);
-    }
 
     @Order(1)
     @Test
@@ -103,15 +87,7 @@ class PublisherSqlDaoTest {
     @SneakyThrows
     @AfterAll
     static void destroy() {
-        dropTables();
+        SqlDaoTestHelper.clearTables();
         sqlDaoFactory.close();
-    }
-
-    @SneakyThrows
-    static void dropTables() {
-        String dropQuery = "DROP TABLE `publisher`";
-        Connection connection = HikariCPDataSource.getInstance().getConnection();
-        Statement statement = connection.createStatement();
-        statement.executeUpdate(dropQuery);
     }
 }

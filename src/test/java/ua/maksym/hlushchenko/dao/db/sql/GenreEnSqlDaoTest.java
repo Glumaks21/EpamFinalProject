@@ -1,16 +1,14 @@
 package ua.maksym.hlushchenko.dao.db.sql;
 
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
-import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.dao.entity.Genre;
 import ua.maksym.hlushchenko.dao.entity.impl.GenreImpl;
 
-import java.sql.*;
 import java.util.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class GenreEnSqlDaoTest {
+class GenreEnSqlDaoTest extends SqlDaoTestHelper {
+    private static SqlDaoFactory sqlDaoFactory;
     private static GenreSqlDao dao;
     private static Genre genre;
 
@@ -20,30 +18,12 @@ class GenreEnSqlDaoTest {
         return genre;
     }
 
-    @SneakyThrows
     @BeforeAll
     static void init() {
-        setUpTables();
-
-        SqlDaoFactory sqlDaoFactory = new SqlDaoFactory();
+        clearTables();
+        sqlDaoFactory = new SqlDaoFactory();
         dao = sqlDaoFactory.createGenreDao(Locale.ENGLISH);
         genre = createGenre();
-    }
-
-    @SneakyThrows
-    static void setUpTables() {
-        String dropQuery = "DROP TABLE IF EXISTS `genre`";
-        String createQuery = "CREATE TABLE `genre` (\n" +
-                "                         `id` int NOT NULL AUTO_INCREMENT,\n" +
-                "                         `name` varchar(45) NOT NULL,\n" +
-                "                         PRIMARY KEY (`id`),\n" +
-                "                         UNIQUE KEY `name_UNIQUE` (`id`,`name`)\n" +
-                ") ENGINE=InnoDB AUTO_INCREMENT=1497 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci";
-
-        Connection connection = HikariCPDataSource.getInstance().getConnection();
-        Statement statement = connection.createStatement();
-        statement.executeUpdate(dropQuery);
-        statement.executeUpdate(createQuery);
     }
 
     @Order(1)
@@ -87,14 +67,7 @@ class GenreEnSqlDaoTest {
 
     @AfterAll
     static void destroy() {
-        dropTables();
-    }
-
-    @SneakyThrows
-    static void dropTables() {
-        String dropQuery = "DROP TABLE `genre`";
-        Connection connection = HikariCPDataSource.getInstance().getConnection();
-        Statement statement = connection.createStatement();
-        statement.executeUpdate(dropQuery);
+        clearTables();
+        sqlDaoFactory.close();
     }
 }

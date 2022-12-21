@@ -2,28 +2,24 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import org.slf4j.*;
 
-import ua.maksym.hlushchenko.dao.Dao;
-import ua.maksym.hlushchenko.dao.DaoFactory;
 import ua.maksym.hlushchenko.dao.entity.impl.role.UserImpl;
-import ua.maksym.hlushchenko.dao.entity.role.Role;
-import ua.maksym.hlushchenko.dao.entity.role.User;
-import ua.maksym.hlushchenko.exception.ConnectionException;
-import ua.maksym.hlushchenko.exception.MappingException;
+import ua.maksym.hlushchenko.dao.entity.role.*;;
+import ua.maksym.hlushchenko.exception.*;
 
-import javax.sql.DataSource;
+import java.lang.reflect.Proxy;
 import java.sql.*;
 import java.util.*;
 
 public class UserSqlDao extends AbstractSqlDao<Integer, User> {
-    private static final String SQL_SELECT_ALL = "SELECT id, login, password_hash, role_id FROM user";
-    private static final String SQL_SELECT_BY_ID = "SELECT id, login, password_hash, role_id FROM user " +
+    static final String SQL_SELECT_ALL = "SELECT id, login, password_hash, role_id FROM user";
+    static final String SQL_SELECT_BY_ID = "SELECT id, login, password_hash, role_id FROM user " +
             "WHERE id = ?";
-    private static final String SQL_INSERT = "INSERT INTO user(login, password_hash, role_id) " +
+    static final String SQL_INSERT = "INSERT INTO user(login, password_hash, role_id) " +
             "VALUES(?, ?, ?)";
-    private static final String SQL_UPDATE_BY_ID = "UPDATE user " +
+    static final String SQL_UPDATE_BY_ID = "UPDATE user " +
             "SET password_hash = ?, role_id = ? " +
             "WHERE id = ?";
-    private static final String SQL_DELETE_BY_ID = "DELETE FROM user " +
+    static final String SQL_DELETE_BY_ID = "DELETE FROM user " +
             "WHERE id = ?";
 
     private static final Logger log = LoggerFactory.getLogger(UserSqlDao.class);
@@ -44,7 +40,10 @@ public class UserSqlDao extends AbstractSqlDao<Integer, User> {
             RoleSqlDao roleSqlDao = sqlDaoFactory.createRoleDao();
             Role role = roleSqlDao.find(resultSet.getInt("role_id")).get();
             user.setRole(role);
-            return user;
+            return (User) Proxy.newProxyInstance(
+                    UserSqlDao.class.getClassLoader(),
+                    new Class[]{User.class, LoadProxy.class},
+                    new LoadHandler<>(user));
         } catch (SQLException | ConnectionException | NoSuchElementException e) {
             throw new MappingException(e);
         }
@@ -52,12 +51,12 @@ public class UserSqlDao extends AbstractSqlDao<Integer, User> {
 
     @Override
     public List<User> findAll() {
-        return mappedQueryResult(SQL_SELECT_ALL);
+        return mappedQuery(SQL_SELECT_ALL);
     }
 
     @Override
     public Optional<User> find(Integer id) {
-        List<User> users = mappedQueryResult(SQL_SELECT_BY_ID, id);
+        List<User> users = mappedQuery(SQL_SELECT_BY_ID, id);
         if (users.isEmpty()) {
             return Optional.empty();
         }
@@ -66,50 +65,30 @@ public class UserSqlDao extends AbstractSqlDao<Integer, User> {
 
     @Override
     public void save(User user) {
-        updateInTransaction(UserSqlDao::saveInTransaction, user);
+        try (ResultSet resultSet = updateQuery(SQL_INSERT,
+                user.getLogin(),
+                user.getPasswordHash(),
+                user.getRole().getId())) {
+            if (resultSet.next()) {
+                user.setId(resultSet.getInt(1));
+            }
+        } catch (SQLException e) {
+            log.warn(e.getMessage());
+            throw new DaoException(e);
+        }
     }
 
     @Override
     public void update(User user) {
-        updateInTransaction(UserSqlDao::updateInTransaction, user);
+        updateQuery(SQL_UPDATE_BY_ID,
+                user.getPasswordHash(),
+                user.getRole().getId(),
+                user.getId());
     }
 
     @Override
     public void delete(Integer id) {
-        updateInTransaction(UserSqlDao::deleteInTransaction, id);
-    }
-
-    static void saveInTransaction(User user, Connection connection) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(SQL_INSERT,
-                Statement.RETURN_GENERATED_KEYS);
-        fillPreparedStatement(statement,
-                user.getLogin(),
-                user.getPasswordHash(),
-                user.getRole().getId());
-        log.info("Try to execute:\n" + formatSql(statement));
-        statement.executeUpdate();
-
-        ResultSet resultSet = statement.getGeneratedKeys();
-        if (resultSet.next()) {
-            user.setId(resultSet.getInt(1));
-        }
-    }
-
-    static void updateInTransaction(User user, Connection connection) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(SQL_UPDATE_BY_ID);
-        fillPreparedStatement(statement,
-                user.getPasswordHash(),
-                user.getRole().getId(),
-                user.getId());
-        log.info("Try to execute:\n" + formatSql(statement));
-        statement.executeUpdate();
-    }
-
-    static void deleteInTransaction(Integer id, Connection connection) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_ID);
-        fillPreparedStatement(statement, id);
-        log.info("Try to execute:\n" + formatSql(statement));
-        statement.executeUpdate();
+        updateQuery(SQL_DELETE_BY_ID, id);
     }
 }
 

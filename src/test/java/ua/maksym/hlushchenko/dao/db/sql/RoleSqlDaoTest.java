@@ -1,12 +1,9 @@
 package ua.maksym.hlushchenko.dao.db.sql;
 
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
-import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.dao.entity.impl.role.RoleImpl;
 import ua.maksym.hlushchenko.dao.entity.role.Role;
 
-import java.sql.*;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,26 +22,10 @@ public class RoleSqlDaoTest {
 
     @BeforeAll
     static void init() {
-        setUpTables();
+        SqlDaoTestHelper.clearTables();
         sqlDaoFactory = new SqlDaoFactory();
         dao = sqlDaoFactory.createRoleDao();
         role = createRole();
-    }
-
-    @SneakyThrows
-    static void setUpTables() {
-        String dropQuery = "DROP TABLE IF EXISTS `role`";
-        String createQuery = "CREATE TABLE `role` (\n" +
-                "                        `id` int NOT NULL AUTO_INCREMENT,\n" +
-                "                        `name` varchar(45) NOT NULL,\n" +
-                "                        PRIMARY KEY (`id`),\n" +
-                "                        UNIQUE KEY `name_UNIQUE` (`name`)\n" +
-                ") ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci";
-
-        Connection connection = HikariCPDataSource.getInstance().getConnection();
-        Statement statement = connection.createStatement();
-        statement.executeUpdate(dropQuery);
-        statement.executeUpdate(createQuery);
     }
 
     @Order(1)
@@ -87,16 +68,7 @@ public class RoleSqlDaoTest {
 
     @AfterAll
     static void destroy() {
-        dropTables();
-    }
-
-    @SneakyThrows
-    static void dropTables() {
-        String dropQuery = "DROP TABLE `role`";
-        Connection connection = HikariCPDataSource.getInstance().getConnection();
-        Statement statement = connection.createStatement();
-        statement.executeUpdate(dropQuery);
-
+        SqlDaoTestHelper.clearTables();
         sqlDaoFactory.close();
     }
 }

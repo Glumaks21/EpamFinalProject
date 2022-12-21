@@ -4,6 +4,7 @@ import ua.maksym.hlushchenko.dao.entity.Author;
 import ua.maksym.hlushchenko.dao.entity.impl.AuthorImpl;
 import ua.maksym.hlushchenko.exception.MappingException;
 
+import java.lang.reflect.Proxy;
 import java.sql.*;
 
 public abstract class AuthorSqlDao extends AbstractSqlDao<Integer, Author> {
@@ -18,7 +19,10 @@ public abstract class AuthorSqlDao extends AbstractSqlDao<Integer, Author> {
             author.setId(resultSet.getInt("id"));
             author.setName(resultSet.getString("name"));
             author.setSurname(resultSet.getString("surname"));
-            return author;
+            return (Author) Proxy.newProxyInstance(
+                    AuthorSqlDao.class.getClassLoader(),
+                    new Class[]{Author.class, LoadProxy.class},
+                    new LoadHandler<>(author));
         } catch (SQLException e) {
             throw new MappingException(e);
         }

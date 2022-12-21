@@ -3,41 +3,40 @@ package ua.maksym.hlushchenko.dao.db.sql;
 import org.slf4j.*;
 
 import ua.maksym.hlushchenko.dao.ReaderDao;
+import ua.maksym.hlushchenko.dao.ReceiptDao;
 import ua.maksym.hlushchenko.dao.entity.*;
 import ua.maksym.hlushchenko.dao.entity.impl.role.ReaderImpl;
 import ua.maksym.hlushchenko.dao.entity.role.Reader;
-import ua.maksym.hlushchenko.exception.ConnectionException;
-import ua.maksym.hlushchenko.exception.DaoException;
-import ua.maksym.hlushchenko.exception.MappingException;
+import ua.maksym.hlushchenko.exception.*;
 
 import java.lang.reflect.*;
 import java.sql.*;
 import java.util.*;
 
 public class ReaderSqlDao extends AbstractSqlDao<Integer, Reader> implements ReaderDao<Integer> {
-    private static final String SQL_SELECT_ALL = "SELECT id, login, blocked " +
+    static final String SQL_SELECT_ALL = "SELECT id, login, password_hash, role_id, blocked " +
             "FROM reader r " +
-            "JOIN user u ON r.used_id = u.login";
-    private static final String SQL_SELECT_BY_LOGIN = "SELECT id, login, blocked " +
+            "JOIN user u ON r.user_id = u.id";
+    static final String SQL_SELECT_BY_ID = "SELECT id, login, password_hash, role_id, blocked " +
             "FROM reader r " +
             "JOIN user u ON r.user_id = u.id " +
             "WHERE user_id = ?";
-    private static final String SQL_SELECT_READER_RECEIPTS = "SELECT id, reader_id, time " +
+    static final String SQL_SELECT_READER_RECEIPTS = "SELECT id, r.reader_id as reader_id, time " +
             "FROM receipt r " +
-            "JOIN reader_has_receipt rhr ON rhr.receipt_id = r.id" +
-            "WHERE rhr.reader_id = ?";
-    private static final String SQL_INSERT = "INSERT INTO reader" +
+            "JOIN reader_has_receipt rhr ON rhr.receipt_id = r.id " +
+            "WHERE r.reader_id = ?";
+    static final String SQL_INSERT = "INSERT INTO reader" +
             "(user_id, blocked) " +
             "VALUES(?, ?)";
-    private static final String SQL_INSERT_READER_RECEIPT = "INSERT INTO reader_has_receipt" +
+    static final String SQL_INSERT_READER_RECEIPT = "INSERT INTO reader_has_receipt" +
             "(reader_id, receipt_id) " +
             "VALUES(?, ?)";
-    private static final String SQL_UPDATE_BY_LOGIN = "UPDATE reader " +
+    static final String SQL_UPDATE_BY_ID = "UPDATE reader " +
             "SET blocked = ? " +
             "WHERE user_id = ?";
-    private static final String SQL_DELETE_BY_LOGIN = "DELETE FROM reader " +
+    static final String SQL_DELETE_BY_ID = "DELETE FROM reader " +
             "WHERE user_id = ?";
-    private static final String SQL_DELETE_READER_RECEIPTS = "DELETE FROM reader_has_receipt " +
+    static final String SQL_DELETE_READER_RECEIPTS = "DELETE FROM reader_has_receipt " +
             "WHERE reader_id = ?";
 
     private static final Logger log = LoggerFactory.getLogger(ReaderSqlDao.class);
@@ -48,11 +47,15 @@ public class ReaderSqlDao extends AbstractSqlDao<Integer, Reader> implements Rea
 
     @Override
     protected Reader mapToEntity(ResultSet resultSet) {
-        try {
+        try (SqlDaoFactory sqlDaoFactory = new SqlDaoFactory()) {
             Reader reader = new ReaderImpl();
+            reader.setId(resultSet.getInt("id"));
             reader.setLogin(resultSet.getString("login"));
             reader.setPasswordHash(resultSet.getString("password_hash"));
             reader.setBlocked(resultSet.getBoolean("blocked"));
+
+            RoleSqlDao roleSqlDao = sqlDaoFactory.createRoleDao();
+            reader.setRole(roleSqlDao.find(resultSet.getInt("role_id")).get());
             return (Reader) Proxy.newProxyInstance(
                     ReaderSqlDao.class.getClassLoader(),
                     new Class[]{Reader.class},
@@ -86,12 +89,12 @@ public class ReaderSqlDao extends AbstractSqlDao<Integer, Reader> implements Rea
 
     @Override
     public List<Reader> findAll() {
-        return mappedQueryResult(SQL_SELECT_ALL);
+        return mappedQuery(SQL_SELECT_ALL);
     }
 
     @Override
     public Optional<Reader> find(Integer id) {
-        List<Reader> readers = mappedQueryResult(SQL_SELECT_BY_LOGIN, id);
+        List<Reader> readers = mappedQuery(SQL_SELECT_BY_ID, id);
         if (readers.isEmpty()) {
             return Optional.empty();
         }
@@ -100,108 +103,62 @@ public class ReaderSqlDao extends AbstractSqlDao<Integer, Reader> implements Rea
 
     @Override
     public void save(Reader reader) {
-        updateInTransaction(ReaderSqlDao::saveInSession, reader);
+        UserSqlDao userSqlDao = new UserSqlDao(connection);
+        userSqlDao.save(reader);
+        updateQuery(SQL_INSERT, reader.getId(), reader.isBlocked());
+        saveReceipts(reader);
+        saveSubscriptions(reader);
     }
 
     @Override
     public void update(Reader reader) {
-        updateInTransaction(ReaderSqlDao::updateInSession, reader);
+        UserSqlDao userSqlDao = new UserSqlDao(connection);
+        userSqlDao.update(reader);
+        updateQuery(SQL_UPDATE_BY_ID,
+                reader.isBlocked(),
+                reader.getId());
+        updateReceipts(reader);
+        updateSubscriptions(reader);
     }
 
     @Override
     public void delete(Integer id) {
-        updateInTransaction(ReaderSqlDao::deleteInSession, id);
-    }
-
-    static void saveInSession(Reader reader, Connection connection) throws SQLException {
-        UserSqlDao.saveInTransaction(reader, connection);
-
-        PreparedStatement statement = connection.prepareStatement(SQL_INSERT);
-        fillPreparedStatement(statement,
-                reader.getId(),
-                reader.isBlocked());
-        log.info("Try to execute:\n" + formatSql(statement));
-        statement.executeUpdate();
-
-        saveReceiptsInTransaction(reader, connection);
-        saveSubscriptionsInTransaction(reader, connection);
-    }
-
-    static void updateInSession(Reader reader, Connection connection) throws SQLException {
-        UserSqlDao.updateInTransaction(reader, connection);
-
-        PreparedStatement statement = connection.prepareStatement(SQL_UPDATE_BY_LOGIN);
-        fillPreparedStatement(statement,
-                reader.isBlocked(),
-                reader.getId());
-        log.info("Try to execute:\n" + formatSql(statement));
-        statement.executeUpdate();
-
-        updateReceiptsInTransaction(reader, connection);
-        updateSubscriptionsInTransaction(reader, connection);
-    }
-
-    static void deleteInSession(Integer id, Connection connection) throws SQLException {
-        deleteReceiptsInTransaction(id, connection);
-        deleteSubscriptionsInTransaction(id, connection);
-
-        PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_LOGIN);
-        fillPreparedStatement(statement, id);
-        log.info("Try to execute:\n" + formatSql(statement));
-        statement.executeUpdate();
-
-        UserSqlDao.deleteInTransaction(id, connection);
+        deleteReceipts(id);
+        deleteSubscriptions(id);
+        updateQuery(SQL_DELETE_BY_ID, id);
+        updateQuery(UserSqlDao.SQL_DELETE_BY_ID, id);
     }
 
     @Override
     public List<Receipt> findReceipts(Integer id) {
-        try (SqlDaoFactory sqlDaoFactory = new SqlDaoFactory()) {
-            ReceiptSqlDao receiptSqlDao = sqlDaoFactory.createReceiptDao();
-            return mappedQueryResult(receiptSqlDao::mapToEntity, SQL_SELECT_READER_RECEIPTS, id);
-        } catch (ConnectionException e) {
-            throw new DaoException(e);
-        }
+        ReceiptSqlDao receiptSqlDao = new ReceiptSqlDao(connection);
+        return mappedQuery(receiptSqlDao::mapToEntity, SQL_SELECT_READER_RECEIPTS, id);
     }
 
     @Override
     public void saveReceipts(Reader reader) {
-        updateInTransaction(ReaderSqlDao::saveReceiptsInTransaction, reader);
+        ReceiptSqlDao receiptSqlDao = new ReceiptSqlDao(connection);
+        for (Receipt receipt : reader.getReceipts()) {
+            receipt.setReader(reader);
+            receiptSqlDao.save(receipt);
+
+            updateQuery(SQL_INSERT_READER_RECEIPT,
+                    reader.getId(),
+                    receipt.getId());
+        }
     }
 
     @Override
     public void updateReceipts(Reader reader) {
-        updateInTransaction(ReaderSqlDao::updateReceiptsInTransaction, reader);
+        deleteReceipts(reader.getId());
+        saveReceipts(reader);
     }
 
     @Override
     public void deleteReceipts(Integer id) {
-        updateInTransaction(ReaderSqlDao::deleteReceiptsInTransaction, id);
-    }
-
-    static void saveReceiptsInTransaction(Reader reader, Connection connection) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(SQL_INSERT_READER_RECEIPT);
-        for (Receipt receipt : reader.getReceipts()) {
-            receipt.setReader(reader);
-            ReceiptSqlDao.saveInTransaction(receipt, connection);
-
-            fillPreparedStatement(statement, reader.getId(), receipt.getId());
-            log.info("Try to execute:\n" + formatSql(statement));
-            statement.executeUpdate();
-        }
-    }
-
-    static void updateReceiptsInTransaction(Reader reader, Connection connection) throws SQLException {
-        deleteReceiptsInTransaction(reader.getId(), connection);
-        saveReceiptsInTransaction(reader, connection);
-    }
-
-    static void deleteReceiptsInTransaction(Integer id, Connection connection) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(SQL_DELETE_READER_RECEIPTS);
-        fillPreparedStatement(statement, id);
-        log.info("Try to execute:\n" + formatSql(statement));
-        statement.executeUpdate();
-
-        ReceiptSqlDao.deleteInTransaction(id, connection);
+        updateQuery(SQL_DELETE_READER_RECEIPTS, id);
+        ReceiptSqlDao receiptSqlDao = new ReceiptSqlDao(connection);
+        receiptSqlDao.deleteByReaderId(id);
     }
 
     @Override
@@ -212,32 +169,22 @@ public class ReaderSqlDao extends AbstractSqlDao<Integer, Reader> implements Rea
 
     @Override
     public void saveSubscriptions(Reader reader) {
-        updateInTransaction(ReaderSqlDao::saveSubscriptionsInTransaction, reader);
+        SubscriptionSqlDao subscriptionSqlDao = new SubscriptionSqlDao(connection);
+        for (Subscription subscription : reader.getSubscriptions()) {
+            subscription.setReader(reader);
+            subscriptionSqlDao.save(subscription);
+        }
     }
 
     @Override
     public void updateSubscriptions(Reader reader) {
-        updateInTransaction(ReaderSqlDao::updateSubscriptionsInTransaction, reader);
+        deleteSubscriptions(reader.getId());
+        saveSubscriptions(reader);
     }
 
     @Override
     public void deleteSubscriptions(Integer id) {
-        updateInTransaction(ReaderSqlDao::deleteSubscriptionsInTransaction, id);
-    }
-
-    static void saveSubscriptionsInTransaction(Reader reader, Connection connection) throws SQLException {
-        for (Subscription subscription : reader.getSubscriptions()) {
-            subscription.setReader(reader);
-            SubscriptionSqlDao.saveInTransaction(subscription, connection);
-        }
-    }
-
-    static void updateSubscriptionsInTransaction(Reader reader, Connection connection) throws SQLException {
-        deleteSubscriptionsInTransaction(reader.getId(), connection);
-        saveSubscriptionsInTransaction(reader, connection);
-    }
-
-    static void deleteSubscriptionsInTransaction(Integer id, Connection connection) throws SQLException {
-         SubscriptionSqlDao.deleteByReaderIdInTransaction(id, connection);
+        SubscriptionSqlDao subscriptionSqlDao = new SubscriptionSqlDao(connection);
+        subscriptionSqlDao.deleteByReaderId(id);
     }
 }

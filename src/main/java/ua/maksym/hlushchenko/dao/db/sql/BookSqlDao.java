@@ -3,13 +3,11 @@ package ua.maksym.hlushchenko.dao.db.sql;
 import ua.maksym.hlushchenko.dao.BookDao;
 import ua.maksym.hlushchenko.dao.entity.*;
 import ua.maksym.hlushchenko.dao.entity.impl.BookImpl;
-import ua.maksym.hlushchenko.exception.ConnectionException;
-import ua.maksym.hlushchenko.exception.MappingException;
+import ua.maksym.hlushchenko.exception.*;
 
 import java.lang.reflect.*;
 import java.sql.*;
-import java.util.Locale;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 public abstract class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao<Integer> {
     private final Locale locale;
@@ -18,6 +16,7 @@ public abstract class BookSqlDao extends AbstractSqlDao<Integer, Book> implement
         super(connection);
         this.locale = locale;
     }
+
     @Override
     protected Book mapToEntity(ResultSet resultSet) {
         try (SqlDaoFactory sqlDaoFactory = new SqlDaoFactory()) {

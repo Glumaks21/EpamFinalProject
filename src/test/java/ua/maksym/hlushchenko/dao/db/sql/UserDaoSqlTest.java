@@ -2,25 +2,22 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
-import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.dao.entity.impl.role.UserImpl;
 import ua.maksym.hlushchenko.dao.entity.role.*;
 import ua.maksym.hlushchenko.util.Sha256Encoder;
 
-import java.sql.*;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class UserDaoSqlTest {
+    private static SqlDaoFactory sqlDaoFactory;
     private static UserSqlDao dao;
     private static User user;
 
-    private static RoleSqlDao roleSqlDao;
-
     static User createUser() {
-        UserImpl user = new UserImpl();
+        User user = new UserImpl();
         user.setLogin("test");
         user.setPasswordHash(Sha256Encoder.encode("test"));
         user.setRole(RoleSqlDaoTest.createRole());
@@ -29,35 +26,16 @@ class UserDaoSqlTest {
 
     @BeforeAll
     static void init() {
-        setUpTables();
-        SqlDaoFactory sqlDaoFactory = new SqlDaoFactory();
-        dao = sqlDaoFactory.createUserDao();
+        SqlDaoTestHelper.clearTables();
+        sqlDaoFactory = new SqlDaoFactory();
+
+        RoleSqlDao roleSqlDao = sqlDaoFactory.createRoleDao();
+        Role role = RoleSqlDaoTest.createRole();
+        roleSqlDao.save(role);
+
         user = createUser();
-
-        roleSqlDao = sqlDaoFactory.createRoleDao();
-        roleSqlDao.save(user.getRole());
-    }
-
-    @SneakyThrows
-    static void setUpTables() {
-        RoleSqlDaoTest.setUpTables();
-
-        String dropQuery = "DROP TABLE IF EXISTS `user`";
-        String createQuery = "CREATE TABLE `user` (\n" +
-                "                        `id` int NOT NULL AUTO_INCREMENT,\n" +
-                "                        `login` varchar(45) NOT NULL,\n" +
-                "                        `password_hash` varchar(256) NOT NULL,\n" +
-                "                        `role_id` int NOT NULL,\n" +
-                "                        PRIMARY KEY (`id`),\n" +
-                "                        UNIQUE KEY `login_UNIQUE` (`login`),\n" +
-                "                        KEY `fk_user_1_idx` (`role_id`,`id`),\n" +
-                "                        CONSTRAINT `fk_user_role_id` FOREIGN KEY (`role_id`) REFERENCES `role` (`id`)\n" +
-                ") ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci";
-
-        Connection connection = HikariCPDataSource.getInstance().getConnection();
-        Statement statement = connection.createStatement();
-        statement.executeUpdate(dropQuery);
-        statement.executeUpdate(createQuery);
+        user.setRole(role);
+        dao = sqlDaoFactory.createUserDao();
     }
 
     @Order(1)
@@ -81,7 +59,7 @@ class UserDaoSqlTest {
         Optional<User> optionalUserInDb = dao.find(user.getId());
         assertTrue(optionalUserInDb.isPresent());
         User userInDb = optionalUserInDb.get();
-        assertEquals(userInDb, user);
+        assertEquals(user, userInDb);
     }
 
     @Order(4)
@@ -102,16 +80,7 @@ class UserDaoSqlTest {
 
     @AfterAll
     static void destroy() {
-        dropTables();
-    }
-
-    @SneakyThrows
-    static void dropTables() {
-        String dropQuery = "DROP TABLE `user`";
-        Connection connection = HikariCPDataSource.getInstance().getConnection();
-        Statement statement = connection.createStatement();
-        statement.executeUpdate(dropQuery);
-
-        RoleSqlDaoTest.dropTables();
+        SqlDaoTestHelper.clearTables();
+        sqlDaoFactory.close();
     }
 }

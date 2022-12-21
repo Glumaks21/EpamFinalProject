@@ -4,6 +4,7 @@ import ua.maksym.hlushchenko.dao.entity.Genre;
 import ua.maksym.hlushchenko.dao.entity.impl.GenreImpl;
 import ua.maksym.hlushchenko.exception.MappingException;
 
+import java.lang.reflect.Proxy;
 import java.sql.*;
 
 public abstract class GenreSqlDao extends AbstractSqlDao<Integer, Genre> {
@@ -12,12 +13,15 @@ public abstract class GenreSqlDao extends AbstractSqlDao<Integer, Genre> {
     }
 
     @Override
-    protected GenreImpl mapToEntity(ResultSet resultSet) {
+    protected Genre mapToEntity(ResultSet resultSet) {
         try {
-            GenreImpl genre = new GenreImpl();
+            Genre genre = new GenreImpl();
             genre.setId(resultSet.getInt("id"));
             genre.setName(resultSet.getString("name"));
-            return genre;
+            return (Genre) Proxy.newProxyInstance(
+                    GenreSqlDao.class.getClassLoader(),
+                    new Class[] {Genre.class, LoadProxy.class},
+                    new LoadHandler<>(genre));
         } catch (SQLException e) {
             throw new MappingException(e);
         }

@@ -3,8 +3,11 @@ package ua.maksym.hlushchenko.dao.db.sql;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
+import ua.maksym.hlushchenko.dao.entity.Book;
 import ua.maksym.hlushchenko.dao.entity.Subscription;
 import ua.maksym.hlushchenko.dao.entity.impl.SubscriptionImpl;
+import ua.maksym.hlushchenko.dao.entity.role.Reader;
+import ua.maksym.hlushchenko.dao.entity.role.Role;
 
 import javax.sql.DataSource;
 import java.time.LocalDate;
@@ -16,11 +19,6 @@ import static org.junit.jupiter.api.Assertions.*;
 class SubscriptionSqlDaoTest {
     private static SqlDaoFactory sqlDaoFactory;
     private static SubscriptionSqlDao dao;
-    private static ReaderSqlDao readerSqlDao;
-    private static BookSqlDao bookSqlDao;
-    private static AuthorSqlDao authorSqlDao;
-    private static PublisherSqlDao publisherSqlDao;
-
     private static Subscription subscription;
 
     static Subscription createSubscription() {
@@ -33,21 +31,28 @@ class SubscriptionSqlDaoTest {
         return subscription;
     }
 
-    @SneakyThrows
     @BeforeAll
     static void init() {
+        SqlDaoTestHelper.clearTables();
+
         sqlDaoFactory = new SqlDaoFactory();
-        dao = sqlDaoFactory.createSubscriptionDao();
-        readerSqlDao = sqlDaoFactory.createReaderDao();
-        bookSqlDao = sqlDaoFactory.createBookDao(Locale.ENGLISH);
-        authorSqlDao = sqlDaoFactory.createAuthorDao(Locale.ENGLISH);
-        publisherSqlDao = sqlDaoFactory.createPublisherDao();
+        RoleSqlDao roleSqlDao = sqlDaoFactory.createRoleDao();
+        Role role = RoleSqlDaoTest.createRole();
+        roleSqlDao.save(role);
+
+        ReaderSqlDao readerSqlDao = sqlDaoFactory.createReaderDao();
+        Reader reader = ReaderSqlDaoTest.createReader();
+        reader.setRole(role);
+        readerSqlDao.save(reader);
+
+        BookSqlDao bookSqlDao = sqlDaoFactory.createBookDao(Locale.ENGLISH);
+        Book book = BookEnSqlDaoTest.createBook();
+        bookSqlDao.save(book);
 
         subscription = createSubscription();
-        readerSqlDao.save(subscription.getReader());
-        authorSqlDao.save(subscription.getBook().getAuthor());
-        publisherSqlDao.save(subscription.getBook().getPublisher());
-        bookSqlDao.save(subscription.getBook());
+        subscription.setReader(reader);
+        subscription.setBook(book);
+        dao = sqlDaoFactory.createSubscriptionDao();
     }
 
     @Order(1)
@@ -85,14 +90,31 @@ class SubscriptionSqlDaoTest {
 
     @Order(5)
     @Test
+    void findByReaderId() {
+        List<Subscription> subscriptions = dao.findByReaderId(subscription.getReader().getId());
+        assertTrue(subscriptions.contains(subscription));
+    }
+
+    @Order(6)
+    @Test
+    void deleteByReaderId() {
+        dao.deleteByReaderId(subscription.getReader().getId());
+        List<Subscription> subscriptions = dao.findByReaderId(subscription.getReader().getId());
+        assertTrue(subscriptions.isEmpty());
+    }
+
+
+    @Order(7)
+    @Test
     void delete() {
+        dao.save(subscription);
         dao.delete(subscription.getId());
         assertTrue(dao.find(subscription.getId()).isEmpty());
     }
 
-    @SneakyThrows
     @AfterAll
     static void destroy() {
+        SqlDaoTestHelper.clearTables();
         sqlDaoFactory.close();
     }
 }

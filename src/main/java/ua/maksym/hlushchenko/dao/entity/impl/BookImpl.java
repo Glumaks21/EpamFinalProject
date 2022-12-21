@@ -18,16 +18,6 @@ public class BookImpl implements Book{
     private List<Genre> genres = new ArrayList<>();
 
     @Override
-    public List<Genre> getGenres() {
-        return new ArrayList<>(genres);
-    }
-
-    @Override
-    public void setGenres(List<Genre> genres) {
-        this.genres = new ArrayList<>(genres);
-    }
-
-    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Book)) return false;
@@ -37,12 +27,11 @@ public class BookImpl implements Book{
                 getAuthor().equals(book.getAuthor()) &&
                 getPublisher().equals(book.getPublisher()) &&
                 getDate().equals(book.getDate()) &&
-                getTitle().equals(book.getTitle()) &&
-                getGenres().equals(book.getGenres());
+                getTitle().equals(book.getTitle());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getTitle(), getAuthor(), getPublisher(), getGenres());
+        return Objects.hash(getId(), getTitle(), getAuthor(), getPublisher());
     }
 }

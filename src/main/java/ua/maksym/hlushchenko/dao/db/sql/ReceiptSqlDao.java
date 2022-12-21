@@ -2,41 +2,45 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import org.slf4j.*;
 
-import ua.maksym.hlushchenko.dao.Dao;
-import ua.maksym.hlushchenko.dao.DaoFactory;
 import ua.maksym.hlushchenko.dao.ReceiptDao;
 import ua.maksym.hlushchenko.dao.entity.*;
 import ua.maksym.hlushchenko.dao.entity.impl.ReceiptImpl;
-import ua.maksym.hlushchenko.dao.entity.role.Reader;
 import ua.maksym.hlushchenko.exception.ConnectionException;
+import ua.maksym.hlushchenko.exception.DaoException;
 import ua.maksym.hlushchenko.exception.MappingException;
 
-import javax.sql.DataSource;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.*;
 import java.util.*;
 
 public class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements ReceiptDao<Integer> {
-    private static final String SQL_SELECT_ALL = "SELECT id, reader_id, time " +
+    static final String SQL_SELECT_ALL = "SELECT id, reader_id, time " +
             "FROM receipt";
-    private static final String SQL_SELECT_BY_ID = "SELECT id, reader_id, time " +
+    static final String SQL_SELECT_BY_ID = "SELECT id, reader_id, time " +
             "FROM receipt " +
             "WHERE id = ?";
-    private static final String SQL_SELECT_RECEIPT_BOOKS =
+    static final String SQL_SELECT_BY_READER_ID = "SELECT id, reader_id, time " +
+            "FROM receipt " +
+            "WHERE reader_id = ?";
+    static final String SQL_SELECT_RECEIPT_BOOKS =
             "SELECT id, title, author_id, publisher_isbn, date, description, cover_id " +
             "FROM book b " +
             "JOIN receipt_has_book rhb ON rhb.book_id = b.id" +
             "WHERE rhb.receipt_id = ?";
-    private static final String SQL_INSERT = "INSERT INTO receipt(reader_id, time) " +
+    static final String SQL_INSERT = "INSERT INTO receipt(reader_id, time) " +
             "VALUES(?, ?)";
-    private static final String SQL_INSERT_RECEIPT_BOOK = "INSERT INTO receipt_has_book(receipt_id, book_id) " +
+    static final String SQL_INSERT_RECEIPT_BOOK = "INSERT INTO receipt_has_book(receipt_id, book_id) " +
             "VALUES(?, ?)";
-    private static final String SQL_UPDATE_BY_ID = "UPDATE receipt SET " +
+    static final String SQL_UPDATE_BY_ID = "UPDATE receipt SET " +
             "reader_id = ?, time = ? " +
             "WHERE id = ?";
-    private static final String SQL_DELETE_BY_ID = "DELETE FROM receipt " +
+    static final String SQL_DELETE_BY_ID = "DELETE FROM receipt " +
             "WHERE id = ?";
-    private static final String SQL_DELETE_RECEIPTS_BOOKS = "DELETE FROM receipt_has_book " +
+    static final String SQL_DELETE_READER_ID = "DELETE FROM receipt " +
+            "WHERE reader_id = ?";
+    static final String SQL_DELETE_RECEIPTS_BOOKS = "DELETE FROM receipt_has_book " +
             "WHERE receipt_id = ?";
 
     private static final Logger log = LoggerFactory.getLogger(ReceiptSqlDao.class);
@@ -53,16 +57,27 @@ public class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements R
             receipt.setDateTime(resultSet.getTimestamp("time").toLocalDateTime());
             return (Receipt) Proxy.newProxyInstance(ReceiptSqlDao.class.getClassLoader(),
                     new Class[]{Receipt.class},
-                    (proxy, method, args) -> {
-                        if (method.getName().equals("getBooks") &&
-                                receipt.getBooks() == null) {
-                            receipt.setBooks(findBooks(receipt.getId()));
-                        }
-
-                        return method.invoke(receipt, args);
-                    });
+                    new LazyInitializationHandler(receipt));
         } catch (SQLException | ConnectionException | NoSuchElementException e) {
             throw new MappingException(e);
+        }
+    }
+
+    private class LazyInitializationHandler implements InvocationHandler {
+        private final Receipt wrapped;
+        private boolean bookInitialised;
+
+        public LazyInitializationHandler(Receipt wrapped) {
+            this.wrapped = wrapped;
+        }
+
+        @Override
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            if (!bookInitialised && method.getName().equals("getBooks")) {
+                bookInitialised = true;
+                wrapped.setBooks(findBooks(wrapped.getId()));
+            }
+            return method.invoke(wrapped, args);
         }
     }
 
@@ -72,12 +87,12 @@ public class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements R
 
     @Override
     public List<Receipt> findAll() {
-        return mappedQueryResult(SQL_SELECT_ALL);
+        return mappedQuery(SQL_SELECT_ALL);
     }
 
     @Override
     public Optional<Receipt> find(Integer id) {
-        List<Receipt> receipts = mappedQueryResult(SQL_SELECT_BY_ID, id);
+        List<Receipt> receipts = mappedQuery(SQL_SELECT_BY_ID, id);
         if (receipts.isEmpty()) {
             return Optional.empty();
         }
@@ -86,100 +101,73 @@ public class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements R
 
     @Override
     public void save(Receipt receipt) {
-        updateInTransaction(ReceiptSqlDao::saveInTransaction, receipt);
+        try (ResultSet resultSet = updateQuery(SQL_INSERT,
+                    receipt.getReader().getId(),
+                    Timestamp.valueOf(receipt.getDateTime()))) {
+            if (resultSet.next()) {
+                receipt.setId(resultSet.getInt(1));
+            }
+
+            saveBooks(receipt);
+        } catch (SQLException e) {
+            log.warn(e.getMessage());
+            throw new DaoException(e);
+        }
     }
 
     @Override
     public void update(Receipt receipt) {
-        updateInTransaction(ReceiptSqlDao::updateInTransaction, receipt);
+        updateBooks(receipt);
+        updateQuery(SQL_UPDATE_BY_ID,
+                receipt.getReader().getId(),
+                Timestamp.valueOf(receipt.getDateTime()),
+                receipt.getId());
     }
 
     @Override
     public void delete(Integer id) {
-        updateInTransaction(ReceiptSqlDao::deleteInTransaction, id);
+        deleteBooks(id);
+        updateQuery(SQL_DELETE_BY_ID, id);
     }
 
-    static void saveInTransaction(Receipt receipt, Connection connection) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(SQL_INSERT,
-                Statement.RETURN_GENERATED_KEYS);
-        fillPreparedStatement(statement,
-                receipt.getReader().getLogin(),
-                Timestamp.valueOf(receipt.getDateTime()));
-        log.info("Try to execute:\n" + formatSql(statement));
-        statement.executeUpdate();
-
-        ResultSet resultSet = statement.getGeneratedKeys();
-        if (resultSet.next()) {
-            receipt.setId(resultSet.getInt(1));
+    @Override
+    public Optional<Receipt> findByReaderId(int id) {
+        List<Receipt> receipts = mappedQuery(SQL_SELECT_BY_READER_ID, id);
+        if (receipts.isEmpty()) {
+            return Optional.empty();
         }
-
-        saveBooksInTransaction(receipt, connection);
+        return Optional.of(receipts.get(0));
     }
 
-    static void updateInTransaction(Receipt receipt, Connection connection) throws SQLException {
-        updateBooksInTransaction(receipt, connection);
-
-        PreparedStatement statement = connection.prepareStatement(SQL_UPDATE_BY_ID);
-        fillPreparedStatement(statement,
-                receipt.getReader().getLogin(),
-                Timestamp.valueOf(receipt.getDateTime()),
-                receipt.getId());
-        log.info("Try to execute:\n" + formatSql(statement));
-        statement.executeUpdate();
-    }
-
-    static void deleteInTransaction(Integer id, Connection connection) throws SQLException {
-        deleteBooksInTransaction(id, connection);
-
-        PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_ID);
-        fillPreparedStatement(statement, id);
-        log.info("Try to execute:\n" + formatSql(statement));
-        statement.executeUpdate();
+    @Override
+    public void deleteByReaderId(int id) {
+        deleteBooks(id);
+        updateQuery(SQL_DELETE_READER_ID, id);
     }
 
     @Override
     public List<Book> findBooks(Integer id) {
-        SqlDaoFactory sqlDaoFactory = new SqlDaoFactory();
-            BookSqlDao bookSqlDao = sqlDaoFactory.createBookDao(Locale.ENGLISH);
-            return mappedQueryResult(bookSqlDao::mapToEntity, SQL_SELECT_RECEIPT_BOOKS, id);
-
+        BookSqlDao bookSqlDao = new BookOriginalSqlDao(connection);
+        return mappedQuery(bookSqlDao::mapToEntity, SQL_SELECT_RECEIPT_BOOKS, id);
     }
 
     @Override
     public void saveBooks(Receipt receipt) {
-        updateInTransaction(ReceiptSqlDao::saveBooksInTransaction, receipt);
+        for (Book book : receipt.getBooks()) {
+            updateQuery(SQL_INSERT_RECEIPT_BOOK,
+                    receipt.getId(),
+                    book.getId());
+        }
     }
 
     @Override
     public void updateBooks(Receipt receipt) {
-        updateInTransaction(ReceiptSqlDao::updateBooksInTransaction, receipt);
+        deleteBooks(receipt.getId());
+        saveBooks(receipt);
     }
 
     @Override
     public void deleteBooks(Integer id) {
-        updateInTransaction(ReceiptSqlDao::deleteBooksInTransaction, id);
-    }
-
-    static void saveBooksInTransaction(Receipt receipt, Connection connection) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(SQL_INSERT_RECEIPT_BOOK);
-        for (Book book : receipt.getBooks()) {
-            fillPreparedStatement(statement,
-                    receipt.getId(),
-                    book.getId());
-            log.info("Try to execute:\n" + formatSql(statement));
-            statement.executeUpdate();
-        }
-    }
-
-    static void updateBooksInTransaction(Receipt receipt, Connection connection) throws SQLException {
-        deleteBooksInTransaction(receipt.getId(), connection);
-        saveBooksInTransaction(receipt, connection);
-    }
-
-    static void deleteBooksInTransaction(Integer id, Connection connection) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(SQL_DELETE_RECEIPTS_BOOKS);
-        fillPreparedStatement(statement, id);
-        log.info("Try to execute:\n" + formatSql(statement));
-        statement.executeUpdate();
+        updateQuery(SQL_DELETE_RECEIPTS_BOOKS, id);
     }
 }

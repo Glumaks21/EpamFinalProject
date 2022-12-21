@@ -7,17 +7,17 @@ import java.sql.*;
 import java.util.*;
 
 public class AuthorUaSqlDao extends AuthorSqlDao {
-    private static final String SQL_SELECT_ALL = "SELECT author_id as id, name, surname " +
+    static final String SQL_SELECT_ALL = "SELECT author_id as id, name, surname " +
             "FROM author_ua";
-    private static final String SQL_SELECT_BY_ID = "SELECT author_id as id, name, surname " +
+    static final String SQL_SELECT_BY_ID = "SELECT author_id as id, name, surname " +
             "FROM author_ua " +
             "WHERE author_id = ?";
-    private static final String SQL_INSERT = "INSERT INTO author_ua(author_id, name, surname) " +
+    static final String SQL_INSERT = "INSERT INTO author_ua(author_id, name, surname) " +
             "VALUES(?, ?, ?)";
-    private static final String SQL_UPDATE_BY_ID = "UPDATE author_ua " +
+    static final String SQL_UPDATE_BY_ID = "UPDATE author_ua " +
             "SET name = ?, surname = ? " +
             "WHERE author_id = ?";
-    private static final String SQL_DELETE_BY_ID = "DELETE FROM author_ua " +
+    static final String SQL_DELETE_BY_ID = "DELETE FROM author_ua " +
             "WHERE author_id = ?";
 
     private static final Logger log = LoggerFactory.getLogger(AuthorUaSqlDao.class);
@@ -28,12 +28,12 @@ public class AuthorUaSqlDao extends AuthorSqlDao {
 
     @Override
     public List<Author> findAll() {
-        return mappedQueryResult(SQL_SELECT_ALL);
+        return mappedQuery(SQL_SELECT_ALL);
     }
 
     @Override
     public Optional<Author> find(Integer id) {
-        List<Author> authors = mappedQueryResult(SQL_SELECT_BY_ID, id);
+        List<Author> authors = mappedQuery(SQL_SELECT_BY_ID, id);
         if (authors.isEmpty()) {
             return Optional.empty();
         }
@@ -42,43 +42,22 @@ public class AuthorUaSqlDao extends AuthorSqlDao {
 
     @Override
     public void save(Author author) {
-        updateInTransaction(AuthorUaSqlDao::saveInTransaction, author);
+        updateQuery(SQL_INSERT,
+                author.getId(),
+                author.getName(),
+                author.getSurname());
     }
 
     @Override
     public void update(Author author) {
-        updateInTransaction(AuthorUaSqlDao::updateInTransaction, author);
+       updateQuery(SQL_UPDATE_BY_ID,
+               author.getName(),
+               author.getSurname(),
+               author.getId());
     }
 
     @Override
     public void delete(Integer id) {
-        updateInTransaction(AuthorUaSqlDao::deleteInTransaction, id);
-    }
-
-    static void saveInTransaction(Author author, Connection connection) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(SQL_INSERT);
-        fillPreparedStatement(statement,
-                author.getId(),
-                author.getName(),
-                author.getSurname());
-        log.info("Try to execute:\n" + formatSql(statement));
-        statement.executeUpdate();
-    }
-
-    static void updateInTransaction(Author author, Connection connection) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(SQL_UPDATE_BY_ID);
-        fillPreparedStatement(statement,
-                author.getName(),
-                author.getSurname(),
-                author.getId());
-        log.info("Try to execute:\n" + formatSql(statement));
-        statement.executeUpdate();
-    }
-
-    static void deleteInTransaction(Integer id, Connection connection) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(SQL_DELETE_BY_ID);
-        fillPreparedStatement(statement, id);
-        log.info("Try to execute:\n" + formatSql(statement));
-        statement.executeUpdate();
+        updateQuery(SQL_DELETE_BY_ID, id);
     }
 }
