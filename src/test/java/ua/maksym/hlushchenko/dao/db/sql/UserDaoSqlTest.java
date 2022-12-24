@@ -2,40 +2,37 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
+import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
+import ua.maksym.hlushchenko.dao.entity.impl.role.ReaderImpl;
 import ua.maksym.hlushchenko.dao.entity.impl.role.UserImpl;
 import ua.maksym.hlushchenko.dao.entity.role.*;
 import ua.maksym.hlushchenko.util.Sha256Encoder;
 
+import java.sql.Connection;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class UserDaoSqlTest {
-    private static SqlDaoFactory sqlDaoFactory;
+    private static Connection connection;
     private static UserSqlDao dao;
     private static User user;
 
     static User createUser() {
-        User user = new UserImpl();
+        User user = new ReaderImpl();
         user.setLogin("test");
         user.setPasswordHash(Sha256Encoder.encode("test"));
-        user.setRole(RoleSqlDaoTest.createRole());
         return user;
     }
 
+    @SneakyThrows
     @BeforeAll
     static void init() {
         SqlDaoTestHelper.clearTables();
-        sqlDaoFactory = new SqlDaoFactory();
-
-        RoleSqlDao roleSqlDao = sqlDaoFactory.createRoleDao();
-        Role role = RoleSqlDaoTest.createRole();
-        roleSqlDao.save(role);
-
+        connection = HikariCPDataSource.getInstance().getConnection();
         user = createUser();
-        user.setRole(role);
-        dao = sqlDaoFactory.createUserDao();
+        dao = new UserSqlDao(connection);
     }
 
     @Order(1)
@@ -64,13 +61,22 @@ class UserDaoSqlTest {
 
     @Order(4)
     @Test
+    void findByLogin() {
+        Optional<User> optionalUserInDb = dao.findByLogin(user.getLogin());
+        assertTrue(optionalUserInDb.isPresent());
+        User userInDb = optionalUserInDb.get();
+        assertEquals(user, userInDb);
+    }
+
+    @Order(5)
+    @Test
     void update() {
         user.setPasswordHash(Sha256Encoder.encode("ne_test"));
         dao.update(user);
         find();
     }
 
-    @Order(5)
+    @Order(6)
     @Test
     void delete() {
         dao.delete(user.getId());
@@ -78,9 +84,10 @@ class UserDaoSqlTest {
         assertTrue(userInDb.isEmpty());
     }
 
+    @SneakyThrows
     @AfterAll
     static void destroy() {
         SqlDaoTestHelper.clearTables();
-        sqlDaoFactory.close();
+        connection.close();
     }
 }

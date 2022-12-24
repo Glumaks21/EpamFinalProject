@@ -6,11 +6,10 @@ import java.util.Objects;
 
 @Data
 @ToString(exclude = "passwordHash")
-public class UserImpl implements User {
+public abstract class UserImpl implements User {
     private int id;
     private String login;
     private String passwordHash;
-    private Role role;
 
     @Override
     public boolean equals(Object o) {
@@ -19,12 +18,11 @@ public class UserImpl implements User {
         User user = (User) o;
         return getId() == user.getId() &&
                 getLogin().equals(user.getLogin()) &&
-                getPasswordHash().equals(user.getPasswordHash()) &&
-                getRole().equals(user.getRole());
+                getPasswordHash().equals(user.getPasswordHash());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getLogin(), getPasswordHash(), getRole());
+        return Objects.hash(getId(), getLogin(), getPasswordHash());
     }
 }

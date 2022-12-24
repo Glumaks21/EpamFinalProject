@@ -4,7 +4,6 @@
     <title>Title</title>
 </head>
 <body>
-    PROFILE
 
 </body>
 </html>

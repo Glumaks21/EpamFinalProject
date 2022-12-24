@@ -2,41 +2,49 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import org.slf4j.*;
 import ua.maksym.hlushchenko.dao.*;
-import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.exception.ConnectionException;
+import ua.maksym.hlushchenko.dao.entity.role.Admin;
+import ua.maksym.hlushchenko.dao.entity.role.Librarian;
+import ua.maksym.hlushchenko.dao.entity.role.User;
 
-import javax.sql.DataSource;
 import java.sql.*;
 import java.util.*;
 
-public class SqlDaoFactory implements DaoFactory, AutoCloseable {
-    private static final DataSource dataSource = HikariCPDataSource.getInstance();
-    private final List<Connection> reserved = new ArrayList<>();
+public class SqlDaoFactory implements DaoFactory {
+    private final Connection connection;
+
+    public SqlDaoFactory(Connection connection) {
+        this.connection = connection;
+    }
 
     private static final Logger log = LoggerFactory.getLogger(SqlDaoFactory.class);
 
     @Override
-    public RoleSqlDao createRoleDao() {
-        return new RoleSqlDao(reserveConnection());
-    }
-
-    @Override
     public UserSqlDao createUserDao() {
-        return new UserSqlDao(reserveConnection());
+        return new UserSqlDao(connection);
     }
 
     @Override
     public ReaderSqlDao createReaderDao() {
-        return new ReaderSqlDao(reserveConnection());
+        return new ReaderSqlDao(connection);
+    }
+
+    @Override
+    public Dao<Integer, Librarian> createLibrarianDao() {
+        return new LibrarianSqlDao(connection);
+    }
+
+    @Override
+    public Dao<Integer, Admin> createAdminDao() {
+        return new AdminSqlDao(connection);
     }
 
     @Override
     public AuthorSqlDao createAuthorDao(Locale locale) {
         switch (locale.getLanguage()) {
             case "en":
-                return new AuthorEnSqlDao(reserveConnection());
+                return new AuthorEnSqlDao(connection);
             case "uk":
-                return new AuthorUaSqlDao(reserveConnection());
+                return new AuthorUaSqlDao(connection);
             default:
                 throw new IllegalArgumentException("Locale not defined");
         }
@@ -44,16 +52,16 @@ public class SqlDaoFactory implements DaoFactory, AutoCloseable {
 
     @Override
     public PublisherSqlDao createPublisherDao() {
-        return new PublisherSqlDao(reserveConnection());
+        return new PublisherSqlDao(connection);
     }
 
     @Override
     public GenreSqlDao createGenreDao(Locale locale) {
         switch (locale.getLanguage()) {
             case "en":
-                return new GenreEnSqlDao(reserveConnection());
+                return new GenreEnSqlDao(connection);
             case "uk":
-                return new GenreUaSqlDao(reserveConnection());
+                return new GenreUaSqlDao(connection);
             default:
                 throw new IllegalArgumentException("Locale not defined");
         }
@@ -63,9 +71,9 @@ public class SqlDaoFactory implements DaoFactory, AutoCloseable {
     public BookSqlDao createBookDao(Locale locale) {
         switch (locale.getLanguage()) {
             case "en":
-                return new BookEnSqlDao(reserveConnection());
+                return new BookEnSqlDao(connection);
             case "uk":
-                return new BookUaSqlDao(reserveConnection());
+                return new BookUaSqlDao(connection);
             default:
                 throw new IllegalArgumentException("Locale not defined");
         }
@@ -73,38 +81,11 @@ public class SqlDaoFactory implements DaoFactory, AutoCloseable {
 
     @Override
     public SubscriptionSqlDao createSubscriptionDao() {
-        return new SubscriptionSqlDao(reserveConnection());
+        return new SubscriptionSqlDao(connection);
     }
 
     @Override
     public ReceiptSqlDao createReceiptDao() {
-        return new ReceiptSqlDao(reserveConnection());
-    }
-
-    @Override
-    public void close() {
-        try {
-            log.info("Try to close connections");
-            for (Connection connection : reserved) {
-                connection.close();
-            }
-            log.info("All connections closed");
-        } catch (SQLException e) {
-            log.warn("Unsuccessful connection closing: " + e.getMessage());
-            throw new ConnectionException(e);
-        }
-    }
-
-    private Connection reserveConnection() {
-        try {
-            log.info("Try to reserve connection");
-            Connection connection = dataSource.getConnection();
-            reserved.add(connection);
-            log.info("Connection successfully reserved");
-            return connection;
-        } catch (SQLException e) {
-            log.warn("Unsuccessful connection reservation: " + e.getMessage());
-            throw new ConnectionException(e);
-        }
+        return new ReceiptSqlDao(connection);
     }
 }

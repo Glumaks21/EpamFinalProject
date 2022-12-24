@@ -2,15 +2,17 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
+import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.dao.entity.Genre;
 import ua.maksym.hlushchenko.dao.entity.impl.GenreImpl;
 
+import java.sql.Connection;
 import java.util.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class GenreUaSqlDaoTest extends SqlDaoTestHelper {
-    private static SqlDaoFactory sqlDaoFactory;
-    private static GenreSqlDao dao;
+    private static Connection connection;
+    private static GenreUaSqlDao dao;
     private static Genre genre;
 
     static Genre createGenre() {
@@ -23,13 +25,13 @@ public class GenreUaSqlDaoTest extends SqlDaoTestHelper {
     @BeforeAll
     static void init() {
         createGenre();
-        sqlDaoFactory = new SqlDaoFactory();
+        connection = HikariCPDataSource.getInstance().getConnection();
 
-        GenreSqlDao daoOriginal = sqlDaoFactory.createGenreDao(Locale.ENGLISH);
+        GenreEnSqlDao daoOriginal = new GenreEnSqlDao(connection);
         Genre genreOriginal = GenreEnSqlDaoTest.createGenre();
         daoOriginal.save(genreOriginal);
 
-        dao = sqlDaoFactory.createGenreDao(new Locale("uk", "UA"));
+        dao = new GenreUaSqlDao(connection);
         genre = createGenre();
         genre.setId(genreOriginal.getId());
     }
@@ -72,9 +74,10 @@ public class GenreUaSqlDaoTest extends SqlDaoTestHelper {
         Assertions.assertTrue(optionalGenreInDb.isEmpty());
     }
 
+    @SneakyThrows
     @AfterAll
     static void destroy() {
         clearTables();
-        sqlDaoFactory.close();
+        connection.close();
     }
 }

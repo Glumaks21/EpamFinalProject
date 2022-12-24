@@ -1,7 +1,6 @@
 package ua.maksym.hlushchenko.dao.db.sql;
 
-import ua.maksym.hlushchenko.dao.entity.Book;
-import ua.maksym.hlushchenko.dao.entity.Genre;
+import ua.maksym.hlushchenko.dao.entity.*;
 import ua.maksym.hlushchenko.exception.DaoException;
 
 import java.sql.Connection;

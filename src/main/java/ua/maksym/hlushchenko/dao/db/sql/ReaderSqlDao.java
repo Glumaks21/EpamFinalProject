@@ -12,11 +12,11 @@ import java.lang.reflect.*;
 import java.sql.*;
 import java.util.*;
 
-class ReaderSqlDao extends AbstractSqlDao<Integer, Reader> implements ReaderDao {
-    private static final String SQL_SELECT_ALL = "SELECT id, login, password_hash, role_id, blocked " +
+class ReaderSqlDao extends UserWithRoleSqlDao<Reader> implements ReaderDao {
+    private static final String SQL_SELECT_ALL = "SELECT id, login, password_hash, blocked " +
             "FROM reader r " +
             "JOIN user u ON r.user_id = u.id";
-    private static final String SQL_SELECT_BY_ID = "SELECT id, login, password_hash, role_id, blocked " +
+    private static final String SQL_SELECT_BY_ID = "SELECT id, login, password_hash, blocked " +
             "FROM reader r " +
             "JOIN user u ON r.user_id = u.id " +
             "WHERE user_id = ?";
@@ -52,9 +52,6 @@ class ReaderSqlDao extends AbstractSqlDao<Integer, Reader> implements ReaderDao 
             reader.setLogin(resultSet.getString("login"));
             reader.setPasswordHash(resultSet.getString("password_hash"));
             reader.setBlocked(resultSet.getBoolean("blocked"));
-
-            RoleSqlDao roleSqlDao = new RoleSqlDao(connection);
-            reader.setRole(roleSqlDao.find(resultSet.getInt("role_id")).get());
             return (Reader) Proxy.newProxyInstance(
                     ReaderSqlDao.class.getClassLoader(),
                     new Class[]{Reader.class},
@@ -102,8 +99,7 @@ class ReaderSqlDao extends AbstractSqlDao<Integer, Reader> implements ReaderDao 
 
     @Override
     public void save(Reader reader) {
-        UserSqlDao userSqlDao = new UserSqlDao(connection);
-        userSqlDao.save(reader);
+        super.save(reader);
         updateQuery(SQL_INSERT, reader.getId(), reader.isBlocked());
         saveReceipts(reader);
         saveSubscriptions(reader);
@@ -111,8 +107,7 @@ class ReaderSqlDao extends AbstractSqlDao<Integer, Reader> implements ReaderDao 
 
     @Override
     public void update(Reader reader) {
-        UserSqlDao userSqlDao = new UserSqlDao(connection);
-        userSqlDao.update(reader);
+        super.update(reader);
         updateQuery(SQL_UPDATE_BY_ID,
                 reader.isBlocked(),
                 reader.getId());
@@ -125,8 +120,7 @@ class ReaderSqlDao extends AbstractSqlDao<Integer, Reader> implements ReaderDao 
         deleteReceipts(id);
         deleteSubscriptions(id);
         updateQuery(SQL_DELETE_BY_ID, id);
-        UserSqlDao userSqlDao = new UserSqlDao(connection);
-        userSqlDao.delete(id);
+        super.delete(id);
     }
 
     @Override

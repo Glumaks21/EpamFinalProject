@@ -16,31 +16,31 @@ import java.sql.*;
 import java.util.*;
 
 class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements ReceiptDao {
-    static final String SQL_SELECT_ALL = "SELECT id, reader_id, time " +
+    private static final String SQL_SELECT_ALL = "SELECT id, reader_id, time " +
             "FROM receipt";
-    static final String SQL_SELECT_BY_ID = "SELECT id, reader_id, time " +
+    private static final String SQL_SELECT_BY_ID = "SELECT id, reader_id, time " +
             "FROM receipt " +
             "WHERE id = ?";
-    static final String SQL_SELECT_BY_READER_ID = "SELECT id, reader_id, time " +
+    private static final String SQL_SELECT_BY_READER_ID = "SELECT id, reader_id, time " +
             "FROM receipt " +
             "WHERE reader_id = ?";
-    static final String SQL_SELECT_RECEIPT_BOOKS =
+    private static final String SQL_SELECT_RECEIPT_BOOKS =
             "SELECT id, title, author_id, publisher_isbn, date, description, cover_id " +
             "FROM book b " +
             "JOIN receipt_has_book rhb ON rhb.book_id = b.id" +
             "WHERE rhb.receipt_id = ?";
-    static final String SQL_INSERT = "INSERT INTO receipt(reader_id, time) " +
+    private static final String SQL_INSERT = "INSERT INTO receipt(reader_id, time) " +
             "VALUES(?, ?)";
-    static final String SQL_INSERT_RECEIPT_BOOK = "INSERT INTO receipt_has_book(receipt_id, book_id) " +
+    private static final String SQL_INSERT_RECEIPT_BOOK = "INSERT INTO receipt_has_book(receipt_id, book_id) " +
             "VALUES(?, ?)";
-    static final String SQL_UPDATE_BY_ID = "UPDATE receipt SET " +
+    private static final String SQL_UPDATE_BY_ID = "UPDATE receipt SET " +
             "reader_id = ?, time = ? " +
             "WHERE id = ?";
-    static final String SQL_DELETE_BY_ID = "DELETE FROM receipt " +
+    private static final String SQL_DELETE_BY_ID = "DELETE FROM receipt " +
             "WHERE id = ?";
-    static final String SQL_DELETE_READER_ID = "DELETE FROM receipt " +
+    private static final String SQL_DELETE_READER_ID = "DELETE FROM receipt " +
             "WHERE reader_id = ?";
-    static final String SQL_DELETE_RECEIPTS_BOOKS = "DELETE FROM receipt_has_book " +
+    private static final String SQL_DELETE_RECEIPTS_BOOKS = "DELETE FROM receipt_has_book " +
             "WHERE receipt_id = ?";
 
     private static final Logger log = LoggerFactory.getLogger(ReceiptSqlDao.class);
@@ -56,19 +56,18 @@ class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements ReceiptD
 
             receipt.setDateTime(resultSet.getTimestamp("time").toLocalDateTime());
             return (Receipt) Proxy.newProxyInstance(ReceiptSqlDao.class.getClassLoader(),
-                    new Class[]{Receipt.class},
+                    new Class[]{Receipt.class, LoadProxy.class},
                     new LazyInitializationHandler(receipt));
         } catch (SQLException | ConnectionException | NoSuchElementException e) {
             throw new MappingException(e);
         }
     }
 
-    private class LazyInitializationHandler implements InvocationHandler {
-        private final Receipt wrapped;
+    private class LazyInitializationHandler extends LoadHandler<Receipt> {
         private boolean bookInitialised;
 
         public LazyInitializationHandler(Receipt wrapped) {
-            this.wrapped = wrapped;
+            super(wrapped);
         }
 
         @Override
@@ -77,7 +76,7 @@ class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements ReceiptD
                 bookInitialised = true;
                 wrapped.setBooks(findBooks(wrapped.getId()));
             }
-            return method.invoke(wrapped, args);
+            return super.invoke(proxy, method, args);
         }
     }
 

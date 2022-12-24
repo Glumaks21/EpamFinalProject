@@ -7,6 +7,9 @@ public interface User {
     void setLogin(String login);
     String getPasswordHash();
     void setPasswordHash(String password);
+
     Role getRole();
-    void setRole(Role role);
+    enum Role {
+        READER, LIBRARIAN, ADMIN
+    }
 }

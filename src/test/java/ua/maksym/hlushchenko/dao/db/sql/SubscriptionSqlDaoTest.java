@@ -7,9 +7,8 @@ import ua.maksym.hlushchenko.dao.entity.Book;
 import ua.maksym.hlushchenko.dao.entity.Subscription;
 import ua.maksym.hlushchenko.dao.entity.impl.SubscriptionImpl;
 import ua.maksym.hlushchenko.dao.entity.role.Reader;
-import ua.maksym.hlushchenko.dao.entity.role.Role;
 
-import javax.sql.DataSource;
+import java.sql.Connection;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -17,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class SubscriptionSqlDaoTest {
-    private static SqlDaoFactory sqlDaoFactory;
+    private static Connection connection;
     private static SubscriptionSqlDao dao;
     private static Subscription subscription;
 
@@ -31,28 +30,24 @@ class SubscriptionSqlDaoTest {
         return subscription;
     }
 
+    @SneakyThrows
     @BeforeAll
     static void init() {
         SqlDaoTestHelper.clearTables();
+        connection = HikariCPDataSource.getInstance().getConnection();
 
-        sqlDaoFactory = new SqlDaoFactory();
-        RoleSqlDao roleSqlDao = sqlDaoFactory.createRoleDao();
-        Role role = RoleSqlDaoTest.createRole();
-        roleSqlDao.save(role);
-
-        ReaderSqlDao readerSqlDao = sqlDaoFactory.createReaderDao();
+        ReaderSqlDao readerSqlDao = new ReaderSqlDao(connection);
         Reader reader = ReaderSqlDaoTest.createReader();
-        reader.setRole(role);
         readerSqlDao.save(reader);
 
-        BookSqlDao bookSqlDao = sqlDaoFactory.createBookDao(Locale.ENGLISH);
+        BookEnSqlDao bookSqlDao = new BookEnSqlDao(connection);
         Book book = BookEnSqlDaoTest.createBook();
         bookSqlDao.save(book);
 
         subscription = createSubscription();
         subscription.setReader(reader);
         subscription.setBook(book);
-        dao = sqlDaoFactory.createSubscriptionDao();
+        dao = new SubscriptionSqlDao(connection);
     }
 
     @Order(1)
@@ -112,9 +107,10 @@ class SubscriptionSqlDaoTest {
         assertTrue(dao.find(subscription.getId()).isEmpty());
     }
 
+    @SneakyThrows
     @AfterAll
     static void destroy() {
         SqlDaoTestHelper.clearTables();
-        sqlDaoFactory.close();
+        connection.close();
     }
 }

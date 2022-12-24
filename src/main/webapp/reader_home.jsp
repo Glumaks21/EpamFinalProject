@@ -6,6 +6,17 @@
     <title>Library</title>
 </head>
 <body>
+    <c:if test="${user != null}">
+        Hello ${user.role}
+    </c:if>
+
+    Select Language
+    <select name="language">
+        <c:forEach var="language" items="${languages}">
+            <option>${language}</option>
+        </c:forEach>
+    </select>
+
     <table>
         <thead>
             <tr>

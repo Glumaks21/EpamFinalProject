@@ -79,19 +79,24 @@ abstract class AbstractSqlDao<K, T> implements Dao<K, T> {
             return statement.getGeneratedKeys();
         } catch (SQLException e) {
             log.warn(e.getMessage());
+            tryToRollBack();
             throw new DaoException(e);
         }
     }
 
     private void tryToRollBack() {
-        log.info("Try to roll back: " + connection);
         try {
-            connection.rollback();
+            log.info("Try to roll back: " + connection);
+            if (!connection.getAutoCommit()) {
+                connection.rollback();
+                log.info("Roll back successful");
+            } else {
+                log.warn("Autocommit is turned on");
+            }
         } catch (SQLException e) {
             log.warn("Roll back failed: " + e.getMessage());
             throw new DaoException(e);
         }
-        log.info("Roll back successful");
     }
 
     protected static String formatSql(Statement statement) {

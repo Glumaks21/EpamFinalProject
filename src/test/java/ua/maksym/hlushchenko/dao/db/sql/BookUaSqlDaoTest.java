@@ -14,8 +14,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class BookUaSqlDaoTest {
-    private static SqlDaoFactory sqlDaoFactory;
-    private static BookSqlDao dao;
+    private static Connection connection;
+    private static BookUaSqlDao dao;
     private static Book book;
 
     static BookImpl createBook() {
@@ -32,18 +32,18 @@ public class BookUaSqlDaoTest {
     @BeforeAll
     static void init() {
         SqlDaoTestHelper.clearTables();
-        sqlDaoFactory = new SqlDaoFactory();
-        dao = sqlDaoFactory.createBookDao(new Locale("uk", "ua"));
+        connection = HikariCPDataSource.getInstance().getConnection();
+        dao = new BookUaSqlDao(connection);
         book = createBook();
 
         Book original = BookEnSqlDaoTest.createBook();
 
-        BookSqlDao bookSqlDao = sqlDaoFactory.createBookDao(Locale.ENGLISH);
+        BookEnSqlDao bookSqlDao = new BookEnSqlDao(connection);
         bookSqlDao.save(original);
 
         Author authorUa = AuthorUaSqlDaoTest.createAuthor();
         authorUa.setId(original.getAuthor().getId());
-        AuthorSqlDao authorSqlDao = sqlDaoFactory.createAuthorDao(new Locale("uk", "ua"));
+        AuthorUaSqlDao authorSqlDao = new AuthorUaSqlDao(connection);
         authorSqlDao.save(authorUa);
 
         book.setId(original.getId());
@@ -84,8 +84,8 @@ public class BookUaSqlDaoTest {
     @Order(5)
     @Test
     void saveGenres() {
-        GenreSqlDao enGenreDao = sqlDaoFactory.createGenreDao(Locale.ENGLISH);
-        GenreSqlDao uaGenreDao = sqlDaoFactory.createGenreDao(new Locale("uk", "ua"));
+        GenreEnSqlDao enGenreDao = new GenreEnSqlDao(connection);
+        GenreUaSqlDao uaGenreDao = new GenreUaSqlDao(connection);
 
         List<Genre> genres = new ArrayList<>();
         for (int i = 1; i < 4; i++) {
@@ -134,9 +134,10 @@ public class BookUaSqlDaoTest {
         assertTrue(dao.find(book.getId()).isEmpty());
     }
 
+    @SneakyThrows
     @AfterAll
     static void destroy() {
         SqlDaoTestHelper.clearTables();
-        sqlDaoFactory.close();
+        connection.close();
     }
 }

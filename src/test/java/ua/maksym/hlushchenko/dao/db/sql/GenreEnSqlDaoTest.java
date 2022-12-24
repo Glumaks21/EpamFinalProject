@@ -1,15 +1,18 @@
 package ua.maksym.hlushchenko.dao.db.sql;
 
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
+import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.dao.entity.Genre;
 import ua.maksym.hlushchenko.dao.entity.impl.GenreImpl;
 
+import java.sql.Connection;
 import java.util.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class GenreEnSqlDaoTest extends SqlDaoTestHelper {
-    private static SqlDaoFactory sqlDaoFactory;
-    private static GenreSqlDao dao;
+    private static Connection connection;
+    private static GenreEnSqlDao dao;
     private static Genre genre;
 
     static Genre createGenre() {
@@ -18,11 +21,12 @@ class GenreEnSqlDaoTest extends SqlDaoTestHelper {
         return genre;
     }
 
+    @SneakyThrows
     @BeforeAll
     static void init() {
         clearTables();
-        sqlDaoFactory = new SqlDaoFactory();
-        dao = sqlDaoFactory.createGenreDao(Locale.ENGLISH);
+        connection = HikariCPDataSource.getInstance().getConnection();
+        dao = new GenreEnSqlDao(connection);
         genre = createGenre();
     }
 
@@ -65,9 +69,10 @@ class GenreEnSqlDaoTest extends SqlDaoTestHelper {
         Assertions.assertTrue(optionalGenreInDb.isEmpty());
     }
 
+    @SneakyThrows
     @AfterAll
     static void destroy() {
         clearTables();
-        sqlDaoFactory.close();
+        connection.close();
     }
 }

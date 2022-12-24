@@ -4,7 +4,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
 class LoadHandler<T> implements InvocationHandler {
-    private final T wrapped;
+    protected final T wrapped;
     private boolean updated;
 
     public LoadHandler(T wrapped) {

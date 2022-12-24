@@ -3,18 +3,20 @@ package ua.maksym.hlushchenko.dao.db.sql;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 
+import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.dao.entity.*;
 import ua.maksym.hlushchenko.dao.entity.impl.role.ReaderImpl;
 import ua.maksym.hlushchenko.dao.entity.role.*;
 import ua.maksym.hlushchenko.util.Sha256Encoder;
 
+import java.sql.Connection;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ReaderSqlDaoTest {
-    private static SqlDaoFactory sqlDaoFactory;
+    private static Connection connection;
     private static ReaderSqlDao dao;
     private static Reader reader;
 
@@ -30,15 +32,9 @@ class ReaderSqlDaoTest {
     @BeforeAll
     static void init() {
         SqlDaoTestHelper.clearTables();
-        sqlDaoFactory = new SqlDaoFactory();
-        dao = sqlDaoFactory.createReaderDao();
+        connection = HikariCPDataSource.getInstance().getConnection();
+        dao = new ReaderSqlDao(connection);
         reader = createReader();
-
-        Role role = RoleSqlDaoTest.createRole();
-        RoleSqlDao roleSqlDao = sqlDaoFactory.createRoleDao();
-        roleSqlDao.save(role);
-        Role savedRole = roleSqlDao.find(role.getId()).get();
-        reader.setRole(savedRole);
     }
 
     @Order(1)
@@ -115,7 +111,7 @@ class ReaderSqlDaoTest {
     @Test
     void saveSubscriptions() {
         Book book = BookEnSqlDaoTest.createBook();
-        BookSqlDao bookSqlDao = sqlDaoFactory.createBookDao(Locale.ENGLISH);
+        BookEnSqlDao bookSqlDao = new BookEnSqlDao(connection);
         bookSqlDao.save(book);
         Book savedBook = bookSqlDao.find(book.getId()).get();
 
@@ -170,6 +166,6 @@ class ReaderSqlDaoTest {
     @AfterAll
     static void destroy() {
         SqlDaoTestHelper.clearTables();
-        sqlDaoFactory.close();
+        connection.close();
     }
 }

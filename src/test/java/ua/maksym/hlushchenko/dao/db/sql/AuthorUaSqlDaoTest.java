@@ -2,17 +2,19 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
+import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.dao.entity.Author;
 import ua.maksym.hlushchenko.dao.entity.impl.AuthorImpl;
 
+import java.sql.Connection;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class AuthorUaSqlDaoTest extends SqlDaoTestHelper {
-    private static SqlDaoFactory sqlDaoFactory;
-    private static AuthorSqlDao dao;
+    private static Connection connection;
+    private static AuthorUaSqlDao dao;
     private static Author author;
 
     static Author createAuthor() {
@@ -26,13 +28,13 @@ class AuthorUaSqlDaoTest extends SqlDaoTestHelper {
     @BeforeAll
     static void init() {
         clearTables();
-        sqlDaoFactory = new SqlDaoFactory();
+        connection = HikariCPDataSource.getInstance().getConnection();
 
-        AuthorSqlDao daoOriginal = sqlDaoFactory.createAuthorDao(Locale.ENGLISH);
+        AuthorSqlDao daoOriginal = new AuthorEnSqlDao(connection);
         Author authorOriginal = AuthorEnSqlDaoTest.createAuthor();
         daoOriginal.save(authorOriginal);
 
-        dao = sqlDaoFactory.createAuthorDao(new Locale("uk", "UA"));
+        dao = new AuthorUaSqlDao(connection);
         author = createAuthor();
         author.setId(authorOriginal.getId());
     }
@@ -80,6 +82,6 @@ class AuthorUaSqlDaoTest extends SqlDaoTestHelper {
     @AfterAll
     static void destroy() {
         clearTables();
-        sqlDaoFactory.close();
+        connection.close();
     }
 }

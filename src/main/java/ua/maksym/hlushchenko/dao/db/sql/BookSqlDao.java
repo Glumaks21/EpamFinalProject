@@ -19,12 +19,14 @@ abstract class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookD
 
     @Override
     protected Book mapToEntity(ResultSet resultSet) {
-        try (SqlDaoFactory sqlDaoFactory = new SqlDaoFactory()) {
+        try {
             Book book = new BookImpl();
 
             book.setId(resultSet.getInt("id"));
             book.setTitle(resultSet.getString("title"));
             book.setDescription(resultSet.getString("description"));
+
+            SqlDaoFactory sqlDaoFactory = new SqlDaoFactory(connection);
 
             AuthorSqlDao authorSqlDao = sqlDaoFactory.createAuthorDao(locale);
             Author author = authorSqlDao.find(resultSet.getInt("author_id")).get();
@@ -37,28 +39,27 @@ abstract class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookD
             book.setDate(resultSet.getDate("date").toLocalDate());
             return (Book) Proxy.newProxyInstance(
                     BookSqlDao.class.getClassLoader(),
-                    new Class[]{Book.class},
+                    new Class[]{Book.class, LoadProxy.class},
                     new LazyInitializationHandler(book));
         } catch (SQLException | ConnectionException | NoSuchElementException e) {
             throw new MappingException(e);
         }
     }
 
-    private class LazyInitializationHandler implements InvocationHandler {
-        private final Book wrapped;
+    private class LazyInitializationHandler extends LoadHandler<Book> {
         private boolean bookInitialised;
 
         public LazyInitializationHandler(Book wrapped) {
-            this.wrapped = wrapped;
+            super(wrapped);
         }
 
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            if (!bookInitialised && method.getName().equals("getGenres")) {
+           if (!bookInitialised && method.getName().equals("getGenres")) {
                 bookInitialised = true;
                 wrapped.setGenres(findGenres(wrapped.getId()));
             }
-            return method.invoke(wrapped, args);
+            return super.invoke(proxy, method, args);
         }
     }
 }

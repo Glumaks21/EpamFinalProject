@@ -6,10 +6,8 @@ import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.dao.entity.Receipt;
 import ua.maksym.hlushchenko.dao.entity.impl.ReceiptImpl;
 import ua.maksym.hlushchenko.dao.entity.role.Reader;
-import ua.maksym.hlushchenko.dao.entity.role.Role;
 
 import java.sql.Connection;
-import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -17,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ReceiptSqlDaoTest {
-    private static SqlDaoFactory sqlDaoFactory;
+    private static Connection connection;
     private static ReceiptSqlDao dao;
     private static Receipt receipt;
 
@@ -31,18 +29,13 @@ class ReceiptSqlDaoTest {
     @SneakyThrows
     @BeforeAll
     static void init() {
-        sqlDaoFactory = new SqlDaoFactory();
-        dao = sqlDaoFactory.createReceiptDao();
+        SqlDaoTestHelper.clearTables();
+        connection = HikariCPDataSource.getInstance().getConnection();
+        dao = new ReceiptSqlDao(connection);
         receipt = createReceipt();
 
-        RoleSqlDao roleSqlDao = sqlDaoFactory.createRoleDao();
-        Role role = RoleSqlDaoTest.createRole();
-        roleSqlDao.save(role);
-        Role savedRole = roleSqlDao.find(role.getId()).get();
-
-        ReaderSqlDao readerSqlDao = sqlDaoFactory.createReaderDao();
+        ReaderSqlDao readerSqlDao = new ReaderSqlDao(connection);
         Reader reader = ReaderSqlDaoTest.createReader();
-        reader.setRole(savedRole);
         readerSqlDao.save(reader);
         Reader savedReader = readerSqlDao.find(reader.getId()).get();
         receipt.setReader(savedReader);
@@ -89,6 +82,7 @@ class ReceiptSqlDaoTest {
     @SneakyThrows
     @AfterAll
     static void destroy() {
-        sqlDaoFactory.close();
+        SqlDaoTestHelper.clearTables();
+        connection.close();
     }
 }

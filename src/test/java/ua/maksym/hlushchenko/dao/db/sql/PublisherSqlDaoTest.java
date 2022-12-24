@@ -15,7 +15,7 @@ import java.util.Optional;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class PublisherSqlDaoTest {
-    private static SqlDaoFactory sqlDaoFactory;
+    private static Connection connection;
     private static PublisherSqlDao dao;
     private static Publisher publisher;
 
@@ -30,8 +30,8 @@ class PublisherSqlDaoTest {
     @BeforeAll
     static void init() {
         SqlDaoTestHelper.clearTables();
-        sqlDaoFactory = new SqlDaoFactory();
-        dao = sqlDaoFactory.createPublisherDao();
+        connection = HikariCPDataSource.getInstance().getConnection();
+        dao = new PublisherSqlDao(connection);
         publisher = createPublisher();
     }
 
@@ -88,6 +88,6 @@ class PublisherSqlDaoTest {
     @AfterAll
     static void destroy() {
         SqlDaoTestHelper.clearTables();
-        sqlDaoFactory.close();
+        connection.close();
     }
 }

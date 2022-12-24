@@ -16,6 +16,11 @@ public class ReaderImpl extends UserImpl implements Reader {
     private List<Subscription> subscriptions = new ArrayList<>();
 
     @Override
+    public Role getRole() {
+        return Role.READER;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Reader)) return false;

@@ -5,10 +5,11 @@ import ua.maksym.hlushchenko.dao.entity.role.*;
 
 import java.util.Locale;
 
-public interface DaoFactory extends AutoCloseable {
-    Dao<Integer, Role> createRoleDao();
+public interface DaoFactory {
     UserDao createUserDao();
-    ReaderDao  createReaderDao();
+    ReaderDao createReaderDao();
+    Dao<Integer, Librarian> createLibrarianDao();
+    Dao<Integer, Admin> createAdminDao();
     Dao<Integer, Author> createAuthorDao(Locale locale);
     PublisherDao createPublisherDao();
     Dao<Integer, Genre> createGenreDao(Locale locale);

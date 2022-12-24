@@ -3,29 +3,48 @@ package ua.maksym.hlushchenko.dao.db.sql;
 import org.slf4j.*;
 
 import ua.maksym.hlushchenko.dao.UserDao;
-import ua.maksym.hlushchenko.dao.entity.impl.role.UserImpl;
 import ua.maksym.hlushchenko.dao.entity.role.*;;
 import ua.maksym.hlushchenko.exception.*;
 
-import java.lang.reflect.Proxy;
 import java.sql.*;
 import java.util.*;
 
 class UserSqlDao extends AbstractSqlDao<Integer, User> implements UserDao {
-    private static final String SQL_SELECT_ALL = "SELECT id, login, password_hash, role_id " +
-            "FROM user";
-    private static final String SQL_SELECT_BY_ID = "SELECT id, login, password_hash, role_id " +
-            "FROM user " +
+    private static final String SQL_SELECT_ALL =
+            "SELECT id, login, password_hash, blocked, " +
+                "CASE " +
+                    "WHEN r.user_id IS NOT null THEN 1 " +
+                    "WHEN a.user_id IS NOT null THEN 2 " +
+                    "WHEN l.user_id IS NOT null THEN 3 " +
+                "END as role " +
+                "FROM user u " +
+                "LEFT OUTER JOIN reader r ON u.id = r.user_id " +
+                "LEFT OUTER JOIN admin a ON u.id = a.user_id " +
+                "LEFT OUTER JOIN librarian l ON u.id = l.user_id";
+    private static final String SQL_SELECT_BY_ID =
+            "SELECT id, login, password_hash, blocked, " +
+                "CASE " +
+                    "WHEN r.user_id IS NOT null THEN 1 " +
+                    "WHEN a.user_id IS NOT null THEN 2 " +
+                    "WHEN l.user_id IS NOT null THEN 3 " +
+                "END as role " +
+                "FROM user u " +
+                "LEFT OUTER JOIN reader r ON u.id = r.user_id " +
+                "LEFT OUTER JOIN admin a ON u.id = a.user_id " +
+                "LEFT OUTER JOIN librarian l ON u.id = l.user_id " +
             "WHERE id = ?";
-    private static final String SQL_SELECT_BY_LOGIN_AND_PASSWORD_HASH =
-            "SELECT id, login, password_hash, role_id " +
-            "FROM user " +
-            "WHERE login = ? AND password_hash = ?";
-    private static final String SQL_INSERT = "INSERT INTO user(login, password_hash, role_id) " +
-            "VALUES(?, ?, ?)";
-    private static final String SQL_UPDATE_BY_ID = "UPDATE user " +
-            "SET password_hash = ?, role_id = ? " +
-            "WHERE id = ?";
+    private static final String SQL_SELECT_BY_LOGIN =
+            "SELECT id, login, password_hash, blocked, " +
+                "CASE " +
+                    "WHEN r.user_id IS NOT null THEN 1 " +
+                    "WHEN a.user_id IS NOT null THEN 2 " +
+                    "WHEN l.user_id IS NOT null THEN 3 " +
+                "END as role " +
+                "FROM user u " +
+                "LEFT OUTER JOIN reader r ON u.id = r.user_id " +
+                "LEFT OUTER JOIN admin a ON u.id = a.user_id " +
+                "LEFT OUTER JOIN librarian l ON u.id = l.user_id " +
+            "WHERE login = ?";
     private static final String SQL_DELETE_BY_ID = "DELETE FROM user " +
             "WHERE id = ?";
 
@@ -38,20 +57,20 @@ class UserSqlDao extends AbstractSqlDao<Integer, User> implements UserDao {
     @Override
     protected User mapToEntity(ResultSet resultSet) {
         try {
-            User user = new UserImpl();
-
-            user.setId(resultSet.getInt("id"));
-            user.setLogin(resultSet.getString("login"));
-            user.setPasswordHash(resultSet.getString("password_hash"));
-
-            RoleSqlDao roleSqlDao = new RoleSqlDao(connection);
-            Role role = roleSqlDao.find(resultSet.getInt("role_id")).get();
-            user.setRole(role);
-            return (User) Proxy.newProxyInstance(
-                    UserSqlDao.class.getClassLoader(),
-                    new Class[]{User.class, LoadProxy.class},
-                    new LoadHandler<>(user));
-        } catch (SQLException | NoSuchElementException e) {
+            switch (resultSet.getInt("role")) {
+                case 1:
+                    ReaderSqlDao readerSqlDao = new ReaderSqlDao(connection);
+                    return readerSqlDao.mapToEntity(resultSet);
+                case 2:
+                    AdminSqlDao adminSqlDao = new AdminSqlDao(connection);
+                    return adminSqlDao.mapToEntity(resultSet);
+                case 3:
+                    LibrarianSqlDao librarianSqlDao = new LibrarianSqlDao(connection);
+                    return librarianSqlDao.mapToEntity(resultSet);
+                default:
+                    throw new MappingException("User's role is undefined");
+            }
+        } catch (SQLException e) {
             throw new MappingException(e);
         }
     }
@@ -72,25 +91,34 @@ class UserSqlDao extends AbstractSqlDao<Integer, User> implements UserDao {
 
     @Override
     public void save(User user) {
-        try (ResultSet resultSet = updateQuery(SQL_INSERT,
-                user.getLogin(),
-                user.getPasswordHash(),
-                user.getRole().getId())) {
-            if (resultSet.next()) {
-                user.setId(resultSet.getInt(1));
-            }
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            throw new DaoException(e);
+        if (user instanceof Reader) {
+            ReaderSqlDao dao = new ReaderSqlDao(connection);
+            dao.save((Reader) user);
+        } else if (user instanceof Librarian) {
+            LibrarianSqlDao dao = new LibrarianSqlDao(connection);
+            dao.save((Librarian) user);
+        } else if (user instanceof Admin) {
+            AdminSqlDao dao = new AdminSqlDao(connection);
+            dao.save((Admin) user);
+        } else {
+            throw new DaoException("Role is not defined");
         }
     }
 
     @Override
     public void update(User user) {
-        updateQuery(SQL_UPDATE_BY_ID,
-                user.getPasswordHash(),
-                user.getRole().getId(),
-                user.getId());
+        if (user instanceof Reader) {
+            ReaderSqlDao dao = new ReaderSqlDao(connection);
+            dao.update((Reader) user);
+        } else if (user instanceof Librarian) {
+            LibrarianSqlDao dao = new LibrarianSqlDao(connection);
+            dao.update((Librarian) user);
+        } else if (user instanceof Admin) {
+            AdminSqlDao dao = new AdminSqlDao(connection);
+            dao.update((Admin) user);
+        } else {
+            throw new DaoException("Role is not defined");
+        }
     }
 
     @Override
@@ -99,8 +127,8 @@ class UserSqlDao extends AbstractSqlDao<Integer, User> implements UserDao {
     }
 
     @Override
-    public Optional<User> findByLoginAndPasswordHash(String login, String passwordHash) {
-        List<User> users = mappedQuery(SQL_SELECT_BY_LOGIN_AND_PASSWORD_HASH, login, passwordHash);
+    public Optional<User> findByLogin(String login) {
+        List<User> users = mappedQuery(SQL_SELECT_BY_LOGIN, login);
         if (users.isEmpty()) {
             return Optional.empty();
         }

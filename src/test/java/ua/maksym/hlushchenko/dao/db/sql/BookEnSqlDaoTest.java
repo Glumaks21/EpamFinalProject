@@ -2,9 +2,11 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
+import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.dao.entity.*;
 import ua.maksym.hlushchenko.dao.entity.impl.*;
 
+import java.sql.Connection;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -12,8 +14,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class BookEnSqlDaoTest extends SqlDaoTestHelper {
-    private static SqlDaoFactory sqlDaoFactory;
-    private static BookSqlDao dao;
+    private static Connection connection;
+    private static BookEnSqlDao dao;
     private static Book book;
 
     static BookImpl createBook() {
@@ -30,8 +32,8 @@ class BookEnSqlDaoTest extends SqlDaoTestHelper {
     @BeforeAll
     static void init() {
         clearTables();
-        sqlDaoFactory = new SqlDaoFactory();
-        dao = sqlDaoFactory.createBookDao(Locale.ENGLISH);
+        connection = HikariCPDataSource.getInstance().getConnection();
+        dao = new BookEnSqlDao(connection);
         book = createBook();
     }
 
@@ -119,9 +121,10 @@ class BookEnSqlDaoTest extends SqlDaoTestHelper {
         assertTrue(dao.find(book.getId()).isEmpty());
     }
 
+    @SneakyThrows
     @AfterAll
     static void destroy() {
         clearTables();
-        sqlDaoFactory.close();
+        connection.close();
     }
 }
