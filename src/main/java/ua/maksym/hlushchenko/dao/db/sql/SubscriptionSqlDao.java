@@ -63,7 +63,7 @@ class SubscriptionSqlDao extends AbstractSqlDao<Integer, Subscription> implement
                     new Class[]{Subscription.class, LoadProxy.class},
                     new LoadHandler<>(subscription));
         } catch (SQLException | ConnectionException | NoSuchElementException e) {
-            throw new MappingException(e);
+            throw new MappingException("Can't map the entity", e);
         }
     }
 
@@ -83,7 +83,8 @@ class SubscriptionSqlDao extends AbstractSqlDao<Integer, Subscription> implement
 
     @Override
     public void save(Subscription subscription) {
-        try (ResultSet resultSet = updateQuery(SQL_INSERT,
+        try (ResultSet resultSet = updateQueryWithKeys(SQL_INSERT,
+                Statement.RETURN_GENERATED_KEYS,
                 subscription.getReader().getId(),
                 subscription.getBook().getId(),
                 Date.valueOf(subscription.getTakenDate()),

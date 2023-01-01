@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration>
     <Appenders>
-        <File name="DaoLogToFile" fileName="logs/db/dao.log">
+        <File name="DaoLogToFile" fileName="logs/dao.log">
             <PatternLayout>
                 <Pattern>%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1} - %m%n</Pattern>
             </PatternLayout>
         </File>
-        <File name="WebLogToFile" fileName="logs/servlets/web.log">
+        <File name="WebLogToFile" fileName="logs/web.log">
             <PatternLayout>
                 <Pattern>%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1} - %m%n</Pattern>
             </PatternLayout>
@@ -16,11 +16,8 @@
         <Logger name="ua.maksym.hlushchenko.dao.db.sql" level="info" additivity="false">
             <AppenderRef ref="DaoLogToFile"/>
         </Logger>
-        <Logger name="ua.maksym.hlushchenko.web" level="info" additivity="false">
+        <Logger name="ua.maksym.hlushchenko.web.filter" level="info" additivity="false">
             <AppenderRef ref="WebLogToFile"/>
         </Logger>
-        <Root level="error">
-            <AppenderRef ref="DaoLogToFile"/>
-        </Root>
     </Loggers>
 </Configuration>

@@ -1,14 +1,20 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java"
+         isELIgnored="false" session="false" %>
 <html>
 <head>
     <title>Registration</title>
 </head>
 <body>
-<a href="/">Home</a>
+<a href="<c:url value="/"/>">Home</a>
+
+<c:if test="${requestScope.message != null}">
+    <h1>${requestScope.message}</h1>
+</c:if>
+
 
 <h1>Registration</h1>
-<form method="POST" action="/profile/registration">
+<form method="post" action="<c:url value="/profile/registration"/>">
     <label>
         <input type="text" name="login">
     </label>
@@ -21,11 +27,6 @@
     <input type="submit"/>
 </form>
 
-<c:if test="${message != null}">
-    <h1>${message}</h1>
-</c:if>
-
-<a href="/profile/login">I haven an account</a>
-</body>
+<a href="<c:url value="/profile/login"/>">I have an account</a>
 </body>
 </html>

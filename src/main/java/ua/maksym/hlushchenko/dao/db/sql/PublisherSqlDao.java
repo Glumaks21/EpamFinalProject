@@ -47,7 +47,7 @@ class PublisherSqlDao extends AbstractSqlDao<String, Publisher> implements Publi
                     new Class[]{Publisher.class, LoadProxy.class},
                     new LoadHandler<>(publisher));
         } catch (SQLException e) {
-            throw new MappingException(e);
+            throw new MappingException("Can't map the entity", e);
         }
     }
 

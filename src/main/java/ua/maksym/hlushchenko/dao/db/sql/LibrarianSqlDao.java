@@ -37,7 +37,7 @@ public class LibrarianSqlDao extends UserWithRoleSqlDao<Librarian> {
                     new Class[]{Librarian.class, LoadProxy.class},
                     new LoadHandler<>(librarian));
         } catch (SQLException e) {
-            throw new MappingException(e);
+            throw new MappingException("Can't map the entity", e);
         }
     }
 

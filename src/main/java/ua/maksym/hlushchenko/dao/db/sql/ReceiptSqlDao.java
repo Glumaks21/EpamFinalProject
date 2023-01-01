@@ -59,7 +59,7 @@ class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements ReceiptD
                     new Class[]{Receipt.class, LoadProxy.class},
                     new LazyInitializationHandler(receipt));
         } catch (SQLException | ConnectionException | NoSuchElementException e) {
-            throw new MappingException(e);
+            throw new MappingException("Can't map the entity", e);
         }
     }
 
@@ -100,7 +100,8 @@ class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements ReceiptD
 
     @Override
     public void save(Receipt receipt) {
-        try (ResultSet resultSet = updateQuery(SQL_INSERT,
+        try (ResultSet resultSet = updateQueryWithKeys(SQL_INSERT,
+                    Statement.RETURN_GENERATED_KEYS,
                     receipt.getReader().getId(),
                     Timestamp.valueOf(receipt.getDateTime()))) {
             if (resultSet.next()) {

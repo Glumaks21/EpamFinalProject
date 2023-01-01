@@ -42,7 +42,8 @@ class AuthorEnSqlDao extends AuthorSqlDao  {
 
     @Override
     public void save(Author author) {
-        try (ResultSet resultSet = updateQuery(SQL_INSERT,
+        try (ResultSet resultSet = updateQueryWithKeys(SQL_INSERT,
+                Statement.RETURN_GENERATED_KEYS,
                 author.getName(),
                 author.getSurname())) {
             if (resultSet.next()) {

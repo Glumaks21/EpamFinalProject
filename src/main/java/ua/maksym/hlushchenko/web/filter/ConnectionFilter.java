@@ -9,7 +9,7 @@ import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.*;
 
-@WebFilter("/*")
+@WebFilter(urlPatterns = {"/", "/profile/*"})
 public class ConnectionFilter extends HttpFilter {
     @Override
     protected void doFilter(HttpServletRequest req,

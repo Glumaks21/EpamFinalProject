@@ -16,7 +16,9 @@ public class LoggingFilter extends HttpFilter {
                             HttpServletResponse res,
                             FilterChain chain)
             throws IOException, ServletException {
-        System.out.println("Received " + req.getRequestURL());
+        log.info("Received: " + req.getRequestURL());
+        log.info("From: " + req.getRemoteAddr());
+        log.info("Method: " + req.getMethod());
         chain.doFilter(req, res);
     }
 }

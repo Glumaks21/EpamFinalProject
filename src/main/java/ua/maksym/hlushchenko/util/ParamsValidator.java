@@ -3,12 +3,14 @@ package ua.maksym.hlushchenko.util;
 import ua.maksym.hlushchenko.exception.ParamsValidationException;
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.util.Optional;
+
 public class ParamsValidator {
-    public static String getOptionalParam(HttpServletRequest request, String paramName) throws ParamsValidationException {
-        return getField(request, paramName, false);
+    public static Optional<String> getOptionalParam(HttpServletRequest request, String paramName) {
+        return Optional.ofNullable(getField(request, paramName, false));
     }
 
-    public static String getRequiredParam(HttpServletRequest request, String paramName) throws ParamsValidationException {
+    public static String getRequiredParam(HttpServletRequest request, String paramName) {
         return getField(request, paramName, true);
     }
 

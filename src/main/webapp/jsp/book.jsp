@@ -2,8 +2,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <html>
 <head>
-    <link rel="icon" type="image/x-icon" href="static/images/title_icon.png">
-    <title>${book.title}</title>
+    <title>${requestScope.book.title}</title>
 </head>
 <body>
     <table>
@@ -23,7 +22,7 @@
                 Picture
             </td>
             <td>
-                ${book.description}
+                ${requestScope.book.description}
             </td>
         </tr>
         </tbody>

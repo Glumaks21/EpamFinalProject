@@ -42,7 +42,7 @@ abstract class BookSqlDao extends AbstractSqlDao<Integer, Book> implements BookD
                     new Class[]{Book.class, LoadProxy.class},
                     new LazyInitializationHandler(book));
         } catch (SQLException | ConnectionException | NoSuchElementException e) {
-            throw new MappingException(e);
+            throw new MappingException("Can't map the entity", e);
         }
     }
 

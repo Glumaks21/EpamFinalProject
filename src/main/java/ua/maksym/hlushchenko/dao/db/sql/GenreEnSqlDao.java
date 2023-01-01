@@ -43,7 +43,8 @@ class GenreEnSqlDao extends GenreSqlDao {
 
     @Override
     public void save(Genre genre) {
-        try (ResultSet resultSet = updateQuery(SQL_INSERT, genre.getName())) {
+        try (ResultSet resultSet = updateQueryWithKeys(SQL_INSERT,
+                Statement.RETURN_GENERATED_KEYS, genre.getName())) {
             if (resultSet.next()) {
                 genre.setId(resultSet.getInt(1));
             }

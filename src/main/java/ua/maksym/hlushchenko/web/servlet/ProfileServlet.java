@@ -1,20 +1,31 @@
 package ua.maksym.hlushchenko.web.servlet;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
+import ua.maksym.hlushchenko.dao.DaoFactory;
+import ua.maksym.hlushchenko.dao.UserDao;
+import ua.maksym.hlushchenko.dao.entity.role.User;
+import ua.maksym.hlushchenko.util.ParamsValidator;
+
 import java.io.IOException;
+import java.util.Optional;
 
 @WebServlet("/profile")
 public class ProfileServlet extends HttpServlet {
-    private static final Logger log = LoggerFactory.getLogger(ProfileServlet.class);
-
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        req.getAttribute("id");
+        String id = ParamsValidator.getRequiredParam(req, "id");
+        DaoFactory daoFactory = (DaoFactory) req.getAttribute("daoFactory");
+        UserDao dao = daoFactory.createUserDao();
+        Optional<User> user = dao.find(Integer.parseInt(id));
+        if (user.isEmpty()) {
+            resp.sendRedirect("/error.html");
+            return;
+        }
+
+        req.setAttribute("user", user.get());
+        req.getRequestDispatcher("/jsp/profile.jsp").forward(req, resp);
     }
 }

@@ -57,7 +57,7 @@ class ReaderSqlDao extends UserWithRoleSqlDao<Reader> implements ReaderDao {
                     new Class[]{Reader.class},
                     new LazyInitializationHandler(reader));
         } catch (SQLException e) {
-            throw new MappingException(e);
+            throw new MappingException("Can't map the entity", e);
         }
     }
 

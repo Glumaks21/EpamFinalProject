@@ -24,7 +24,7 @@ public abstract class AuthorSqlDao extends AbstractSqlDao<Integer, Author> {
                     new Class[]{Author.class, LoadProxy.class},
                     new LoadHandler<>(author));
         } catch (SQLException e) {
-            throw new MappingException(e);
+            throw new MappingException("Can't map the entity", e);
         }
     }
 }

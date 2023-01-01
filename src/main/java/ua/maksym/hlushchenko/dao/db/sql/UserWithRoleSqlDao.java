@@ -20,7 +20,8 @@ public abstract class UserWithRoleSqlDao<T extends User> extends AbstractSqlDao<
 
     @Override
     public void save(T user) {
-        try (ResultSet resultSet = updateQuery(SQL_INSERT,
+        try (ResultSet resultSet = updateQueryWithKeys(SQL_INSERT,
+                Statement.RETURN_GENERATED_KEYS,
                 user.getLogin(),
                 user.getPasswordHash())) {
             if (resultSet.next()) {

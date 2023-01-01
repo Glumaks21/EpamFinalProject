@@ -2,6 +2,7 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import ua.maksym.hlushchenko.dao.entity.role.Admin;
 import ua.maksym.hlushchenko.dao.entity.impl.role.AdminImpl;
+import ua.maksym.hlushchenko.exception.ConnectionException;
 import ua.maksym.hlushchenko.exception.MappingException;
 
 import java.lang.reflect.Proxy;
@@ -37,7 +38,7 @@ public class AdminSqlDao extends UserWithRoleSqlDao<Admin> {
                     new Class[]{Admin.class, LoadProxy.class},
                     new LoadHandler<>(admin));
         } catch (SQLException e) {
-            throw new MappingException(e);
+            throw new MappingException("Can't map the entity", e);
         }
     }
 

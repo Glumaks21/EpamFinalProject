@@ -67,12 +67,13 @@ class BookEnSqlDao extends BookSqlDao {
             book.setPublisher(savedPublisher);
         }
 
-        try (ResultSet resultSet =  updateQuery(SQL_INSERT,
-                    book.getTitle(),
-                    book.getDescription(),
-                    book.getAuthor().getId(),
-                    book.getPublisher().getIsbn(),
-                    Date.valueOf(book.getDate()))) {
+        try (ResultSet resultSet =  updateQueryWithKeys(SQL_INSERT,
+                Statement.RETURN_GENERATED_KEYS,
+                book.getTitle(),
+                book.getDescription(),
+                book.getAuthor().getId(),
+                book.getPublisher().getIsbn(),
+                Date.valueOf(book.getDate()))) {
             if (resultSet.next()) {
                 book.setId(resultSet.getInt(1));
             }

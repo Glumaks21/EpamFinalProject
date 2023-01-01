@@ -71,7 +71,7 @@ class UserSqlDao extends AbstractSqlDao<Integer, User> implements UserDao {
                     throw new MappingException("User's role is undefined");
             }
         } catch (SQLException e) {
-            throw new MappingException(e);
+            throw new MappingException("Can't define user role", e);
         }
     }
 

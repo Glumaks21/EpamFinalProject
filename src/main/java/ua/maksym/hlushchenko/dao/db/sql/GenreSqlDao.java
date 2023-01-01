@@ -23,7 +23,7 @@ abstract class GenreSqlDao extends AbstractSqlDao<Integer, Genre> {
                     new Class[] {Genre.class, LoadProxy.class},
                     new LoadHandler<>(genre));
         } catch (SQLException e) {
-            throw new MappingException(e);
+            throw new MappingException("Can't map the entity", e);
         }
     }
 }
