@@ -2,29 +2,54 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import org.slf4j.*;
 import ua.maksym.hlushchenko.dao.entity.Genre;
+import ua.maksym.hlushchenko.dao.entity.sql.GenreImpl;
 import ua.maksym.hlushchenko.exception.DaoException;
+import ua.maksym.hlushchenko.exception.MappingException;
 
+import java.lang.reflect.Proxy;
 import java.sql.*;
 import java.util.*;
 
-class GenreEnSqlDao extends GenreSqlDao {
-    private static final String SQL_SELECT_ALL = "SELECT id, name " +
-            "FROM genre";
-    private static final String SQL_SELECT_BY_ID = "SELECT id, name " +
-            "FROM genre " +
-            "WHERE id = ?";
-    private static final String SQL_INSERT = "INSERT INTO genre(name) " +
-            "VALUES(?)";
-    private static final String SQL_UPDATE_BY_ID = "UPDATE genre " +
-            "SET name = ? " +
-            "WHERE id = ?";
-    private  static final String SQL_DELETE_BY_ID = "DELETE FROM genre " +
-            "WHERE id = ?";
+class GenreEnSqlDao extends AbstractSqlDao<Integer, Genre> {
+    public static final String SQL_TABLE_NAME = "genre";
+    public static final String SQL_COLUMN_NAME_ID = "id";
+    public static final String SQL_COLUMN_NAME_NAME = "name";
+
+
+    private static final String SQL_SELECT_ALL = QueryUtil.createSelect(
+            SQL_TABLE_NAME, SQL_COLUMN_NAME_ID, SQL_COLUMN_NAME_NAME);
+
+    private static final String SQL_SELECT_BY_ID = QueryUtil.createSelectWithConditions(
+            SQL_TABLE_NAME, List.of(SQL_COLUMN_NAME_ID, SQL_COLUMN_NAME_NAME), List.of(SQL_COLUMN_NAME_ID));
+
+    private static final String SQL_INSERT =  QueryUtil.createInsert(
+            SQL_TABLE_NAME, SQL_COLUMN_NAME_NAME);
+
+    private static final String SQL_UPDATE_BY_ID = QueryUtil.createUpdate(
+            SQL_TABLE_NAME, List.of(SQL_COLUMN_NAME_NAME), List.of(SQL_COLUMN_NAME_ID));
+
+    private  static final String SQL_DELETE_BY_ID = QueryUtil.createDelete(
+            SQL_TABLE_NAME, SQL_COLUMN_NAME_ID);
+
 
     private static final Logger log = LoggerFactory.getLogger(GenreEnSqlDao.class);
 
     public GenreEnSqlDao(Connection connection) {
         super(connection);
+    }
+
+    protected Genre mapToEntity(ResultSet resultSet) {
+        try {
+            Genre genre = new GenreImpl();
+            genre.setId(resultSet.getInt(SQL_COLUMN_NAME_ID));
+            genre.setName(resultSet.getString(SQL_COLUMN_NAME_NAME));
+            return (Genre) Proxy.newProxyInstance(
+                    GenreEnSqlDao.class.getClassLoader(),
+                    new Class[] {Genre.class, LoadProxy.class},
+                    new LoadHandler<>(genre));
+        } catch (SQLException e) {
+            throw new MappingException("Can't map the entity", e);
+        }
     }
 
     @Override

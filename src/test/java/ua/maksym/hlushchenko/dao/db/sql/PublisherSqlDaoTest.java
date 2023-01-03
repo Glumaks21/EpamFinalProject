@@ -2,14 +2,11 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
-import ua.maksym.hlushchenko.dao.DaoFactory;
 import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.dao.entity.Publisher;
-import ua.maksym.hlushchenko.dao.entity.impl.PublisherImpl;
+import ua.maksym.hlushchenko.dao.entity.sql.PublisherImpl;
 
 import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,7 +18,6 @@ class PublisherSqlDaoTest {
 
     static Publisher createPublisher() {
         Publisher publisher = new PublisherImpl();
-        publisher.setIsbn("1234567890123");
         publisher.setName("Test company");
         return publisher;
     }
@@ -52,7 +48,7 @@ class PublisherSqlDaoTest {
     @Order(3)
     @Test
     void find() {
-        Optional<Publisher> optionalPublisherInDb = dao.find(publisher.getIsbn());
+        Optional<Publisher> optionalPublisherInDb = dao.find(publisher.getId());
         Assertions.assertTrue(optionalPublisherInDb.isPresent());
         Publisher publisherInDb = optionalPublisherInDb.get();
         Assertions.assertEquals(publisher, publisherInDb);
@@ -70,8 +66,8 @@ class PublisherSqlDaoTest {
     @Order(5)
     @Test
     void delete() {
-        dao.delete(publisher.getIsbn());
-        Optional<Publisher> optionalPublisherInDb = dao.find(publisher.getIsbn());
+        dao.delete(publisher.getId());
+        Optional<Publisher> optionalPublisherInDb = dao.find(publisher.getId());
         Assertions.assertTrue(optionalPublisherInDb.isEmpty());
     }
 
@@ -80,7 +76,7 @@ class PublisherSqlDaoTest {
     void deleteByName() {
         save();
         dao.deleteByName(publisher.getName());
-        Optional<Publisher> optionalPublisherInDb = dao.find(publisher.getIsbn());
+        Optional<Publisher> optionalPublisherInDb = dao.find(publisher.getId());
         Assertions.assertTrue(optionalPublisherInDb.isEmpty());
     }
 

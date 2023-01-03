@@ -5,7 +5,7 @@ import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.dao.entity.Book;
 import ua.maksym.hlushchenko.dao.entity.Subscription;
-import ua.maksym.hlushchenko.dao.entity.impl.SubscriptionImpl;
+import ua.maksym.hlushchenko.dao.entity.sql.SubscriptionImpl;
 import ua.maksym.hlushchenko.dao.entity.role.Reader;
 
 import java.sql.Connection;

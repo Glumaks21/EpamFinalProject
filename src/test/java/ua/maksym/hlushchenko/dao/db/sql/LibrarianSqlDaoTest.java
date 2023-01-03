@@ -3,7 +3,7 @@ package ua.maksym.hlushchenko.dao.db.sql;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.dao.entity.impl.role.LibrarianImpl;
+import ua.maksym.hlushchenko.dao.entity.sql.role.LibrarianImpl;
 import ua.maksym.hlushchenko.dao.entity.role.Librarian;
 import ua.maksym.hlushchenko.util.Sha256Encoder;
 

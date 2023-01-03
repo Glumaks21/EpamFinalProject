@@ -1,4 +1,4 @@
-package ua.maksym.hlushchenko.dao.entity.impl;
+package ua.maksym.hlushchenko.dao.entity.sql;
 
 import lombok.Data;
 import ua.maksym.hlushchenko.dao.entity.*;
@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import java.util.*;
 
 @Data
-public class BookImpl implements Book{
+public class BookImpl implements Book {
     private int id;
     private String title;
     private String description;

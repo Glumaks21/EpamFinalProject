@@ -2,6 +2,7 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import org.slf4j.*;
 import ua.maksym.hlushchenko.dao.entity.Author;
+import ua.maksym.hlushchenko.exception.DaoException;
 
 import java.sql.*;
 import java.util.*;
@@ -50,7 +51,7 @@ class AuthorEnSqlDao extends AuthorSqlDao  {
                 author.setId(resultSet.getInt(1));
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new DaoException(e);
         }
     }
 

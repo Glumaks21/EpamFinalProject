@@ -1,4 +1,4 @@
-package ua.maksym.hlushchenko.dao.entity.impl.role;
+package ua.maksym.hlushchenko.dao.entity.sql.role;
 
 import lombok.Data;
 import lombok.ToString;

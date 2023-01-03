@@ -4,7 +4,7 @@ import org.slf4j.*;
 
 import ua.maksym.hlushchenko.dao.*;
 import ua.maksym.hlushchenko.dao.entity.*;
-import ua.maksym.hlushchenko.dao.entity.impl.SubscriptionImpl;
+import ua.maksym.hlushchenko.dao.entity.sql.SubscriptionImpl;
 import ua.maksym.hlushchenko.dao.entity.role.Reader;
 import ua.maksym.hlushchenko.exception.ConnectionException;
 import ua.maksym.hlushchenko.exception.DaoException;

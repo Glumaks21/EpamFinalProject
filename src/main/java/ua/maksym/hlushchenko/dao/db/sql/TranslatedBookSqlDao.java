@@ -8,9 +8,12 @@ import java.sql.Date;
 import java.util.*;
 
 abstract class TranslatedBookSqlDao extends BookSqlDao {
-    private static final String SQL_UPDATE_IN_ORIGINAL = "UPDATE book " +
-            "SET author_id = ?, publisher_isbn = ?, date = ? " +
-            "WHERE id = ?";
+    private static final String SQL_UPDATE_IN_ORIGINAL = QueryUtil.createUpdate(
+            BookEnSqlDao.SQL_TABLE_NAME,
+            List.of(BookEnSqlDao.SQL_COLUMN_NAME_AUTHOR, BookEnSqlDao.SQL_COLUMN_NAME_PUBLISHER,
+                    BookEnSqlDao.SQL_COLUMN_NAME_DATE),
+            List.of(BookEnSqlDao.SQL_COLUMN_NAME_ID)
+    );
 
     public TranslatedBookSqlDao(Connection connection, Locale locale) {
         super(connection, locale);
@@ -20,14 +23,14 @@ abstract class TranslatedBookSqlDao extends BookSqlDao {
     public void update(Book book) {
         updateQuery(SQL_UPDATE_IN_ORIGINAL,
                 book.getAuthor().getId(),
-                book.getPublisher().getIsbn(),
+                book.getPublisher().getId(),
                 Date.valueOf(book.getDate()),
                 book.getId());
     }
 
     @Override
     public void saveGenres(Book book) {
-        GenreSqlDao originalGenreDao = new GenreEnSqlDao(connection);
+        GenreEnSqlDao originalGenreDao = new GenreEnSqlDao(connection);
 
         List<Genre> originalGenres = new ArrayList<>();
         for (Genre translatedGenre : book.getGenres()) {

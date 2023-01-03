@@ -1,7 +1,7 @@
 package ua.maksym.hlushchenko.dao.db.sql;
 
 import ua.maksym.hlushchenko.dao.entity.role.Librarian;
-import ua.maksym.hlushchenko.dao.entity.impl.role.LibrarianImpl;
+import ua.maksym.hlushchenko.dao.entity.sql.role.LibrarianImpl;
 import ua.maksym.hlushchenko.exception.MappingException;
 
 import java.lang.reflect.Proxy;
@@ -9,17 +9,23 @@ import java.sql.*;
 import java.util.*;
 
 public class LibrarianSqlDao extends UserWithRoleSqlDao<Librarian> {
+    static final String SQL_TABLE_NAME = "librarian";
+    static final String SQL_COLUMN_NAME_ID = "user_id";
+
     private static final String SQL_SELECT_ALL = "SELECT id, login, password_hash " +
             "FROM librarian l " +
             "JOIN user u ON l.user_id = u.id";
+
     private static final String SQL_SELECT_BY_ID = "SELECT id, login, password_hash " +
             "FROM librarian l " +
             "JOIN user u ON l.user_id = u.id " +
             "WHERE user_id = ?";
-    private static final String SQL_INSERT = "INSERT INTO librarian(user_id) " +
-            "VALUES(?)";
-    private static final String SQL_DELETE_BY_ID = "DELETE FROM librarian " +
-            "WHERE user_id = ?";
+
+    private static final String SQL_INSERT = QueryUtil.createInsert(
+            SQL_TABLE_NAME, SQL_COLUMN_NAME_ID);
+
+    private static final String SQL_DELETE_BY_ID = QueryUtil.createDelete(
+            SQL_TABLE_NAME, SQL_COLUMN_NAME_ID);
 
     public LibrarianSqlDao(Connection connection) {
         super(connection);

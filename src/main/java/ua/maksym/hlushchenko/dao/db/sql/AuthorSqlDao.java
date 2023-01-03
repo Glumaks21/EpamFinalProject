@@ -1,7 +1,7 @@
 package ua.maksym.hlushchenko.dao.db.sql;
 
 import ua.maksym.hlushchenko.dao.entity.Author;
-import ua.maksym.hlushchenko.dao.entity.impl.AuthorImpl;
+import ua.maksym.hlushchenko.dao.entity.sql.AuthorImpl;
 import ua.maksym.hlushchenko.exception.MappingException;
 
 import java.lang.reflect.Proxy;

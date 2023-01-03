@@ -3,8 +3,7 @@ package ua.maksym.hlushchenko.dao.db.sql;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.dao.entity.Genre;
-import ua.maksym.hlushchenko.dao.entity.impl.GenreImpl;
+import ua.maksym.hlushchenko.dao.entity.sql.GenreImpl;
 
 import java.sql.Connection;
 import java.util.*;
@@ -13,10 +12,10 @@ import java.util.*;
 class GenreEnSqlDaoTest extends SqlDaoTestHelper {
     private static Connection connection;
     private static GenreEnSqlDao dao;
-    private static Genre genre;
+    private static ua.maksym.hlushchenko.dao.entity.Genre genre;
 
-    static Genre createGenre() {
-        Genre genre = new GenreImpl();
+    static ua.maksym.hlushchenko.dao.entity.Genre createGenre() {
+        ua.maksym.hlushchenko.dao.entity.Genre genre = new GenreImpl();
         genre.setName("test");
         return genre;
     }
@@ -40,16 +39,16 @@ class GenreEnSqlDaoTest extends SqlDaoTestHelper {
     @Order(2)
     @Test
     void findAll() {
-        List<Genre> genres = dao.findAll();
+        List<ua.maksym.hlushchenko.dao.entity.Genre> genres = dao.findAll();
         Assertions.assertTrue(genres.contains(genre));
     }
 
     @Order(3)
     @Test
     void find() {
-        Optional<Genre> optionalGenreInDb = dao.find(genre.getId());
+        Optional<ua.maksym.hlushchenko.dao.entity.Genre> optionalGenreInDb = dao.find(genre.getId());
         Assertions.assertTrue(optionalGenreInDb.isPresent());
-        Genre genreInDb = optionalGenreInDb.get();
+        ua.maksym.hlushchenko.dao.entity.Genre genreInDb = optionalGenreInDb.get();
         Assertions.assertEquals(genre, genreInDb);
     }
 
@@ -65,7 +64,7 @@ class GenreEnSqlDaoTest extends SqlDaoTestHelper {
     @Test
     void delete() {
         dao.delete(genre.getId());
-        Optional<Genre> optionalGenreInDb = dao.find(genre.getId());
+        Optional<ua.maksym.hlushchenko.dao.entity.Genre> optionalGenreInDb = dao.find(genre.getId());
         Assertions.assertTrue(optionalGenreInDb.isEmpty());
     }
 

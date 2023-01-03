@@ -1,4 +1,4 @@
-package ua.maksym.hlushchenko.dao.entity.impl;
+package ua.maksym.hlushchenko.dao.entity.sql;
 
 import lombok.Data;
 import ua.maksym.hlushchenko.dao.entity.Book;

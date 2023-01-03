@@ -1,8 +1,8 @@
 package ua.maksym.hlushchenko.dao.entity;
 
 public interface Publisher {
-    String getIsbn();
-    void setIsbn(String isbn);
+    int getId();
+    void setId(int id);
     String getName();
     void setName(String name);
 }

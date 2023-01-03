@@ -10,17 +10,32 @@ import java.sql.*;
 import java.util.*;
 
 class UserSqlDao extends AbstractSqlDao<Integer, User> implements UserDao {
-    private static final String SQL_SELECT_ALL =
-            "SELECT id, login, password_hash, blocked, " +
+    static final String SQL_TABLE_NAME = "user";
+    static final String SQL_COLUMN_NAME_ID = "id";
+    static final String SQL_COLUMN_NAME_LOGIN = "login";
+    static final String SQL_COLUMN_NAME_PASSWORD_HASH = "password_hash";
+
+    private static final String SQL_SELECT_ALL = String.format(
+            "SELECT %s, %s, %s, %s, " +
                 "CASE " +
-                    "WHEN r.user_id IS NOT null THEN 1 " +
-                    "WHEN a.user_id IS NOT null THEN 2 " +
-                    "WHEN l.user_id IS NOT null THEN 3 " +
+                    "WHEN r.%s IS NOT null THEN 1 " +
+                    "WHEN a.%s IS NOT null THEN 2 " +
+                    "WHEN l.%s IS NOT null THEN 3 " +
                 "END as role " +
-                "FROM user u " +
-                "LEFT OUTER JOIN reader r ON u.id = r.user_id " +
-                "LEFT OUTER JOIN admin a ON u.id = a.user_id " +
-                "LEFT OUTER JOIN librarian l ON u.id = l.user_id";
+            "FROM %s u " +
+            "LEFT OUTER JOIN %s r ON u.%s = r.%s " +
+            "LEFT OUTER JOIN %s a ON u.%s = a.%s " +
+            "LEFT OUTER JOIN %s l ON u.%s = l.%s",
+
+            SQL_COLUMN_NAME_ID, SQL_COLUMN_NAME_LOGIN, SQL_COLUMN_NAME_PASSWORD_HASH,
+            ReaderSqlDao.SQL_COLUMN_NAME_BLOCKED,
+            ReaderSqlDao.SQL_COLUMN_NAME_ID, AdminSqlDao.SQL_COLUMN_NAME_ID, LibrarianSqlDao.SQL_COLUMN_NAME_ID,
+            SQL_TABLE_NAME,
+            ReaderSqlDao.SQL_TABLE_NAME, SQL_COLUMN_NAME_ID, ReaderSqlDao.SQL_COLUMN_NAME_ID,
+            AdminSqlDao.SQL_TABLE_NAME, SQL_COLUMN_NAME_ID, AdminSqlDao.SQL_COLUMN_NAME_ID,
+            LibrarianSqlDao.SQL_TABLE_NAME, SQL_COLUMN_NAME_ID, LibrarianSqlDao.SQL_COLUMN_NAME_ID);
+
+
     private static final String SQL_SELECT_BY_ID =
             "SELECT id, login, password_hash, blocked, " +
                 "CASE " +

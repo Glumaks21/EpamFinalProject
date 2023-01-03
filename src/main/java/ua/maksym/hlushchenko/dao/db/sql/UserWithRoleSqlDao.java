@@ -4,15 +4,20 @@ import ua.maksym.hlushchenko.dao.entity.role.User;
 import ua.maksym.hlushchenko.exception.DaoException;
 
 import java.sql.*;
+import java.util.List;
 
 public abstract class UserWithRoleSqlDao<T extends User> extends AbstractSqlDao<Integer, T> {
-    private static final String SQL_INSERT = "INSERT INTO user(login, password_hash) " +
-            "VALUES(?, ?)";
-    private static final String SQL_UPDATE_BY_ID = "UPDATE user " +
-            "SET login = ?, password_hash = ? " +
-            "WHERE id = ?";
-    private static final String SQL_DELETE_BY_ID = "DELETE FROM user " +
-            "WHERE id = ?";
+    private static final String SQL_INSERT = QueryUtil.createInsert(
+            UserSqlDao.SQL_TABLE_NAME, UserSqlDao.SQL_COLUMN_NAME_LOGIN, UserSqlDao.SQL_COLUMN_NAME_PASSWORD_HASH);
+
+    private static final String SQL_UPDATE_BY_ID = QueryUtil.createUpdate(
+            UserSqlDao.SQL_TABLE_NAME,
+            List.of(UserSqlDao.SQL_COLUMN_NAME_LOGIN, UserSqlDao.SQL_COLUMN_NAME_PASSWORD_HASH),
+            List.of(UserSqlDao.SQL_COLUMN_NAME_ID));
+
+    private static final String SQL_DELETE_BY_ID = QueryUtil.createDelete(
+            UserSqlDao.SQL_TABLE_NAME, UserSqlDao.SQL_COLUMN_NAME_ID);
+
 
     public UserWithRoleSqlDao(Connection connection) {
         super(connection);

@@ -2,37 +2,115 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import org.slf4j.*;
 import ua.maksym.hlushchenko.dao.entity.*;
+import ua.maksym.hlushchenko.dao.entity.sql.BookImpl;
+import ua.maksym.hlushchenko.exception.ConnectionException;
+import ua.maksym.hlushchenko.exception.MappingException;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.sql.*;
 import java.util.*;
 
 class BookUaSqlDao extends TranslatedBookSqlDao {
-    private static final String SQL_SELECT_ALL = "SELECT " +
-            "id, b_u.title as title, b_u.description as description, author_id, publisher_isbn, date " +
-            "FROM book_ua b_u " +
-            "JOIN book b ON b_u.book_id = b.id";
-    private static final String SQL_SELECT_BY_ID = "SELECT " +
-            "id, b_u.title as title, b_u.description as description, author_id, publisher_isbn, date " +
-            "FROM book_ua b_u " +
-            "JOIN book b ON b_u.book_id = b.id " +
-            "WHERE b.id = ?";
-    private static final String SQL_SELECT_GENRES_BY_BOOK_ID = "SELECT g.genre_id as id, name " +
-            "FROM genre_ua g " +
-            "JOIN book_has_genre bg ON g.genre_id = bg.genre_id " +
-            "WHERE bg.book_id = ?";
-    private static final String SQL_INSERT = "INSERT INTO book_ua" +
-            "(book_id, title, description) " +
-            "VALUES(?, ?, ?)";
-    private static final String SQL_UPDATE_BY_ID = "UPDATE book_ua " +
-            "SET title = ?, description = ? " +
-            "WHERE book_id = ?";
-    private static final String SQL_DELETE_BY_ID = "DELETE FROM book_ua " +
-            "WHERE book_id = ?";
+    static final String SQL_TABLE_NAME = "book_ua";
+    static final String SQL_COLUMN_NAME_ID = "book_id";
+    static final String SQL_COLUMN_NAME_TITLE = "title";
+    static final String SQL_COLUMN_NAME_DESCRIPTION = "description";
+
+    private static final String SQL_SELECT_ALL = String.format(
+            "SELECT %s, b_u.%s as %<s, %s, %s, %s, b_u.%s as %<s " +
+            "FROM %s b_u " +
+            "JOIN %s b ON b_u.%s = b.%s",
+            SQL_COLUMN_NAME_ID, SQL_COLUMN_NAME_TITLE,
+            BookEnSqlDao.SQL_COLUMN_NAME_AUTHOR, BookEnSqlDao.SQL_COLUMN_NAME_PUBLISHER,
+            BookEnSqlDao.SQL_COLUMN_NAME_DATE, SQL_COLUMN_NAME_DESCRIPTION,
+            SQL_TABLE_NAME, BookEnSqlDao.SQL_TABLE_NAME,
+            SQL_COLUMN_NAME_ID, BookEnSqlDao.SQL_COLUMN_NAME_ID
+    );
+
+    private static final String SQL_SELECT_BY_ID = String.format(
+            "SELECT %s, b_u.%s as %<s, %s, %s, %s, b_u.%s as %<s " +
+            "FROM %s b_u " +
+            "JOIN %s b ON b_u.%s = b.%s " +
+            "WHERE b.%s = ?",
+            SQL_COLUMN_NAME_ID, SQL_COLUMN_NAME_TITLE,
+            BookEnSqlDao.SQL_COLUMN_NAME_AUTHOR, BookEnSqlDao.SQL_COLUMN_NAME_PUBLISHER,
+            BookEnSqlDao.SQL_COLUMN_NAME_DATE, SQL_COLUMN_NAME_DESCRIPTION,
+            SQL_TABLE_NAME, BookEnSqlDao.SQL_TABLE_NAME,
+            SQL_COLUMN_NAME_ID, BookEnSqlDao.SQL_COLUMN_NAME_ID,
+            BookEnSqlDao.SQL_COLUMN_NAME_ID
+    );
+
+    private static final String SQL_SELECT_GENRES_BY_BOOK_ID = String.format(
+            "SELECT g_u.%s as %<s, %s " +
+            "FROM %s g_u " +
+            "JOIN %s bg ON g_u.%s = bg.%s " +
+            "WHERE bg.%s = ?",
+            GenreUaSqlDao.SQL_COLUMN_NAME_ID, GenreUaSqlDao.SQL_COLUMN_NAME_NAME,
+            GenreUaSqlDao.SQL_TABLE_NAME, BookEnSqlDao.SQL_GENRES_TABLE_NAME,
+            GenreUaSqlDao.SQL_COLUMN_NAME_ID, BookEnSqlDao.SQL_GENRES_COLUMN_NAME_GENRE_ID,
+            BookEnSqlDao.SQL_GENRES_COLUMN_NAME_BOOK_ID
+    );
+
+    private static final String SQL_INSERT = QueryUtil.createInsert(
+            SQL_TABLE_NAME, SQL_COLUMN_NAME_ID, SQL_COLUMN_NAME_TITLE, SQL_COLUMN_NAME_DESCRIPTION);
+
+    private static final String SQL_UPDATE_BY_ID = QueryUtil.createUpdate(
+            SQL_TABLE_NAME, List.of(SQL_COLUMN_NAME_TITLE, SQL_COLUMN_NAME_DESCRIPTION), List.of(SQL_COLUMN_NAME_ID));
+
+    private static final String SQL_DELETE_BY_ID = QueryUtil.createDelete(
+            SQL_TABLE_NAME, SQL_COLUMN_NAME_ID);
 
     private static final Logger log = LoggerFactory.getLogger(BookUaSqlDao.class);
 
     public BookUaSqlDao(Connection connection) {
         super(connection, new Locale("uk", "ua"));
+    }
+
+    @Override
+    protected Book mapToEntity(ResultSet resultSet) {
+        try {
+            Book book = new BookImpl();
+
+            book.setId(resultSet.getInt(SQL_COLUMN_NAME_ID));
+            book.setTitle(resultSet.getString(SQL_COLUMN_NAME_TITLE));
+
+            AuthorUaSqlDao authorSqlDao = new AuthorUaSqlDao(connection);
+            int authorId = resultSet.getInt(BookEnSqlDao.SQL_COLUMN_NAME_AUTHOR);
+            Author author = authorSqlDao.find(authorId).get();
+            book.setAuthor(author);
+
+            PublisherSqlDao publisherSqlDao = new PublisherSqlDao(connection);
+            int publisherId = resultSet.getInt(BookEnSqlDao.SQL_COLUMN_NAME_PUBLISHER);
+            Publisher publisher = publisherSqlDao.find(publisherId).get();
+            book.setPublisher(publisher);
+
+            book.setDate(resultSet.getDate(BookEnSqlDao.SQL_COLUMN_NAME_DATE).toLocalDate());
+            book.setDescription(resultSet.getString(SQL_COLUMN_NAME_DESCRIPTION));
+            return (Book) Proxy.newProxyInstance(
+                    BookSqlDao.class.getClassLoader(),
+                    new Class[]{Book.class, LoadProxy.class},
+                    new LazyInitializationHandler(book));
+        } catch (SQLException | ConnectionException | NoSuchElementException e) {
+            throw new MappingException("Can't map the entity", e);
+        }
+    }
+
+    private class LazyInitializationHandler extends LoadHandler<Book> {
+        private boolean bookInitialised;
+
+        public LazyInitializationHandler(Book wrapped) {
+            super(wrapped);
+        }
+
+        @Override
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            if (!bookInitialised && method.getName().equals("getGenres")) {
+                bookInitialised = true;
+                wrapped.setGenres(findGenres(wrapped.getId()));
+            }
+            return super.invoke(proxy, method, args);
+        }
     }
 
     @Override

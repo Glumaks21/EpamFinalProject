@@ -1,4 +1,4 @@
-package ua.maksym.hlushchenko.dao.entity.impl;
+package ua.maksym.hlushchenko.dao.entity.sql;
 
 import lombok.Data;
 import ua.maksym.hlushchenko.dao.entity.Publisher;
@@ -7,7 +7,7 @@ import java.util.Objects;
 
 @Data
 public class PublisherImpl implements Publisher {
-    private String isbn;
+    private int id;
     private String name;
 
     @Override
@@ -15,12 +15,12 @@ public class PublisherImpl implements Publisher {
         if (this == o) return true;
         if (!(o instanceof Publisher)) return false;
         Publisher publisher = (Publisher) o;
-        return Objects.equals(getIsbn(), publisher.getIsbn()) &&
+        return Objects.equals(getId(), publisher.getId()) &&
                 Objects.equals(getName(), publisher.getName());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getIsbn(), getName());
+        return Objects.hash(getId(), getName());
     }
 }

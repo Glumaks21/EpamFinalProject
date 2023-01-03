@@ -4,6 +4,7 @@
 
 <html>
 <head>
+    <link rel="stylesheet" href="<c:url value="/static/css/home.css"/>">
     <title>Library</title>
 </head>
 <body>

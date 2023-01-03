@@ -4,12 +4,11 @@ import org.slf4j.*;
 
 import ua.maksym.hlushchenko.dao.ReceiptDao;
 import ua.maksym.hlushchenko.dao.entity.*;
-import ua.maksym.hlushchenko.dao.entity.impl.ReceiptImpl;
+import ua.maksym.hlushchenko.dao.entity.sql.ReceiptImpl;
 import ua.maksym.hlushchenko.exception.ConnectionException;
 import ua.maksym.hlushchenko.exception.DaoException;
 import ua.maksym.hlushchenko.exception.MappingException;
 
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.*;

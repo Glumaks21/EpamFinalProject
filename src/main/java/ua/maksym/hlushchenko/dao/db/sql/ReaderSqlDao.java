@@ -4,7 +4,7 @@ import org.slf4j.*;
 
 import ua.maksym.hlushchenko.dao.ReaderDao;
 import ua.maksym.hlushchenko.dao.entity.*;
-import ua.maksym.hlushchenko.dao.entity.impl.role.ReaderImpl;
+import ua.maksym.hlushchenko.dao.entity.sql.role.ReaderImpl;
 import ua.maksym.hlushchenko.dao.entity.role.Reader;
 import ua.maksym.hlushchenko.exception.*;
 
@@ -13,6 +13,10 @@ import java.sql.*;
 import java.util.*;
 
 class ReaderSqlDao extends UserWithRoleSqlDao<Reader> implements ReaderDao {
+    static final String SQL_TABLE_NAME = "reader";
+    static final String SQL_COLUMN_NAME_ID = "user_id";
+    static final String SQL_COLUMN_NAME_BLOCKED = "blocked";
+
     private static final String SQL_SELECT_ALL = "SELECT id, login, password_hash, blocked " +
             "FROM reader r " +
             "JOIN user u ON r.user_id = u.id";

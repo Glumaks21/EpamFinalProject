@@ -2,9 +2,9 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import org.slf4j.*;
 import ua.maksym.hlushchenko.dao.*;
+import ua.maksym.hlushchenko.dao.entity.Genre;
 import ua.maksym.hlushchenko.dao.entity.role.Admin;
 import ua.maksym.hlushchenko.dao.entity.role.Librarian;
-import ua.maksym.hlushchenko.dao.entity.role.User;
 
 import java.sql.*;
 import java.util.*;
@@ -56,7 +56,7 @@ public class SqlDaoFactory implements DaoFactory {
     }
 
     @Override
-    public GenreSqlDao createGenreDao(Locale locale) {
+    public Dao<Integer, Genre> createGenreDao(Locale locale) {
         switch (locale.getLanguage()) {
             case "en":
                 return new GenreEnSqlDao(connection);
