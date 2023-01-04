@@ -4,7 +4,7 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.dao.entity.Receipt;
-import ua.maksym.hlushchenko.dao.entity.sql.ReceiptImpl;
+import ua.maksym.hlushchenko.dao.entity.impl.ReceiptImpl;
 import ua.maksym.hlushchenko.dao.entity.role.Reader;
 
 import java.sql.Connection;

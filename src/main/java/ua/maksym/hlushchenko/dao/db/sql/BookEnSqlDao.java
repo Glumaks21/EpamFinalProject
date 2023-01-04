@@ -1,19 +1,19 @@
 package ua.maksym.hlushchenko.dao.db.sql;
 
 import org.slf4j.*;
+import ua.maksym.hlushchenko.dao.BookDao;
+import ua.maksym.hlushchenko.dao.Dao;
 import ua.maksym.hlushchenko.dao.entity.*;
-import ua.maksym.hlushchenko.dao.entity.sql.BookImpl;
-import ua.maksym.hlushchenko.exception.ConnectionException;
-import ua.maksym.hlushchenko.exception.DaoException;
-import ua.maksym.hlushchenko.exception.MappingException;
+import ua.maksym.hlushchenko.dao.entity.impl.BookImpl;
+import ua.maksym.hlushchenko.exception.*;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
+import java.lang.reflect.*;
 import java.sql.*;
 import java.sql.Date;
+import java.time.LocalDate;
 import java.util.*;
 
-class BookEnSqlDao extends BookSqlDao {
+class BookEnSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao {
     static final String SQL_TABLE_NAME = "book";
     static final String SQL_COLUMN_NAME_ID = "id";
     static final String SQL_COLUMN_NAME_TITLE = "title";
@@ -21,75 +21,96 @@ class BookEnSqlDao extends BookSqlDao {
     static final String SQL_COLUMN_NAME_PUBLISHER = "publisher_id";
     static final String SQL_COLUMN_NAME_DATE = "publication_date";
     static final String SQL_COLUMN_NAME_DESCRIPTION = "description";
+    static final String SQL_COLUMN_NAME_COVER_PATH = "cover_path";
 
     static final String SQL_GENRES_TABLE_NAME = "book_has_genre";
     static final String SQL_GENRES_COLUMN_NAME_BOOK_ID = "book_id";
     static final String SQL_GENRES_COLUMN_NAME_GENRE_ID = "genre_id";
 
     private static final String SQL_SELECT_ALL = QueryUtil.createSelect(
-            SQL_TABLE_NAME, SQL_COLUMN_NAME_ID, SQL_COLUMN_NAME_TITLE, SQL_COLUMN_NAME_AUTHOR,
-            SQL_COLUMN_NAME_PUBLISHER, SQL_COLUMN_NAME_DATE, SQL_COLUMN_NAME_DESCRIPTION);
+            SQL_TABLE_NAME,
+            List.of(SQL_COLUMN_NAME_ID, SQL_COLUMN_NAME_TITLE, SQL_COLUMN_NAME_AUTHOR,
+                    SQL_COLUMN_NAME_PUBLISHER, SQL_COLUMN_NAME_DATE,
+                    SQL_COLUMN_NAME_DESCRIPTION, SQL_COLUMN_NAME_COVER_PATH));
 
     private static final String SQL_SELECT_BY_ID = QueryUtil.createSelectWithConditions(
             SQL_TABLE_NAME,
             List.of(SQL_COLUMN_NAME_ID, SQL_COLUMN_NAME_TITLE, SQL_COLUMN_NAME_AUTHOR,
-                    SQL_COLUMN_NAME_PUBLISHER, SQL_COLUMN_NAME_DATE, SQL_COLUMN_NAME_DESCRIPTION),
+                    SQL_COLUMN_NAME_PUBLISHER, SQL_COLUMN_NAME_DATE,
+                    SQL_COLUMN_NAME_DESCRIPTION, SQL_COLUMN_NAME_COVER_PATH),
             List.of(SQL_COLUMN_NAME_ID));
 
-    private static final String SQL_SELECT_GENRES_BY_BOOK_ID = String.format(
-            "SELECT %s, %s FROM %s g " +
-            "JOIN %s bg ON g.%s = bg.%s " +
-            "WHERE bg.%s = ?",
-            GenreEnSqlDao.SQL_COLUMN_NAME_ID, GenreEnSqlDao.SQL_COLUMN_NAME_NAME, GenreEnSqlDao.SQL_TABLE_NAME,
-            SQL_GENRES_TABLE_NAME, GenreEnSqlDao.SQL_COLUMN_NAME_ID, SQL_GENRES_COLUMN_NAME_GENRE_ID,
-            SQL_GENRES_COLUMN_NAME_BOOK_ID);
+    private static final String SQL_SELECT_GENRES_BY_BOOK_ID = QueryUtil.createSelectWithJoinAndConditions(
+            GenreEnSqlDao.SQL_TABLE_NAME,
+            List.of(GenreEnSqlDao.SQL_COLUMN_NAME_ID, GenreEnSqlDao.SQL_COLUMN_NAME_NAME),
+            SQL_GENRES_TABLE_NAME,
+            List.of(),
+            GenreEnSqlDao.SQL_COLUMN_NAME_ID,
+            SQL_GENRES_COLUMN_NAME_GENRE_ID,
+            SQL_GENRES_TABLE_NAME,
+            List.of(SQL_GENRES_COLUMN_NAME_BOOK_ID)
+    );
 
     private static final String SQL_INSERT = QueryUtil.createInsert(
-            SQL_TABLE_NAME, SQL_COLUMN_NAME_TITLE, SQL_COLUMN_NAME_AUTHOR,
-            SQL_COLUMN_NAME_PUBLISHER, SQL_COLUMN_NAME_DATE, SQL_COLUMN_NAME_DESCRIPTION);
+            SQL_TABLE_NAME,
+            List.of(SQL_COLUMN_NAME_TITLE, SQL_COLUMN_NAME_AUTHOR,
+                    SQL_COLUMN_NAME_PUBLISHER, SQL_COLUMN_NAME_DATE,
+                    SQL_COLUMN_NAME_DESCRIPTION, SQL_COLUMN_NAME_COVER_PATH));
 
     private static final String SQL_INSERT_BOOK_GENRE = QueryUtil.createInsert(
-            SQL_GENRES_TABLE_NAME, SQL_GENRES_COLUMN_NAME_BOOK_ID, SQL_GENRES_COLUMN_NAME_GENRE_ID);
+            SQL_GENRES_TABLE_NAME,
+            List.of(SQL_GENRES_COLUMN_NAME_BOOK_ID, SQL_GENRES_COLUMN_NAME_GENRE_ID));
 
     private static final String SQL_UPDATE_BY_ID = QueryUtil.createUpdate(
             SQL_TABLE_NAME,
             List.of(SQL_COLUMN_NAME_TITLE, SQL_COLUMN_NAME_AUTHOR, SQL_COLUMN_NAME_PUBLISHER,
-                    SQL_COLUMN_NAME_DATE, SQL_COLUMN_NAME_DESCRIPTION),
+                    SQL_COLUMN_NAME_DATE, SQL_COLUMN_NAME_DESCRIPTION, SQL_COLUMN_NAME_COVER_PATH),
             List.of(SQL_COLUMN_NAME_ID));
 
     private static final String SQL_DELETE_BY_ID = QueryUtil.createDelete(
-            SQL_TABLE_NAME, SQL_COLUMN_NAME_ID);
+            SQL_TABLE_NAME,
+            List.of(SQL_COLUMN_NAME_ID));
 
     private static final String SQL_DELETE_ALL_GENRES_BY_BOOK_ID = QueryUtil.createDelete(
-            SQL_GENRES_TABLE_NAME, SQL_GENRES_COLUMN_NAME_BOOK_ID);
+            SQL_GENRES_TABLE_NAME,
+            List.of(SQL_GENRES_COLUMN_NAME_BOOK_ID));
 
 
     private static final Logger log = LoggerFactory.getLogger(BookEnSqlDao.class);
 
     public BookEnSqlDao(Connection connection) {
-        super(connection, Locale.ENGLISH);
+        super(connection);
     }
 
     @Override
     protected Book mapToEntity(ResultSet resultSet) {
         try {
-            Book book = new BookImpl();
+            int id = extractColumn(resultSet, SQL_TABLE_NAME, SQL_COLUMN_NAME_ID);
+            String title = extractColumn(resultSet, SQL_TABLE_NAME, SQL_COLUMN_NAME_TITLE);
 
-            book.setId(resultSet.getInt(SQL_COLUMN_NAME_ID));
-            book.setTitle(resultSet.getString(SQL_COLUMN_NAME_TITLE));
-
+            int authorId = extractColumn(resultSet, SQL_TABLE_NAME, SQL_COLUMN_NAME_AUTHOR);
             AuthorEnSqlDao authorSqlDao = new AuthorEnSqlDao(connection);
-            Author author = authorSqlDao.find(resultSet.getInt(SQL_COLUMN_NAME_AUTHOR)).get();
-            book.setAuthor(author);
+            Author author = authorSqlDao.find(authorId).get();
 
+            int publisherId = extractColumn(resultSet, SQL_TABLE_NAME, SQL_COLUMN_NAME_PUBLISHER);
             PublisherSqlDao publisherSqlDao = new PublisherSqlDao(connection);
-            Publisher publisher = publisherSqlDao.find(resultSet.getInt(SQL_COLUMN_NAME_PUBLISHER)).get();
-            book.setPublisher(publisher);
+            Publisher publisher = publisherSqlDao.find(publisherId).get();
 
-            book.setDate(resultSet.getDate(SQL_COLUMN_NAME_DATE).toLocalDate());
-            book.setDescription(resultSet.getString(SQL_COLUMN_NAME_DESCRIPTION));
+            Date dateInDb = extractColumn(resultSet, SQL_TABLE_NAME, SQL_COLUMN_NAME_DATE);
+            LocalDate date = dateInDb.toLocalDate();
+            String description = extractColumn(resultSet, SQL_TABLE_NAME, SQL_COLUMN_NAME_DESCRIPTION);
+            String coverPath = extractColumn(resultSet, SQL_TABLE_NAME, SQL_COLUMN_NAME_DESCRIPTION);
+
+            Book book = new BookImpl();
+            book.setId(id);
+            book.setTitle(title);
+            book.setAuthor(author);
+            book.setPublisher(publisher);
+            book.setDate(date);
+            book.setDescription(description);
+            book.setCoverPath(coverPath);
             return (Book) Proxy.newProxyInstance(
-                    BookSqlDao.class.getClassLoader(),
+                    BookEnSqlDao.class.getClassLoader(),
                     new Class[]{Book.class, LoadProxy.class},
                     new LazyInitializationHandler(book));
         } catch (SQLException | ConnectionException | NoSuchElementException e) {
@@ -131,7 +152,7 @@ class BookEnSqlDao extends BookSqlDao {
     @Override
     public void save(Book book) {
         if (!(book.getAuthor() instanceof LoadProxy)) {
-            AuthorSqlDao authorSqlDao = new AuthorEnSqlDao(connection);
+            Dao<Integer, Author> authorSqlDao = new AuthorEnSqlDao(connection);
             authorSqlDao.save(book.getAuthor());
             Author savedAuthor = authorSqlDao.find(book.getAuthor().getId()).get();
             book.setAuthor(savedAuthor);
@@ -150,7 +171,8 @@ class BookEnSqlDao extends BookSqlDao {
                 book.getAuthor().getId(),
                 book.getPublisher().getId(),
                 Date.valueOf(book.getDate()),
-                book.getDescription())) {
+                book.getDescription(),
+                book.getCoverPath())) {
             if (resultSet.next()) {
                 book.setId(resultSet.getInt(1));
             }
@@ -170,6 +192,7 @@ class BookEnSqlDao extends BookSqlDao {
                 book.getPublisher().getId(),
                 Date.valueOf(book.getDate()),
                 book.getDescription(),
+                book.getCoverPath(),
                 book.getId());
         updateGenres(book);
     }

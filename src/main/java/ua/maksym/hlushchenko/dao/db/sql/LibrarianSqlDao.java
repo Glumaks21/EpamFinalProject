@@ -1,7 +1,7 @@
 package ua.maksym.hlushchenko.dao.db.sql;
 
 import ua.maksym.hlushchenko.dao.entity.role.Librarian;
-import ua.maksym.hlushchenko.dao.entity.sql.role.LibrarianImpl;
+import ua.maksym.hlushchenko.dao.entity.impl.role.LibrarianImpl;
 import ua.maksym.hlushchenko.exception.MappingException;
 
 import java.lang.reflect.Proxy;
@@ -22,10 +22,12 @@ public class LibrarianSqlDao extends UserWithRoleSqlDao<Librarian> {
             "WHERE user_id = ?";
 
     private static final String SQL_INSERT = QueryUtil.createInsert(
-            SQL_TABLE_NAME, SQL_COLUMN_NAME_ID);
+            SQL_TABLE_NAME,
+            List.of(SQL_COLUMN_NAME_ID));
 
     private static final String SQL_DELETE_BY_ID = QueryUtil.createDelete(
-            SQL_TABLE_NAME, SQL_COLUMN_NAME_ID);
+            SQL_TABLE_NAME,
+            List.of(SQL_COLUMN_NAME_ID));
 
     public LibrarianSqlDao(Connection connection) {
         super(connection);

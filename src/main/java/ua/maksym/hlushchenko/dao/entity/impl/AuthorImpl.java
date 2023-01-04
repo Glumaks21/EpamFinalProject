@@ -1,4 +1,4 @@
-package ua.maksym.hlushchenko.dao.entity.sql;
+package ua.maksym.hlushchenko.dao.entity.impl;
 
 import lombok.Data;
 import ua.maksym.hlushchenko.dao.entity.Author;
@@ -10,6 +10,7 @@ public class AuthorImpl implements Author {
     private int id;
     private String name;
     private String surname;
+    private String alias;
 
     @Override
     public boolean equals(Object o) {
@@ -18,11 +19,12 @@ public class AuthorImpl implements Author {
         Author author = (Author) o;
         return getId() == author.getId() &&
                 Objects.equals(getName(), author.getName()) &&
-                Objects.equals(getSurname(), author.getSurname());
+                Objects.equals(getSurname(), author.getSurname()) &&
+                Objects.equals(getAlias(), author.getAlias());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getName(), getSurname());
+        return Objects.hash(getId(), getName(), getSurname(), getAlias());
     }
 }

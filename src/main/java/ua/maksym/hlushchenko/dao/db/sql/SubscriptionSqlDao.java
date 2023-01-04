@@ -4,7 +4,7 @@ import org.slf4j.*;
 
 import ua.maksym.hlushchenko.dao.*;
 import ua.maksym.hlushchenko.dao.entity.*;
-import ua.maksym.hlushchenko.dao.entity.sql.SubscriptionImpl;
+import ua.maksym.hlushchenko.dao.entity.impl.SubscriptionImpl;
 import ua.maksym.hlushchenko.dao.entity.role.Reader;
 import ua.maksym.hlushchenko.exception.ConnectionException;
 import ua.maksym.hlushchenko.exception.DaoException;
@@ -47,11 +47,11 @@ class SubscriptionSqlDao extends AbstractSqlDao<Integer, Subscription> implement
             Subscription subscription = new SubscriptionImpl();
             subscription.setId(resultSet.getInt("id"));
 
-            ReaderSqlDao readerSqlDao = new ReaderSqlDao(connection);
+            ReaderDao readerSqlDao = new ReaderSqlDao(connection);
             Reader reader = readerSqlDao.find(resultSet.getInt("reader_id")).get();
             subscription.setReader(reader);
 
-            BookSqlDao bookSqlDao = new BookEnSqlDao(connection);
+            BookDao bookSqlDao = new BookEnSqlDao(connection);
             Book book = bookSqlDao.find(resultSet.getInt("book_id")).get();
             subscription.setBook(book);
 

@@ -4,8 +4,8 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.dao.entity.*;
-import ua.maksym.hlushchenko.dao.entity.sql.*;
-import ua.maksym.hlushchenko.dao.entity.sql.GenreImpl;
+import ua.maksym.hlushchenko.dao.entity.impl.*;
+import ua.maksym.hlushchenko.dao.entity.impl.GenreImpl;
 
 import java.sql.Connection;
 import java.time.LocalDate;

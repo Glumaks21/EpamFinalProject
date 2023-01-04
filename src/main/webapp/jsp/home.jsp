@@ -21,6 +21,9 @@
         <thead>
             <tr>
                 <th>
+
+                </th>
+                <th>
                     Title
                     <my:sort category="title"/>
                 </th>
@@ -41,6 +44,9 @@
         <tbody>
             <c:forEach var="book" items="${requestScope.books}">
                 <tr>
+                    <td>
+                        <img class="cover" src="<c:url value="${book.coverPath}"/>"/>
+                    </td>
                     <td>
                         <a href="book?id=${book.id}">${book.title}</a>
                     </td>

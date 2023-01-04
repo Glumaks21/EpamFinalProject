@@ -2,6 +2,7 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import org.slf4j.*;
 import ua.maksym.hlushchenko.dao.*;
+import ua.maksym.hlushchenko.dao.entity.Author;
 import ua.maksym.hlushchenko.dao.entity.Genre;
 import ua.maksym.hlushchenko.dao.entity.role.Admin;
 import ua.maksym.hlushchenko.dao.entity.role.Librarian;
@@ -39,7 +40,7 @@ public class SqlDaoFactory implements DaoFactory {
     }
 
     @Override
-    public AuthorSqlDao createAuthorDao(Locale locale) {
+    public Dao<Integer, Author> createAuthorDao(Locale locale) {
         switch (locale.getLanguage()) {
             case "en":
                 return new AuthorEnSqlDao(connection);
@@ -68,7 +69,7 @@ public class SqlDaoFactory implements DaoFactory {
     }
 
     @Override
-    public BookSqlDao createBookDao(Locale locale) {
+    public BookDao createBookDao(Locale locale) {
         switch (locale.getLanguage()) {
             case "en":
                 return new BookEnSqlDao(connection);

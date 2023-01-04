@@ -18,4 +18,6 @@ public interface Book {
     void setDate(LocalDate date);
     List<Genre> getGenres();
     void setGenres(List<Genre> genres);
+    String getCoverPath();
+    void setCoverPath(String coverPath);
 }

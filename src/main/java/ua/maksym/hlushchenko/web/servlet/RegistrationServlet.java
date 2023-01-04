@@ -2,7 +2,7 @@ package ua.maksym.hlushchenko.web.servlet;
 
 import ua.maksym.hlushchenko.dao.DaoFactory;
 import ua.maksym.hlushchenko.dao.ReaderDao;
-import ua.maksym.hlushchenko.dao.entity.sql.role.ReaderImpl;
+import ua.maksym.hlushchenko.dao.entity.impl.role.ReaderImpl;
 import ua.maksym.hlushchenko.dao.entity.role.Reader;
 import ua.maksym.hlushchenko.exception.DaoException;
 import ua.maksym.hlushchenko.exception.ParamsValidationException;

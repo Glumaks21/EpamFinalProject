@@ -4,7 +4,7 @@ import org.slf4j.*;
 
 import ua.maksym.hlushchenko.dao.ReaderDao;
 import ua.maksym.hlushchenko.dao.entity.*;
-import ua.maksym.hlushchenko.dao.entity.sql.role.ReaderImpl;
+import ua.maksym.hlushchenko.dao.entity.impl.role.ReaderImpl;
 import ua.maksym.hlushchenko.dao.entity.role.Reader;
 import ua.maksym.hlushchenko.exception.*;
 

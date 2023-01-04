@@ -7,4 +7,6 @@ public interface Author {
     void setName(String name);
     String getSurname();
     void setSurname(String surname);
+    String getAlias();
+    void setAlias(String alias);
 }

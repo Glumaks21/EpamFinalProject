@@ -1,5 +1,6 @@
 package ua.maksym.hlushchenko.dao.db.sql;
 
+import ua.maksym.hlushchenko.dao.BookDao;
 import ua.maksym.hlushchenko.dao.entity.*;
 import ua.maksym.hlushchenko.exception.DaoException;
 
@@ -7,7 +8,7 @@ import java.sql.Connection;
 import java.sql.Date;
 import java.util.*;
 
-abstract class TranslatedBookSqlDao extends BookSqlDao {
+abstract class TranslatedBookSqlDao extends AbstractSqlDao<Integer, Book> implements BookDao {
     private static final String SQL_UPDATE_IN_ORIGINAL = QueryUtil.createUpdate(
             BookEnSqlDao.SQL_TABLE_NAME,
             List.of(BookEnSqlDao.SQL_COLUMN_NAME_AUTHOR, BookEnSqlDao.SQL_COLUMN_NAME_PUBLISHER,
@@ -16,9 +17,8 @@ abstract class TranslatedBookSqlDao extends BookSqlDao {
     );
 
     public TranslatedBookSqlDao(Connection connection, Locale locale) {
-        super(connection, locale);
+        super(connection);
     }
-
     @Override
     public void update(Book book) {
         updateQuery(SQL_UPDATE_IN_ORIGINAL,
@@ -42,7 +42,7 @@ abstract class TranslatedBookSqlDao extends BookSqlDao {
             }
         }
 
-        BookSqlDao bookSqlDao = new BookEnSqlDao(connection);
+        BookDao bookSqlDao = new BookEnSqlDao(connection);
         List<Genre> uaGenres = book.getGenres();
         book.setGenres(originalGenres);
         bookSqlDao.saveGenres(book);

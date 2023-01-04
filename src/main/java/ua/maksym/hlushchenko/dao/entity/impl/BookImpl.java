@@ -1,4 +1,4 @@
-package ua.maksym.hlushchenko.dao.entity.sql;
+package ua.maksym.hlushchenko.dao.entity.impl;
 
 import lombok.Data;
 import ua.maksym.hlushchenko.dao.entity.*;
@@ -10,10 +10,11 @@ import java.util.*;
 public class BookImpl implements Book {
     private int id;
     private String title;
-    private String description;
     private Author author;
     private Publisher publisher;
     private LocalDate date;
+    private String description;
+    private String coverPath;
 
     private List<Genre> genres = new ArrayList<>();
 

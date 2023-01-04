@@ -1,7 +1,7 @@
 package ua.maksym.hlushchenko.dao.db.sql;
 
 import ua.maksym.hlushchenko.dao.entity.role.Admin;
-import ua.maksym.hlushchenko.dao.entity.sql.role.AdminImpl;
+import ua.maksym.hlushchenko.dao.entity.impl.role.AdminImpl;
 import ua.maksym.hlushchenko.exception.MappingException;
 
 import java.lang.reflect.Proxy;
@@ -12,25 +12,29 @@ public class AdminSqlDao extends UserWithRoleSqlDao<Admin> {
     static final String SQL_TABLE_NAME = "admin";
     static final String SQL_COLUMN_NAME_ID = "user_id";
 
-    private static final String SQL_SELECT_ALL = String.format(
-            "SELECT %s, %s, %s FROM %s a " +
-            "JOIN %s u ON a.%s = u.%s",
-            SQL_COLUMN_NAME_ID, UserSqlDao.SQL_COLUMN_NAME_LOGIN, UserSqlDao.SQL_COLUMN_NAME_PASSWORD_HASH,
-            SQL_TABLE_NAME, UserSqlDao.SQL_TABLE_NAME, SQL_COLUMN_NAME_ID, UserSqlDao.SQL_COLUMN_NAME_ID);
+    private static final String SQL_SELECT_ALL = QueryUtil.createSelectWithJoin(
+            SQL_TABLE_NAME,
+            List.of(SQL_COLUMN_NAME_ID),
+            UserSqlDao.SQL_TABLE_NAME,
+            List.of(UserSqlDao.SQL_COLUMN_NAME_LOGIN, UserSqlDao.SQL_COLUMN_NAME_PASSWORD_HASH),
+            SQL_COLUMN_NAME_ID,
+            UserSqlDao.SQL_COLUMN_NAME_ID);
 
-    private static final String SQL_SELECT_BY_ID = String.format(
-            "SELECT %s, %s, %s FROM %s a " +
-            "JOIN %s u ON a.%s = u.%s " +
-            "WHERE %s = ?",
-            SQL_COLUMN_NAME_ID, UserSqlDao.SQL_COLUMN_NAME_LOGIN, UserSqlDao.SQL_COLUMN_NAME_PASSWORD_HASH,
-            SQL_TABLE_NAME, UserSqlDao.SQL_TABLE_NAME, SQL_COLUMN_NAME_ID, UserSqlDao.SQL_COLUMN_NAME_ID,
-            SQL_COLUMN_NAME_ID);
+    private static final String SQL_SELECT_BY_ID = QueryUtil.createSelectWithJoinAndConditions(
+            SQL_TABLE_NAME,
+            List.of(SQL_COLUMN_NAME_ID),
+            UserSqlDao.SQL_TABLE_NAME,
+            List.of(UserSqlDao.SQL_COLUMN_NAME_LOGIN, UserSqlDao.SQL_COLUMN_NAME_PASSWORD_HASH),
+            SQL_COLUMN_NAME_ID,
+            UserSqlDao.SQL_COLUMN_NAME_ID,
+            SQL_TABLE_NAME,
+            List.of(SQL_COLUMN_NAME_ID));
 
     private static final String SQL_INSERT = QueryUtil.createInsert(
-            SQL_TABLE_NAME, SQL_COLUMN_NAME_ID);
+            SQL_TABLE_NAME, List.of(SQL_COLUMN_NAME_ID));
 
     private static final String SQL_DELETE_BY_ID = QueryUtil.createDelete(
-            SQL_TABLE_NAME, SQL_COLUMN_NAME_ID);
+            SQL_TABLE_NAME, List.of(SQL_COLUMN_NAME_ID));
 
     public AdminSqlDao(Connection connection) {
         super(connection);
@@ -39,10 +43,16 @@ public class AdminSqlDao extends UserWithRoleSqlDao<Admin> {
     @Override
     protected Admin mapToEntity(ResultSet resultSet) {
         try {
+            int id = extractColumn(resultSet, SQL_TABLE_NAME, SQL_COLUMN_NAME_ID);
+            String login = extractColumn(resultSet,
+                    UserSqlDao.SQL_TABLE_NAME, UserSqlDao.SQL_COLUMN_NAME_LOGIN);
+            String passwordHash = extractColumn(resultSet,
+                    UserSqlDao.SQL_TABLE_NAME, UserSqlDao.SQL_COLUMN_NAME_PASSWORD_HASH);
+
             Admin admin = new AdminImpl();
-            admin.setId(resultSet.getInt(SQL_COLUMN_NAME_ID));
-            admin.setLogin(resultSet.getString(UserSqlDao.SQL_COLUMN_NAME_LOGIN));
-            admin.setPasswordHash(resultSet.getString(UserSqlDao.SQL_COLUMN_NAME_PASSWORD_HASH));
+            admin.setId(id);
+            admin.setLogin(login);
+            admin.setPasswordHash(passwordHash);
             return (Admin) Proxy.newProxyInstance(
                     AdminSqlDao.class.getClassLoader(),
                     new Class[]{Admin.class, LoadProxy.class},

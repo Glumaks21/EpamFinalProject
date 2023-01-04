@@ -2,13 +2,16 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import org.slf4j.*;
 import ua.maksym.hlushchenko.dao.entity.*;
-import ua.maksym.hlushchenko.dao.entity.sql.BookImpl;
+import ua.maksym.hlushchenko.dao.entity.impl.BookImpl;
+import ua.maksym.hlushchenko.dao.entity.role.User;
 import ua.maksym.hlushchenko.exception.ConnectionException;
 import ua.maksym.hlushchenko.exception.MappingException;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.*;
+import java.sql.Date;
+import java.time.LocalDate;
 import java.util.*;
 
 class BookUaSqlDao extends TranslatedBookSqlDao {
@@ -17,49 +20,47 @@ class BookUaSqlDao extends TranslatedBookSqlDao {
     static final String SQL_COLUMN_NAME_TITLE = "title";
     static final String SQL_COLUMN_NAME_DESCRIPTION = "description";
 
-    private static final String SQL_SELECT_ALL = String.format(
-            "SELECT %s, b_u.%s as %<s, %s, %s, %s, b_u.%s as %<s " +
-            "FROM %s b_u " +
-            "JOIN %s b ON b_u.%s = b.%s",
-            SQL_COLUMN_NAME_ID, SQL_COLUMN_NAME_TITLE,
-            BookEnSqlDao.SQL_COLUMN_NAME_AUTHOR, BookEnSqlDao.SQL_COLUMN_NAME_PUBLISHER,
-            BookEnSqlDao.SQL_COLUMN_NAME_DATE, SQL_COLUMN_NAME_DESCRIPTION,
-            SQL_TABLE_NAME, BookEnSqlDao.SQL_TABLE_NAME,
-            SQL_COLUMN_NAME_ID, BookEnSqlDao.SQL_COLUMN_NAME_ID
-    );
+    private static final String SQL_SELECT_ALL = QueryUtil.createSelectWithJoin(
+            SQL_TABLE_NAME,
+            List.of(SQL_COLUMN_NAME_ID, SQL_COLUMN_NAME_TITLE, SQL_COLUMN_NAME_DESCRIPTION),
+            BookEnSqlDao.SQL_TABLE_NAME,
+            List.of(BookEnSqlDao.SQL_COLUMN_NAME_AUTHOR, BookEnSqlDao.SQL_COLUMN_NAME_PUBLISHER,
+                    BookEnSqlDao.SQL_COLUMN_NAME_DATE, BookEnSqlDao.SQL_COLUMN_NAME_COVER_PATH),
+            SQL_COLUMN_NAME_ID,
+            BookEnSqlDao.SQL_COLUMN_NAME_ID);
 
-    private static final String SQL_SELECT_BY_ID = String.format(
-            "SELECT %s, b_u.%s as %<s, %s, %s, %s, b_u.%s as %<s " +
-            "FROM %s b_u " +
-            "JOIN %s b ON b_u.%s = b.%s " +
-            "WHERE b.%s = ?",
-            SQL_COLUMN_NAME_ID, SQL_COLUMN_NAME_TITLE,
-            BookEnSqlDao.SQL_COLUMN_NAME_AUTHOR, BookEnSqlDao.SQL_COLUMN_NAME_PUBLISHER,
-            BookEnSqlDao.SQL_COLUMN_NAME_DATE, SQL_COLUMN_NAME_DESCRIPTION,
-            SQL_TABLE_NAME, BookEnSqlDao.SQL_TABLE_NAME,
-            SQL_COLUMN_NAME_ID, BookEnSqlDao.SQL_COLUMN_NAME_ID,
-            BookEnSqlDao.SQL_COLUMN_NAME_ID
-    );
+    private static final String SQL_SELECT_BY_ID = QueryUtil.createSelectWithJoinAndConditions(
+            SQL_TABLE_NAME,
+            List.of(SQL_COLUMN_NAME_ID, SQL_COLUMN_NAME_TITLE, SQL_COLUMN_NAME_DESCRIPTION),
+            BookEnSqlDao.SQL_TABLE_NAME,
+            List.of(BookEnSqlDao.SQL_COLUMN_NAME_AUTHOR, BookEnSqlDao.SQL_COLUMN_NAME_PUBLISHER,
+                    BookEnSqlDao.SQL_COLUMN_NAME_DATE, BookEnSqlDao.SQL_COLUMN_NAME_COVER_PATH),
+            SQL_COLUMN_NAME_ID,
+            BookEnSqlDao.SQL_COLUMN_NAME_ID,
+            SQL_TABLE_NAME,
+            List.of(SQL_COLUMN_NAME_ID));
 
-    private static final String SQL_SELECT_GENRES_BY_BOOK_ID = String.format(
-            "SELECT g_u.%s as %<s, %s " +
-            "FROM %s g_u " +
-            "JOIN %s bg ON g_u.%s = bg.%s " +
-            "WHERE bg.%s = ?",
-            GenreUaSqlDao.SQL_COLUMN_NAME_ID, GenreUaSqlDao.SQL_COLUMN_NAME_NAME,
-            GenreUaSqlDao.SQL_TABLE_NAME, BookEnSqlDao.SQL_GENRES_TABLE_NAME,
-            GenreUaSqlDao.SQL_COLUMN_NAME_ID, BookEnSqlDao.SQL_GENRES_COLUMN_NAME_GENRE_ID,
-            BookEnSqlDao.SQL_GENRES_COLUMN_NAME_BOOK_ID
-    );
+    private static final String SQL_SELECT_GENRES_BY_BOOK_ID = QueryUtil.createSelectWithJoinAndConditions(
+            GenreUaSqlDao.SQL_TABLE_NAME,
+            List.of(GenreUaSqlDao.SQL_COLUMN_NAME_ID, GenreUaSqlDao.SQL_COLUMN_NAME_NAME),
+            BookEnSqlDao.SQL_GENRES_TABLE_NAME,
+            List.of(),
+            GenreUaSqlDao.SQL_COLUMN_NAME_ID,
+            BookEnSqlDao.SQL_GENRES_COLUMN_NAME_GENRE_ID,
+            BookEnSqlDao.SQL_GENRES_TABLE_NAME,
+            List.of(BookEnSqlDao.SQL_GENRES_COLUMN_NAME_BOOK_ID));
 
     private static final String SQL_INSERT = QueryUtil.createInsert(
-            SQL_TABLE_NAME, SQL_COLUMN_NAME_ID, SQL_COLUMN_NAME_TITLE, SQL_COLUMN_NAME_DESCRIPTION);
+            SQL_TABLE_NAME,
+            List.of(SQL_COLUMN_NAME_ID, SQL_COLUMN_NAME_TITLE, SQL_COLUMN_NAME_DESCRIPTION));
 
     private static final String SQL_UPDATE_BY_ID = QueryUtil.createUpdate(
-            SQL_TABLE_NAME, List.of(SQL_COLUMN_NAME_TITLE, SQL_COLUMN_NAME_DESCRIPTION), List.of(SQL_COLUMN_NAME_ID));
+            SQL_TABLE_NAME,
+            List.of(SQL_COLUMN_NAME_TITLE, SQL_COLUMN_NAME_DESCRIPTION), List.of(SQL_COLUMN_NAME_ID));
 
     private static final String SQL_DELETE_BY_ID = QueryUtil.createDelete(
-            SQL_TABLE_NAME, SQL_COLUMN_NAME_ID);
+            SQL_TABLE_NAME,
+            List.of(SQL_COLUMN_NAME_ID));
 
     private static final Logger log = LoggerFactory.getLogger(BookUaSqlDao.class);
 
@@ -70,25 +71,30 @@ class BookUaSqlDao extends TranslatedBookSqlDao {
     @Override
     protected Book mapToEntity(ResultSet resultSet) {
         try {
-            Book book = new BookImpl();
+            int id = extractColumn(resultSet, SQL_TABLE_NAME, SQL_COLUMN_NAME_ID);
+            String title = extractColumn(resultSet, SQL_TABLE_NAME, SQL_COLUMN_NAME_TITLE);
 
-            book.setId(resultSet.getInt(SQL_COLUMN_NAME_ID));
-            book.setTitle(resultSet.getString(SQL_COLUMN_NAME_TITLE));
-
+            int authorId = extractColumn(resultSet, BookEnSqlDao.SQL_TABLE_NAME, BookEnSqlDao.SQL_COLUMN_NAME_AUTHOR);
             AuthorUaSqlDao authorSqlDao = new AuthorUaSqlDao(connection);
-            int authorId = resultSet.getInt(BookEnSqlDao.SQL_COLUMN_NAME_AUTHOR);
             Author author = authorSqlDao.find(authorId).get();
-            book.setAuthor(author);
 
+            int publisherId = extractColumn(resultSet, BookEnSqlDao.SQL_TABLE_NAME, BookEnSqlDao.SQL_COLUMN_NAME_PUBLISHER);
             PublisherSqlDao publisherSqlDao = new PublisherSqlDao(connection);
-            int publisherId = resultSet.getInt(BookEnSqlDao.SQL_COLUMN_NAME_PUBLISHER);
             Publisher publisher = publisherSqlDao.find(publisherId).get();
-            book.setPublisher(publisher);
 
-            book.setDate(resultSet.getDate(BookEnSqlDao.SQL_COLUMN_NAME_DATE).toLocalDate());
-            book.setDescription(resultSet.getString(SQL_COLUMN_NAME_DESCRIPTION));
+            Date dateInDb = extractColumn(resultSet, BookEnSqlDao.SQL_TABLE_NAME, BookEnSqlDao.SQL_COLUMN_NAME_DATE);
+            LocalDate date = dateInDb.toLocalDate();
+            String description = extractColumn(resultSet, SQL_TABLE_NAME, SQL_COLUMN_NAME_DESCRIPTION);
+
+            Book book = new BookImpl();
+            book.setId(id);
+            book.setTitle(title);
+            book.setAuthor(author);
+            book.setPublisher(publisher);
+            book.setDate(date);
+            book.setDescription(description);
             return (Book) Proxy.newProxyInstance(
-                    BookSqlDao.class.getClassLoader(),
+                    BookUaSqlDao.class.getClassLoader(),
                     new Class[]{Book.class, LoadProxy.class},
                     new LazyInitializationHandler(book));
         } catch (SQLException | ConnectionException | NoSuchElementException e) {

@@ -2,7 +2,7 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import org.slf4j.*;
 import ua.maksym.hlushchenko.dao.entity.Genre;
-import ua.maksym.hlushchenko.dao.entity.sql.GenreImpl;
+import ua.maksym.hlushchenko.dao.entity.impl.GenreImpl;
 import ua.maksym.hlushchenko.exception.DaoException;
 import ua.maksym.hlushchenko.exception.MappingException;
 
@@ -11,25 +11,32 @@ import java.sql.*;
 import java.util.*;
 
 class GenreEnSqlDao extends AbstractSqlDao<Integer, Genre> {
-    public static final String SQL_TABLE_NAME = "genre";
-    public static final String SQL_COLUMN_NAME_ID = "id";
-    public static final String SQL_COLUMN_NAME_NAME = "name";
+    static final String SQL_TABLE_NAME = "genre";
+    static final String SQL_COLUMN_NAME_ID = "id";
+    static final String SQL_COLUMN_NAME_NAME = "name";
 
 
     private static final String SQL_SELECT_ALL = QueryUtil.createSelect(
-            SQL_TABLE_NAME, SQL_COLUMN_NAME_ID, SQL_COLUMN_NAME_NAME);
+            SQL_TABLE_NAME,
+            List.of(SQL_COLUMN_NAME_ID, SQL_COLUMN_NAME_NAME));
 
     private static final String SQL_SELECT_BY_ID = QueryUtil.createSelectWithConditions(
-            SQL_TABLE_NAME, List.of(SQL_COLUMN_NAME_ID, SQL_COLUMN_NAME_NAME), List.of(SQL_COLUMN_NAME_ID));
+            SQL_TABLE_NAME,
+            List.of(SQL_COLUMN_NAME_ID, SQL_COLUMN_NAME_NAME),
+            List.of(SQL_COLUMN_NAME_ID));
 
     private static final String SQL_INSERT =  QueryUtil.createInsert(
-            SQL_TABLE_NAME, SQL_COLUMN_NAME_NAME);
+            SQL_TABLE_NAME,
+            List.of(SQL_COLUMN_NAME_NAME));
 
     private static final String SQL_UPDATE_BY_ID = QueryUtil.createUpdate(
-            SQL_TABLE_NAME, List.of(SQL_COLUMN_NAME_NAME), List.of(SQL_COLUMN_NAME_ID));
+            SQL_TABLE_NAME,
+            List.of(SQL_COLUMN_NAME_NAME),
+            List.of(SQL_COLUMN_NAME_ID));
 
     private  static final String SQL_DELETE_BY_ID = QueryUtil.createDelete(
-            SQL_TABLE_NAME, SQL_COLUMN_NAME_ID);
+            SQL_TABLE_NAME,
+            List.of(SQL_COLUMN_NAME_ID));
 
 
     private static final Logger log = LoggerFactory.getLogger(GenreEnSqlDao.class);
@@ -40,9 +47,12 @@ class GenreEnSqlDao extends AbstractSqlDao<Integer, Genre> {
 
     protected Genre mapToEntity(ResultSet resultSet) {
         try {
+            int id = extractColumn(resultSet, SQL_TABLE_NAME, SQL_COLUMN_NAME_ID);
+            String name = extractColumn(resultSet, SQL_TABLE_NAME, SQL_COLUMN_NAME_NAME);
+
             Genre genre = new GenreImpl();
-            genre.setId(resultSet.getInt(SQL_COLUMN_NAME_ID));
-            genre.setName(resultSet.getString(SQL_COLUMN_NAME_NAME));
+            genre.setId(id);
+            genre.setName(name);
             return (Genre) Proxy.newProxyInstance(
                     GenreEnSqlDao.class.getClassLoader(),
                     new Class[] {Genre.class, LoadProxy.class},

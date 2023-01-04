@@ -4,8 +4,8 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.dao.entity.*;
-import ua.maksym.hlushchenko.dao.entity.sql.*;
-import ua.maksym.hlushchenko.dao.entity.sql.GenreImpl;
+import ua.maksym.hlushchenko.dao.entity.impl.*;
+import ua.maksym.hlushchenko.dao.entity.impl.GenreImpl;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -88,10 +88,10 @@ public class BookUaSqlDaoTest {
         GenreEnSqlDao enGenreDao = new GenreEnSqlDao(connection);
         GenreUaSqlDao uaGenreDao = new GenreUaSqlDao(connection);
 
-        List<ua.maksym.hlushchenko.dao.entity.Genre> genres = new ArrayList<>();
+        List<Genre> genres = new ArrayList<>();
         for (int i = 1; i < 4; i++) {
-            ua.maksym.hlushchenko.dao.entity.Genre genreEn = new GenreImpl();
-            ua.maksym.hlushchenko.dao.entity.Genre genreUa = new GenreImpl();
+            Genre genreEn = new GenreImpl();
+            Genre genreUa = new GenreImpl();
             genreEn.setName("Genre " + i);
             genreUa.setName("Жанр " + i);
             enGenreDao.save(genreEn);
@@ -107,14 +107,14 @@ public class BookUaSqlDaoTest {
     @Order(6)
     @Test
     void findGenres() {
-        List<ua.maksym.hlushchenko.dao.entity.Genre> genres = dao.findGenres(book.getId());
+        List<Genre> genres = dao.findGenres(book.getId());
         assertEquals(book.getGenres(), genres);
     }
 
     @Order(7)
     @Test
     void updateGenres() {
-        List<ua.maksym.hlushchenko.dao.entity.Genre> genres = book.getGenres();
+        List<Genre> genres = book.getGenres();
         genres.remove(0);
         book.setGenres(genres);
         dao.updateGenres(book);

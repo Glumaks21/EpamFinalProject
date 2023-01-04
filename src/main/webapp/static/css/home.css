@@ -22,3 +22,9 @@ a:hover {
 a:active {
     text-decoration: underline;
 }
+
+img.cover {
+    width: 150px;
+    height: auto;
+    padding: 10px;
+}

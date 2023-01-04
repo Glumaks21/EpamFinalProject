@@ -2,29 +2,69 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import org.slf4j.*;
 import ua.maksym.hlushchenko.dao.entity.Author;
+import ua.maksym.hlushchenko.dao.entity.impl.AuthorImpl;
 import ua.maksym.hlushchenko.exception.DaoException;
+import ua.maksym.hlushchenko.exception.MappingException;
 
+import java.lang.reflect.Proxy;
 import java.sql.*;
 import java.util.*;
 
-class AuthorEnSqlDao extends AuthorSqlDao  {
-    private static final String SQL_SELECT_ALL = "SELECT id, name, surname " +
-            "FROM author";
-    private static final String SQL_SELECT_BY_ID = "SELECT id, name, surname " +
-            "FROM author " +
-            "WHERE id = ?";
-    private static final String SQL_INSERT = "INSERT INTO author(name, surname) " +
-            "VALUES(?, ?)";
-    private static final String SQL_UPDATE_BY_ID = "UPDATE author " +
-            "SET name = ?, surname = ? " +
-            "WHERE id = ?";
-    private static final String SQL_DELETE_BY_ID = "DELETE FROM author " +
-            "WHERE id = ?";
+class AuthorEnSqlDao extends AbstractSqlDao<Integer, Author>  {
+    static final String SQL_TABLE_NAME = "author";
+    static final String SQL_COLUMN_NAME_ID = "id";
+    static final String SQL_COLUMN_NAME_NAME = "name";
+    static final String SQL_COLUMN_NAME_SURNAME = "surname";
+    static final String SQL_COLUMN_NAME_ALIAS = "alias";
+
+    private static final String SQL_SELECT_ALL = QueryUtil.createSelect(
+            SQL_TABLE_NAME,
+            List.of(SQL_COLUMN_NAME_ID, SQL_COLUMN_NAME_NAME, SQL_COLUMN_NAME_SURNAME, SQL_COLUMN_NAME_ALIAS));
+
+    private static final String SQL_SELECT_BY_ID = QueryUtil.createSelectWithConditions(
+            SQL_TABLE_NAME,
+            List.of(SQL_COLUMN_NAME_ID, SQL_COLUMN_NAME_NAME, SQL_COLUMN_NAME_SURNAME, SQL_COLUMN_NAME_ALIAS),
+            List.of(SQL_COLUMN_NAME_ID));
+
+    private static final String SQL_INSERT = QueryUtil.createInsert(
+            SQL_TABLE_NAME,
+            List.of(SQL_COLUMN_NAME_NAME, SQL_COLUMN_NAME_SURNAME, SQL_COLUMN_NAME_ALIAS));
+
+    private static final String SQL_UPDATE_BY_ID = QueryUtil.createUpdate(
+            SQL_TABLE_NAME,
+            List.of(SQL_COLUMN_NAME_NAME, SQL_COLUMN_NAME_SURNAME, SQL_COLUMN_NAME_ALIAS),
+            List.of(SQL_COLUMN_NAME_ID));
+
+    private static final String SQL_DELETE_BY_ID = QueryUtil.createDelete(
+            SQL_TABLE_NAME,
+            List.of(SQL_COLUMN_NAME_ID));
 
     private static final Logger log = LoggerFactory.getLogger(AuthorEnSqlDao.class);
 
     public AuthorEnSqlDao(Connection connection) {
         super(connection);
+    }
+
+    @Override
+    protected Author mapToEntity(ResultSet resultSet) {
+        try {
+            int id = extractColumn(resultSet, SQL_TABLE_NAME, SQL_COLUMN_NAME_ID);
+            String name = extractColumn(resultSet, SQL_TABLE_NAME, SQL_COLUMN_NAME_NAME);
+            String surname = extractColumn(resultSet, SQL_TABLE_NAME, SQL_COLUMN_NAME_SURNAME);
+            String alias = extractColumn(resultSet, SQL_TABLE_NAME, SQL_COLUMN_NAME_ALIAS);
+
+            Author author = new AuthorImpl();
+            author.setId(id);
+            author.setName(name);
+            author.setSurname(surname);
+            author.setAlias(alias);
+            return (Author) Proxy.newProxyInstance(
+                    AuthorEnSqlDao.class.getClassLoader(),
+                    new Class[]{Author.class, LoadProxy.class},
+                    new LoadHandler<>(author));
+        } catch (SQLException e) {
+            throw new MappingException("Can't map the entity", e);
+        }
     }
 
     @Override
@@ -46,7 +86,8 @@ class AuthorEnSqlDao extends AuthorSqlDao  {
         try (ResultSet resultSet = updateQueryWithKeys(SQL_INSERT,
                 Statement.RETURN_GENERATED_KEYS,
                 author.getName(),
-                author.getSurname())) {
+                author.getSurname(),
+                author.getAlias())) {
             if (resultSet.next()) {
                 author.setId(resultSet.getInt(1));
             }
@@ -60,6 +101,7 @@ class AuthorEnSqlDao extends AuthorSqlDao  {
         updateQuery(SQL_UPDATE_BY_ID,
                 author.getName(),
                 author.getSurname(),
+                author.getAlias(),
                 author.getId());
     }
 

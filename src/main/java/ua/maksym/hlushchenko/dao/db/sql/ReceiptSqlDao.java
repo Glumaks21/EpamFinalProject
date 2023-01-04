@@ -4,7 +4,7 @@ import org.slf4j.*;
 
 import ua.maksym.hlushchenko.dao.ReceiptDao;
 import ua.maksym.hlushchenko.dao.entity.*;
-import ua.maksym.hlushchenko.dao.entity.sql.ReceiptImpl;
+import ua.maksym.hlushchenko.dao.entity.impl.ReceiptImpl;
 import ua.maksym.hlushchenko.exception.ConnectionException;
 import ua.maksym.hlushchenko.exception.DaoException;
 import ua.maksym.hlushchenko.exception.MappingException;
@@ -146,7 +146,7 @@ class ReceiptSqlDao extends AbstractSqlDao<Integer, Receipt> implements ReceiptD
 
     @Override
     public List<Book> findBooks(Integer id) {
-        BookSqlDao bookSqlDao = new BookEnSqlDao(connection);
+        BookEnSqlDao bookSqlDao = new BookEnSqlDao(connection);
         return mappedQuery(bookSqlDao::mapToEntity, SQL_SELECT_RECEIPT_BOOKS, id);
     }
 
