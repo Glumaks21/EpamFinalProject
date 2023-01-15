@@ -2,6 +2,7 @@ package ua.maksym.hlushchenko.exception;
 
 public class DaoException extends RuntimeException {
     public DaoException() {
+
     }
 
     public DaoException(String message) {

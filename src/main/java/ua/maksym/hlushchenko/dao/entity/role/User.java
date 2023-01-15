@@ -9,6 +9,7 @@ public interface User {
     void setPasswordHash(String password);
 
     Role getRole();
+
     enum Role {
         READER, LIBRARIAN, ADMIN
     }

@@ -2,7 +2,9 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
+import ua.maksym.hlushchenko.dao.Dao;
 import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
+import ua.maksym.hlushchenko.dao.db.sql.annotations.Id;
 import ua.maksym.hlushchenko.dao.entity.impl.role.AdminImpl;
 import ua.maksym.hlushchenko.dao.entity.role.Admin;
 import ua.maksym.hlushchenko.util.Sha256Encoder;
@@ -16,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class AdminSqlDaoTest {
     private static Connection connection;
-    private static AdminSqlDao dao;
+    private static Dao<Integer, Admin> dao;
     private static Admin admin;
 
     static Admin createAdmin() {
@@ -31,7 +33,7 @@ class AdminSqlDaoTest {
     static void init() {
         SqlDaoTestHelper.clearTables();
         connection = HikariCPDataSource.getInstance().getConnection();
-        dao = new AdminSqlDao(connection);
+        dao = new GenericDao<>(AdminImpl.class, connection);
         admin = createAdmin();
     }
 

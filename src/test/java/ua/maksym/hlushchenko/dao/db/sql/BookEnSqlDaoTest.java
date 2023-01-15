@@ -14,7 +14,7 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class BookEnSqlDaoTest extends SqlDaoTestHelper {
+class BookEnSqlDaoTest {
     private static Connection connection;
     private static BookEnSqlDao dao;
     private static Book book;
@@ -32,7 +32,7 @@ class BookEnSqlDaoTest extends SqlDaoTestHelper {
     @SneakyThrows
     @BeforeAll
     static void init() {
-        clearTables();
+        SqlDaoTestHelper.clearTables();
         connection = HikariCPDataSource.getInstance().getConnection();
         dao = new BookEnSqlDao(connection);
         book = createBook();
@@ -125,7 +125,7 @@ class BookEnSqlDaoTest extends SqlDaoTestHelper {
     @SneakyThrows
     @AfterAll
     static void destroy() {
-        clearTables();
+        SqlDaoTestHelper.clearTables();
         connection.close();
     }
 }

@@ -2,9 +2,11 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
+import ua.maksym.hlushchenko.dao.Dao;
 import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.dao.entity.Author;
 import ua.maksym.hlushchenko.dao.entity.impl.AuthorImpl;
+import ua.maksym.hlushchenko.dao.entity.impl.GenreImpl;
 
 import java.sql.Connection;
 import java.util.*;
@@ -14,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class AuthorEnSqlDaoTest {
     private static Connection connection;
-    private static AuthorEnSqlDao dao;
+    private static Dao<Integer, Author> dao;
     private static Author author;
 
     static Author createAuthor() {
@@ -29,7 +31,7 @@ class AuthorEnSqlDaoTest {
     static void init() {
         SqlDaoTestHelper.clearTables();
         connection = HikariCPDataSource.getInstance().getConnection();
-        dao = new AuthorEnSqlDao(connection);
+        dao = new GenericDao<>(AuthorImpl.class, connection);
         author = createAuthor();
     }
 

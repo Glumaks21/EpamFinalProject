@@ -12,7 +12,6 @@ public class HikariCPDataSource {
         HikariConfig config = new HikariConfig();
         Properties properties = new Properties();
 
-        System.out.println(new File("").getAbsolutePath());
         try (InputStream is = HikariCPDataSource.class.getClassLoader().
                 getResourceAsStream("db.properties")) {
             properties.load(is);

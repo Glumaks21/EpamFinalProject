@@ -9,20 +9,21 @@ import ua.maksym.hlushchenko.dao.entity.impl.AuthorImpl;
 import ua.maksym.hlushchenko.dao.entity.impl.AuthorUaImpl;
 
 import java.sql.Connection;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class AuthorUaSqlDaoTest {
+class GenericDaoTest {
     private static Connection connection;
     private static Dao<Integer, Author> dao;
     private static Author author;
 
     static Author createAuthor() {
-        Author author = new AuthorUaImpl();
-        author.setName("Барак");
-        author.setSurname("Обама");
+        AuthorImpl author = new AuthorImpl();
+        author.setName("Barak");
+        author.setSurname("Obama");
         return author;
     }
 
@@ -31,20 +32,15 @@ class AuthorUaSqlDaoTest {
     static void init() {
         SqlDaoTestHelper.clearTables();
         connection = HikariCPDataSource.getInstance().getConnection();
-
-        Dao<Integer, Author> daoOriginal = new GenericDao<>(AuthorImpl.class, connection);
-        Author authorOriginal = AuthorEnSqlDaoTest.createAuthor();
-        daoOriginal.save(authorOriginal);
-
-        dao = new GenericDao<>(AuthorUaImpl.class, connection);
+        dao = new GenericDao<>(AuthorImpl.class, connection);
         author = createAuthor();
-        author.setId(authorOriginal.getId());
     }
 
     @Order(1)
     @Test
     void save() {
         dao.save(author);
+        assertTrue(author.getId() > 0);
     }
 
     @Order(2)
@@ -58,16 +54,16 @@ class AuthorUaSqlDaoTest {
     @Test
     void find() {
         Optional<Author> optionalAuthorInDb = dao.find(author.getId());
-        Assertions.assertTrue(optionalAuthorInDb.isPresent());
+        assertTrue(optionalAuthorInDb.isPresent());
         Author authorInDb = optionalAuthorInDb.get();
-        Assertions.assertEquals(author, authorInDb);
+        assertEquals(author, authorInDb);
     }
 
     @Order(4)
     @Test
     void update() {
-        author.setName("Джо");
-        author.setSurname("Біден");
+        author.setName("Joe");
+        author.setSurname("Biden");
         dao.update(author);
         find();
     }
@@ -77,7 +73,7 @@ class AuthorUaSqlDaoTest {
     void delete() {
         dao.delete(author.getId());
         Optional<Author> optionalAuthorInDb = dao.find(author.getId());
-        Assertions.assertTrue(optionalAuthorInDb.isEmpty());
+        assertTrue(optionalAuthorInDb.isEmpty());
     }
 
     @SneakyThrows
