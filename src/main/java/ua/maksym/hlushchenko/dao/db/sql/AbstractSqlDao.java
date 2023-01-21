@@ -9,59 +9,25 @@ import java.sql.*;
 import java.util.*;
 
 abstract class AbstractSqlDao<K, T> implements Dao<K, T> {
-    protected final Connection connection;
+    protected final SqlQueryHelper sqlQueryHelper;
 
     private static final Logger log = LoggerFactory.getLogger(AbstractSqlDao.class);
 
     public AbstractSqlDao(Connection connection) {
-        try {
-            if (connection == null || connection.isClosed()) {
-                throw new IllegalArgumentException();
-            }
-        } catch (SQLException e) {
-            throw new IllegalArgumentException();
-        }
-
-        this.connection = connection;
+        sqlQueryHelper = new SqlQueryHelper(connection);
     }
 
     protected abstract T mapEntity(ResultSet resultSet);
 
-    private ResultSet query(String query, Object... args) {
-        try {
-            PreparedStatement statement = connection.prepareStatement(query);
-            fillPreparedStatement(statement, args);
-            log.info("Try to execute query:\n" + TemplateSqlQueryUtil.formatSql(statement));
-            return statement.executeQuery();
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            throw new DaoException("Failure to request a query: " + query, e);
-        }
-    }
-
-    protected static void fillPreparedStatement(PreparedStatement statement, Object... args)
-            throws SQLException {
-        for (int i = 0; i < args.length; i++) {
-            statement.setObject(i + 1, args[i]);
-        }
-    }
-
     protected Optional<T> querySingle(String sqlQuery, Object... args) {
-        try (ResultSet resultSet = query(sqlQuery, args)) {
+        try (ResultSet resultSet = sqlQueryHelper.query(sqlQuery, args)) {
             resultSet.setFetchSize(1);
             List<T> mappedQuery = mapResultSet(this::mapEntity, resultSet);
             return mappedQuery.isEmpty()?
                     Optional.empty():
                     Optional.of(mappedQuery.get(0));
         } catch (SQLException e) {
-            throw new DaoException(e);
-        }
-    }
-
-    protected List<T> queryList(String sqlQuery, Object... args) {
-        try (ResultSet resultSet = query(sqlQuery, args)) {
-            return mapResultSet(this::mapEntity, resultSet);
-        } catch (SQLException e) {
+            log.warn("Failed to query single entity");
             throw new DaoException(e);
         }
     }
@@ -80,44 +46,11 @@ abstract class AbstractSqlDao<K, T> implements Dao<K, T> {
         }
     }
 
-    protected void updateQuery(String query, Object... args) {
-        try {
-            PreparedStatement statement = connection.prepareStatement(query);
-            fillPreparedStatement(statement, args);
-            log.info("Try to execute update:\n" + TemplateSqlQueryUtil.formatSql(statement));
-            statement.executeUpdate();
+    protected List<T> queryList(String sqlQuery, Object... args) {
+        try (ResultSet resultSet = sqlQueryHelper.query(sqlQuery, args)) {
+            return mapResultSet(this::mapEntity, resultSet);
         } catch (SQLException e) {
-            log.warn(e.getMessage());
-            tryToRollBack();
-            throw new DaoException(e);
-        }
-    }
-
-    protected ResultSet updateQueryWithKeys(String query, Object... args) {
-        try {
-            PreparedStatement statement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
-            fillPreparedStatement(statement, args);
-            log.info("Try to execute update:\n" + TemplateSqlQueryUtil.formatSql(statement));
-            statement.executeUpdate();
-            return statement.getGeneratedKeys();
-        } catch (SQLException e) {
-            log.warn(e.getMessage());
-            tryToRollBack();
-            throw new DaoException(e);
-        }
-    }
-
-    private void tryToRollBack() {
-        try {
-            log.info("Try to roll back: " + connection);
-            if (!connection.getAutoCommit()) {
-                connection.rollback();
-                log.info("Roll back successful");
-            } else {
-                log.warn("Autocommit is turned on");
-            }
-        } catch (SQLException e) {
-            log.warn("Roll back failed: " + e.getMessage());
+            log.warn("Failed to query entity list");
             throw new DaoException(e);
         }
     }

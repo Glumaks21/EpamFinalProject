@@ -1,6 +1,7 @@
 package ua.maksym.hlushchenko.dao.db.sql;
 
-import ua.maksym.hlushchenko.dao.db.sql.annotations.*;
+import ua.maksym.hlushchenko.orm.annotations.Column;
+import ua.maksym.hlushchenko.orm.annotations.Table;
 
 import java.lang.reflect.Field;
 import java.util.*;

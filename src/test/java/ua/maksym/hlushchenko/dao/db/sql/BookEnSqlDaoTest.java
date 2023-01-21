@@ -3,9 +3,8 @@ package ua.maksym.hlushchenko.dao.db.sql;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.dao.entity.*;
 import ua.maksym.hlushchenko.dao.entity.impl.*;
-import ua.maksym.hlushchenko.dao.entity.impl.GenreImpl;
+import ua.maksym.hlushchenko.dao.entity.impl.Genre;
 
 import java.sql.Connection;
 import java.time.LocalDate;
@@ -19,8 +18,8 @@ class BookEnSqlDaoTest {
     private static BookEnSqlDao dao;
     private static Book book;
 
-    static BookImpl createBook() {
-        BookImpl book = new BookImpl();
+    static Book createBook() {
+        Book book = new Book();
         book.setTitle("test");
         book.setAuthor(AuthorEnSqlDaoTest.createAuthor());
         book.setPublisher(PublisherSqlDaoTest.createPublisher());
@@ -39,21 +38,21 @@ class BookEnSqlDaoTest {
     }
 
     @Order(1)
-    @Test
+    @Test2
     void save() {
         dao.save(book);
         assertTrue(book.getId() != 0);
     }
 
     @Order(2)
-    @Test
+    @Test2
     void findAll() {
         List<Book> books = dao.findAll();
         assertTrue(books.contains(book));
     }
 
     @Order(3)
-    @Test
+    @Test2
     void find() {
         Optional<Book> optionalBookInDb = dao.find(book.getId());
         assertTrue(optionalBookInDb.isPresent());
@@ -62,7 +61,7 @@ class BookEnSqlDaoTest {
     }
 
     @Order(4)
-    @Test
+    @Test2
     void update() {
         book.setTitle("ne_test");
         book.setDate(LocalDate.now());
@@ -71,11 +70,11 @@ class BookEnSqlDaoTest {
     }
 
     @Order(5)
-    @Test
+    @Test2
     void saveGenres() {
-        GenreImpl genre1 = new GenreImpl();
+        Genre genre1 = new Genre();
         genre1.setName("Genre1");
-        GenreImpl genre2 = new GenreImpl();
+        Genre genre2 = new Genre();
         genre2.setName("Genre2");
 
         List<ua.maksym.hlushchenko.dao.entity.Genre> genres = new ArrayList<>();
@@ -87,16 +86,16 @@ class BookEnSqlDaoTest {
     }
 
     @Order(6)
-    @Test
+    @Test2
     void findGenres() {
         List<ua.maksym.hlushchenko.dao.entity.Genre> genres = dao.findGenres(book.getId());
         assertEquals(book.getGenres(), genres);
     }
 
     @Order(7)
-    @Test
+    @Test2
     void updateGenres() {
-        GenreImpl genre3 = new GenreImpl();
+        Genre genre3 = new Genre();
         genre3.setName("Genre3");
 
         List<ua.maksym.hlushchenko.dao.entity.Genre> genres = book.getGenres();
@@ -109,14 +108,14 @@ class BookEnSqlDaoTest {
     }
 
     @Order(8)
-    @Test
+    @Test2
     void deleteGenres() {
         dao.deleteGenres(book.getId());
         assertTrue(dao.findGenres(book.getId()).isEmpty());
     }
 
     @Order(9)
-    @Test
+    @Test2
     void delete() {
         dao.delete(book.getId());
         assertTrue(dao.find(book.getId()).isEmpty());

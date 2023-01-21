@@ -1,13 +1,13 @@
-package ua.maksym.hlushchenko.dao.db.sql.annotations;
+package ua.maksym.hlushchenko.orm.annotations;
 
 import java.lang.annotation.*;
 
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface OneToMany {
-    String mappedBy();
+    Class<?> genericType();
 
-    Class<?> relatedEntity();
+    String mappedBy();
 
     boolean lazyInit() default true;
 }

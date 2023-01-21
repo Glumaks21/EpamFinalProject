@@ -1,6 +1,5 @@
 package ua.maksym.hlushchenko.dao.db.sql;
 
-import ua.maksym.hlushchenko.dao.db.sql.annotations.OneToMany;
 import ua.maksym.hlushchenko.exception.EntityParserException;
 import ua.maksym.hlushchenko.util.ReflectionUtil;
 import ua.maksym.hlushchenko.util.StringUtil;
@@ -10,7 +9,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static ua.maksym.hlushchenko.dao.db.sql.EntityParser.*;
+import static ua.maksym.hlushchenko.dao.db.sql.EntityUtil.*;
 
 public class GenericQueryCreator {
     public static String generateQueryByMethodName(Class<?> entityClass, String name) {
@@ -29,7 +28,7 @@ public class GenericQueryCreator {
     }
 
     private static String generateFind(Class<?> entityClass, String name) {
-        QueryBuilder queryBuilder = generateSelectQueryBuilder(entityClass);
+        QueryBuilder queryBuilder = QueryRelationUtil.generateSelectQueryBuilder(entityClass);
 
         if (name.equals("find")) {
             queryBuilder.addCondition(getTableName(entityClass),
@@ -45,23 +44,6 @@ public class GenericQueryCreator {
         }
 
         return queryBuilder.toString();
-    }
-
-    private static QueryBuilder generateSelectQueryBuilder(Class<?> entityClass) {
-        QueryBuilder queryBuilder = new QueryBuilder(QueryBuilder.QueryType.SELECT).
-                setTable(getTableName(entityClass)).
-                addAllColumns(getTableName(entityClass), getColumnNames(entityClass));
-
-        List<Class<?>> superTypes = getEntitiesHierarchyOf(entityClass);
-        for (int i = 1; i < superTypes.size(); i++) {
-            Class<?> prevType = superTypes.get(i - 1);
-            Class<?> currType = superTypes.get(i);
-            queryBuilder.addJoin(getTableName(prevType), getTableName(currType),
-                    getIdColumnName(prevType), getIdColumnName(currType)).
-                    addAllColumns(getTableName(currType), getColumnNames(currType));
-        }
-
-        return queryBuilder;
     }
 
     private static void parseConditions(Class<?> entityClass, QueryBuilder queryBuilder, String conditions) {

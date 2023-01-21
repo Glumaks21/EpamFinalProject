@@ -1,6 +1,6 @@
 package ua.maksym.hlushchenko.dao.db.sql;
 
-import ua.maksym.hlushchenko.dao.db.sql.annotations.Table;
+import ua.maksym.hlushchenko.orm.annotations.Table;
 import ua.maksym.hlushchenko.exception.EntityNotFoundException;
 
 import java.io.*;

@@ -6,8 +6,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ReflectionUtil {
-    public static List<Class<?>> getSuperClassesOf(Class<?> clazz) {
-        List<Class<?>> subTypes = new ArrayList<>();
+    public static List<Class<?>> getClassesHierarchyOf(Class<?> clazz) {
+        List<Class<?>> subTypes = new LinkedList<>();
 
         Class<?> currClass = clazz;
         while (currClass != null) {
@@ -22,6 +22,7 @@ public class ReflectionUtil {
         return Arrays.stream(clazz.getDeclaredFields()).
                 anyMatch(field -> field.getName().equals(fieldName));
     }
+
 
     public static List<Field> getDeclaredFieldsAnnotatedWith(Class<?> clazz,
                                                              Class<? extends Annotation> annotationClass) {

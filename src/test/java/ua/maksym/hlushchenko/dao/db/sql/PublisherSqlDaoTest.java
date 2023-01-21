@@ -4,8 +4,7 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.dao.Dao;
 import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.dao.entity.Publisher;
-import ua.maksym.hlushchenko.dao.entity.impl.PublisherImpl;
+import ua.maksym.hlushchenko.dao.entity.impl.Publisher;
 
 import java.sql.Connection;
 import java.util.List;
@@ -18,7 +17,7 @@ class PublisherSqlDaoTest {
     private static Publisher publisher;
 
     static Publisher createPublisher() {
-        Publisher publisher = new PublisherImpl();
+        Publisher publisher = new Publisher();
         publisher.setName("Test company");
         return publisher;
     }
@@ -28,26 +27,26 @@ class PublisherSqlDaoTest {
     static void init() {
         SqlDaoTestHelper.clearTables();
         connection = HikariCPDataSource.getInstance().getConnection();
-        dao = new GenericDao<>(PublisherImpl.class, connection);
+        dao = new GenericDao<>(Publisher.class, connection);
         publisher = createPublisher();
     }
 
 
     @Order(1)
-    @Test
+    @Test2
     void save() {
         dao.save(publisher);
     }
 
     @Order(2)
-    @Test
+    @Test2
     void findAll() {
         List<Publisher> publishers = dao.findAll();
         Assertions.assertTrue(publishers.contains(publisher));
     }
 
     @Order(3)
-    @Test
+    @Test2
     void find() {
         Optional<Publisher> optionalPublisherInDb = dao.find(publisher.getId());
         Assertions.assertTrue(optionalPublisherInDb.isPresent());
@@ -56,7 +55,7 @@ class PublisherSqlDaoTest {
     }
 
     @Order(4)
-    @Test
+    @Test2
     void findByName() {
 //        Optional<Publisher> optionalPublisherInDb = dao.findByName(publisher.getName());
 //        Assertions.assertTrue(optionalPublisherInDb.isPresent());
@@ -65,7 +64,7 @@ class PublisherSqlDaoTest {
     }
 
     @Order(5)
-    @Test
+    @Test2
     void delete() {
         dao.delete(publisher.getId());
         Optional<Publisher> optionalPublisherInDb = dao.find(publisher.getId());
@@ -73,7 +72,7 @@ class PublisherSqlDaoTest {
     }
 
     @Order(6)
-    @Test
+    @Test2
     void deleteByName() {
 //        save();
 //        dao.deleteByName(publisher.getName());

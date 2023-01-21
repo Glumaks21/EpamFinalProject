@@ -4,9 +4,7 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.dao.Dao;
 import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.dao.db.sql.annotations.Id;
-import ua.maksym.hlushchenko.dao.entity.impl.role.AdminImpl;
-import ua.maksym.hlushchenko.dao.entity.role.Admin;
+import ua.maksym.hlushchenko.dao.entity.impl.role.Admin;
 import ua.maksym.hlushchenko.util.Sha256Encoder;
 
 import java.sql.Connection;
@@ -22,7 +20,7 @@ class AdminSqlDaoTest {
     private static Admin admin;
 
     static Admin createAdmin() {
-        Admin admin = new AdminImpl();
+        Admin admin = new Admin();
         admin.setLogin("librarian");
         admin.setPasswordHash(Sha256Encoder.encode("It is true"));
         return admin;
@@ -33,26 +31,26 @@ class AdminSqlDaoTest {
     static void init() {
         SqlDaoTestHelper.clearTables();
         connection = HikariCPDataSource.getInstance().getConnection();
-        dao = new GenericDao<>(AdminImpl.class, connection);
+        dao = new GenericDao<>(Admin.class, connection);
         admin = createAdmin();
     }
 
     @Order(1)
-    @Test
+    @Test2
     void save() {
         dao.save(admin);
         assertTrue(admin.getId() > 0);
     }
 
     @Order(2)
-    @Test
+    @Test2
     void findAll() {
         List<Admin> admins = dao.findAll();
         assertTrue(admins.contains(admin));
     }
 
     @Order(3)
-    @Test
+    @Test2
     void find() {
         Optional<Admin> optionalAdmin = dao.find(admin.getId());
         assertTrue(optionalAdmin.isPresent());
@@ -61,7 +59,7 @@ class AdminSqlDaoTest {
     }
 
     @Order(4)
-    @Test
+    @Test2
     void update() {
         admin.setPasswordHash(Sha256Encoder.encode("This is was joke"));
         dao.update(admin);
@@ -69,7 +67,7 @@ class AdminSqlDaoTest {
     }
 
     @Order(5)
-    @Test
+    @Test2
     void delete() {
         dao.delete(admin.getId());
         assertTrue(dao.find(admin.getId()).isEmpty());

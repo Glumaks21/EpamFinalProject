@@ -1,11 +1,9 @@
-package ua.maksym.hlushchenko.dao.db.sql.annotations;
+package ua.maksym.hlushchenko.orm.annotations;
 
 import java.lang.annotation.*;
 
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ManyToOne {
-    Class<?> relatedEntity();
-
     boolean lazyInit() default false;
 }

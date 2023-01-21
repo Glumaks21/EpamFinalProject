@@ -3,10 +3,7 @@ package ua.maksym.hlushchenko.dao.db.sql;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.dao.entity.Book;
-import ua.maksym.hlushchenko.dao.entity.Subscription;
-import ua.maksym.hlushchenko.dao.entity.impl.SubscriptionImpl;
-import ua.maksym.hlushchenko.dao.entity.role.Reader;
+import ua.maksym.hlushchenko.dao.entity.impl.Subscription;
 
 import java.sql.Connection;
 import java.time.LocalDate;
@@ -21,7 +18,7 @@ class SubscriptionSqlDaoTest {
     private static Subscription subscription;
 
     static Subscription createSubscription() {
-        Subscription subscription = new SubscriptionImpl();
+        Subscription subscription = new Subscription();
         subscription.setReader(ReaderSqlDaoTest.createReader());
         subscription.setBook(BookEnSqlDaoTest.createBook());
         subscription.setTakenDate(LocalDate.of(1111, 11, 11));
@@ -51,21 +48,21 @@ class SubscriptionSqlDaoTest {
     }
 
     @Order(1)
-    @Test
+    @Test2
     void save() {
         dao.save(subscription);
         assertTrue(subscription.getId() != 0);
     }
 
     @Order(2)
-    @Test
+    @Test2
     void findAll() {
         List<Subscription> subscriptions = dao.findAll();
         assertTrue(subscriptions.contains(subscription));
     }
 
     @Order(3)
-    @Test
+    @Test2
     void find() {
         Optional<Subscription> optionalSubscriptionInDb = dao.find(subscription.getId());
         assertTrue(optionalSubscriptionInDb.isPresent());
@@ -74,7 +71,7 @@ class SubscriptionSqlDaoTest {
     }
 
     @Order(4)
-    @Test
+    @Test2
     void update() {
         subscription.setTakenDate(LocalDate.now());
         subscription.setBroughtDate(LocalDate.now());
@@ -84,14 +81,14 @@ class SubscriptionSqlDaoTest {
     }
 
     @Order(5)
-    @Test
+    @Test2
     void findByReaderId() {
         List<Subscription> subscriptions = dao.findByReaderId(subscription.getReader().getId());
         assertTrue(subscriptions.contains(subscription));
     }
 
     @Order(6)
-    @Test
+    @Test2
     void deleteByReaderId() {
         dao.deleteByReaderId(subscription.getReader().getId());
         List<Subscription> subscriptions = dao.findByReaderId(subscription.getReader().getId());
@@ -100,7 +97,7 @@ class SubscriptionSqlDaoTest {
 
 
     @Order(7)
-    @Test
+    @Test2
     void delete() {
         dao.save(subscription);
         dao.delete(subscription.getId());

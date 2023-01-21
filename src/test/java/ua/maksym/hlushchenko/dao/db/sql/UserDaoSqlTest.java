@@ -3,7 +3,7 @@ package ua.maksym.hlushchenko.dao.db.sql;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.dao.entity.impl.role.ReaderImpl;
+import ua.maksym.hlushchenko.dao.entity.impl.role.Reader;
 import ua.maksym.hlushchenko.dao.entity.role.*;
 import ua.maksym.hlushchenko.util.Sha256Encoder;
 
@@ -19,7 +19,7 @@ class UserDaoSqlTest {
     private static User user;
 
     static User createUser() {
-        User user = new ReaderImpl();
+        User user = new Reader();
         user.setLogin("test");
         user.setPasswordHash(Sha256Encoder.encode("test"));
         return user;
@@ -35,7 +35,7 @@ class UserDaoSqlTest {
     }
 
     @Order(1)
-    @Test
+    @Test2
     void save() {
         dao.save(user);
         assertTrue(user.getId() != 0);
@@ -43,14 +43,14 @@ class UserDaoSqlTest {
 
     @SneakyThrows
     @Order(2)
-    @Test
+    @Test2
     void findAll() {
         List<User> users = dao.findAll();
         assertTrue(users.contains(user));
     }
 
     @Order(3)
-    @Test
+    @Test2
     void find() {
         Optional<User> optionalUserInDb = dao.find(user.getId());
         assertTrue(optionalUserInDb.isPresent());
@@ -59,7 +59,7 @@ class UserDaoSqlTest {
     }
 
     @Order(4)
-    @Test
+    @Test2
     void findByLogin() {
         Optional<User> optionalUserInDb = dao.findByLogin(user.getLogin());
         assertTrue(optionalUserInDb.isPresent());
@@ -68,7 +68,7 @@ class UserDaoSqlTest {
     }
 
     @Order(5)
-    @Test
+    @Test2
     void update() {
         user.setPasswordHash(Sha256Encoder.encode("ne_test"));
         dao.update(user);
@@ -76,7 +76,7 @@ class UserDaoSqlTest {
     }
 
     @Order(6)
-    @Test
+    @Test2
     void delete() {
         dao.delete(user.getId());
         Optional<User> userInDb = dao.find(user.getId());

@@ -4,9 +4,8 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.dao.Dao;
 import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.dao.entity.Author;
 import ua.maksym.hlushchenko.dao.entity.impl.AuthorImpl;
-import ua.maksym.hlushchenko.dao.entity.impl.AuthorUaImpl;
+import ua.maksym.hlushchenko.dao.entity.impl.AuthorUa;
 
 import java.sql.Connection;
 import java.util.*;
@@ -20,7 +19,7 @@ class AuthorUaSqlDaoTest {
     private static Author author;
 
     static Author createAuthor() {
-        Author author = new AuthorUaImpl();
+        Author author = new AuthorUa();
         author.setName("Барак");
         author.setSurname("Обама");
         return author;
@@ -36,26 +35,26 @@ class AuthorUaSqlDaoTest {
         Author authorOriginal = AuthorEnSqlDaoTest.createAuthor();
         daoOriginal.save(authorOriginal);
 
-        dao = new GenericDao<>(AuthorUaImpl.class, connection);
+        dao = new GenericDao<>(AuthorUa.class, connection);
         author = createAuthor();
         author.setId(authorOriginal.getId());
     }
 
     @Order(1)
-    @Test
+    @Test2
     void save() {
         dao.save(author);
     }
 
     @Order(2)
-    @Test
+    @Test2
     void findAll() {
         List<Author> authors = dao.findAll();
         assertTrue(authors.contains(author));
     }
 
     @Order(3)
-    @Test
+    @Test2
     void find() {
         Optional<Author> optionalAuthorInDb = dao.find(author.getId());
         Assertions.assertTrue(optionalAuthorInDb.isPresent());
@@ -64,7 +63,7 @@ class AuthorUaSqlDaoTest {
     }
 
     @Order(4)
-    @Test
+    @Test2
     void update() {
         author.setName("Джо");
         author.setSurname("Біден");
@@ -73,7 +72,7 @@ class AuthorUaSqlDaoTest {
     }
 
     @Order(5)
-    @Test
+    @Test2
     void delete() {
         dao.delete(author.getId());
         Optional<Author> optionalAuthorInDb = dao.find(author.getId());

@@ -5,7 +5,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import ua.maksym.hlushchenko.dao.DaoFactory;
 import ua.maksym.hlushchenko.dao.UserDao;
-import ua.maksym.hlushchenko.dao.entity.role.User;
+import ua.maksym.hlushchenko.dao.entity.impl.role.AbstractUser;
 import ua.maksym.hlushchenko.util.ParamsValidator;
 
 import java.io.IOException;
@@ -19,7 +19,7 @@ public class ProfileServlet extends HttpServlet {
         String id = ParamsValidator.getRequiredParam(req, "id");
         DaoFactory daoFactory = (DaoFactory) req.getAttribute("daoFactory");
         UserDao dao = daoFactory.createUserDao();
-        Optional<User> user = dao.find(Integer.parseInt(id));
+        Optional<AbstractUser> user = dao.find(Integer.parseInt(id));
         if (user.isEmpty()) {
             resp.sendRedirect("/error.html");
             return;

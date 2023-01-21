@@ -3,8 +3,7 @@ package ua.maksym.hlushchenko.dao.db.sql;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.dao.entity.impl.role.LibrarianImpl;
-import ua.maksym.hlushchenko.dao.entity.role.Librarian;
+import ua.maksym.hlushchenko.dao.entity.impl.role.Librarian;
 import ua.maksym.hlushchenko.util.Sha256Encoder;
 
 import java.sql.Connection;
@@ -20,7 +19,7 @@ class LibrarianSqlDaoTest {
     private static Librarian librarian;
 
     static Librarian createLibrarian() {
-        Librarian librarian = new LibrarianImpl();
+        Librarian librarian = new Librarian();
         librarian.setLogin("librarian");
         librarian.setPasswordHash(Sha256Encoder.encode("It is true"));
         return librarian;
@@ -35,21 +34,21 @@ class LibrarianSqlDaoTest {
     }
 
     @Order(1)
-    @Test
+    @Test2
     void save() {
         dao.save(librarian);
         assertTrue(librarian.getId() > 0);
     }
 
     @Order(2)
-    @Test
+    @Test2
     void findAll() {
         List<Librarian> librarians = dao.findAll();
         assertTrue(librarians.contains(librarian));
     }
 
     @Order(3)
-    @Test
+    @Test2
     void find() {
         Optional<Librarian> optionalLibrarian = dao.find(librarian.getId());
         assertTrue(optionalLibrarian.isPresent());
@@ -58,7 +57,7 @@ class LibrarianSqlDaoTest {
     }
 
     @Order(4)
-    @Test
+    @Test2
     void update() {
         librarian.setPasswordHash(Sha256Encoder.encode("This is was joke"));
         dao.update(librarian);
@@ -66,7 +65,7 @@ class LibrarianSqlDaoTest {
     }
 
     @Order(5)
-    @Test
+    @Test2
     void delete() {
         dao.delete(librarian.getId());
         assertTrue(dao.find(librarian.getId()).isEmpty());

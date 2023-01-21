@@ -4,9 +4,7 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import ua.maksym.hlushchenko.dao.Dao;
 import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.dao.entity.Author;
 import ua.maksym.hlushchenko.dao.entity.impl.AuthorImpl;
-import ua.maksym.hlushchenko.dao.entity.impl.AuthorUaImpl;
 
 import java.sql.Connection;
 import java.util.List;
@@ -37,21 +35,21 @@ class GenericDaoTest {
     }
 
     @Order(1)
-    @Test
+    @Test2
     void save() {
         dao.save(author);
         assertTrue(author.getId() > 0);
     }
 
     @Order(2)
-    @Test
+    @Test2
     void findAll() {
         List<Author> authors = dao.findAll();
         assertTrue(authors.contains(author));
     }
 
     @Order(3)
-    @Test
+    @Test2
     void find() {
         Optional<Author> optionalAuthorInDb = dao.find(author.getId());
         assertTrue(optionalAuthorInDb.isPresent());
@@ -60,7 +58,7 @@ class GenericDaoTest {
     }
 
     @Order(4)
-    @Test
+    @Test2
     void update() {
         author.setName("Joe");
         author.setSurname("Biden");
@@ -69,7 +67,7 @@ class GenericDaoTest {
     }
 
     @Order(5)
-    @Test
+    @Test2
     void delete() {
         dao.delete(author.getId());
         Optional<Author> optionalAuthorInDb = dao.find(author.getId());

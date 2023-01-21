@@ -1,11 +1,11 @@
 package ua.maksym.hlushchenko.web.servlet;
 
 import ua.maksym.hlushchenko.dao.*;
-import ua.maksym.hlushchenko.dao.entity.role.User;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
+import ua.maksym.hlushchenko.dao.entity.impl.role.AbstractUser;
 import ua.maksym.hlushchenko.exception.*;
 import ua.maksym.hlushchenko.util.*;
 
@@ -30,7 +30,7 @@ public class LoginServlet extends HttpServlet {
 
             DaoFactory daoFactory = (DaoFactory) req.getAttribute("daoFactory");
             UserDao dao = daoFactory.createUserDao();
-            Optional<User> optionalUser = dao.findByLogin(login);
+            Optional<AbstractUser> optionalUser = dao.findByLogin(login);
             if (optionalUser.isEmpty() ||
                     !optionalUser.get().getPasswordHash().equals(Sha256Encoder.encode(password))) {
                 throw new ParamsValidationException("Incorrect login or password");
@@ -38,7 +38,7 @@ public class LoginServlet extends HttpServlet {
 
             HttpSession session = req.getSession(true);
             session.setAttribute("userId", optionalUser.get().getId());
-            session.setAttribute("role", optionalUser.get().getRole());
+            //session.setAttribute("role", optionalUser.get().getRole());
             resp.sendRedirect("/");
         } catch (ParamsValidationException | DaoException e) {
             req.setAttribute("message", e.getMessage());
