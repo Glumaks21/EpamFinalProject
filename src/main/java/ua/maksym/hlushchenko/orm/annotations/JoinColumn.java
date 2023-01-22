@@ -6,6 +6,4 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface JoinColumn {
     String value();
-
-    boolean lazyInit() default false;
 }

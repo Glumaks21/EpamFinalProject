@@ -2,6 +2,8 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import ua.maksym.hlushchenko.dao.Dao;
 import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
+import ua.maksym.hlushchenko.dao.entity.impl.Book;
+import ua.maksym.hlushchenko.dao.entity.impl.Publisher;
 import ua.maksym.hlushchenko.dao.entity.impl.Receipt;
 import ua.maksym.hlushchenko.exception.ConnectionException;
 import ua.maksym.hlushchenko.exception.EntityNotFoundException;
@@ -37,11 +39,11 @@ class Test {
         entityManager.scanPackage("ua.maksym.hlushchenko.dao.entity.impl");
         EntityDaoFactory entityDaoFactory = new EntityDaoFactory(entityManager);
 
-        Dao<Integer, Receipt> dao = entityDaoFactory.getDao(Receipt.class);
-        List<Receipt> receipts = dao.findAll();
-        System.out.println(receipts);
-        receipts.get(0).getReader();
-        receipts.get(0).getReader();
-        System.out.println(receipts);
+        Dao<Integer, Book> dao = entityDaoFactory.getDao(Book.class);
+        List<Book> books = dao.findAll();
+        System.out.println(books);
+        System.out.println(books.get(0).getGenres());
+        System.out.println(books.get(0).getGenres());
+        System.out.println(books);
     }
 }

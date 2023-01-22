@@ -26,32 +26,35 @@ public class QueryRelationUtil {
         return queryBuilder;
     }
 
-    public static String getQueryOfOneToOneFor(Field field)
-            throws NoSuchFieldException {
+    public static String getSelectQueryForField(Field field) {
+        Class<?> entityClass = field.getDeclaringClass();
+        return new QueryBuilder(QueryType.SELECT).
+                setTable(getTableName(entityClass)).
+                addColumn(getTableName(entityClass), getColumnNameFor(field)).
+                addCondition(getTableName(entityClass), getIdColumnName(entityClass), ConditionOperator.EQUALS).
+                toString();
+    }
+
+    public static String getUnMappedOneToOneQueryFor(Field field) {
         Class<?> relatedEntity = field.getType();
+        return generateSelectQueryBuilder(relatedEntity).
+                addCondition(getTableName(relatedEntity), getIdColumnName(relatedEntity), ConditionOperator.EQUALS).
+                toString();
+    }
+
+    public static String getMappedOneToOneQueryFor(Field field) throws NoSuchFieldException {
         OneToOne oneToOne = field.getAnnotation(OneToOne.class);
-
-        QueryBuilder queryBuilder = generateSelectQueryBuilder(relatedEntity);
-        if (!oneToOne.mappedBy().equals("")) {
-            Field mappedField = relatedEntity.getDeclaredField(oneToOne.mappedBy());
-            return queryBuilder.addCondition(getTableName(relatedEntity),
-                            getColumnNameFor(mappedField),
-                            ConditionOperator.EQUALS).
-                    toString();
-        }
-
-        return queryBuilder.addCondition(getTableName(relatedEntity),
-                        getIdColumnName(relatedEntity),
-                        ConditionOperator.EQUALS).
+        Class<?> relatedEntity = field.getType();
+        Field mappedField = relatedEntity.getDeclaredField(oneToOne.mappedBy());
+        return generateSelectQueryBuilder(relatedEntity).
+                addCondition(getTableName(relatedEntity), getColumnNameFor(mappedField), ConditionOperator.EQUALS).
                 toString();
     }
 
     public static String getQueryOfManyToOneFor(Field field) {
         Class<?> relatedEntity = field.getType();
         return generateSelectQueryBuilder(relatedEntity).
-                addCondition(getTableName(relatedEntity),
-                        getIdColumnName(relatedEntity),
-                        ConditionOperator.EQUALS).
+                addCondition(getTableName(relatedEntity), getIdColumnName(relatedEntity), ConditionOperator.EQUALS).
                 toString();
     }
 

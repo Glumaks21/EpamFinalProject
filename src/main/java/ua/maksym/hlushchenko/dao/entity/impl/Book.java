@@ -20,11 +20,11 @@ public class Book {
     private String title;
 
     @ManyToOne
-    @JoinColumn(value = "author_id")
+    @JoinColumn("author_id")
     private Author author;
 
     @ManyToOne
-    @JoinColumn(value = "publisher_id")
+    @JoinColumn("publisher_id")
     private Publisher publisher;
 
     @Column("publication_date")
@@ -42,6 +42,6 @@ public class Book {
             inverseColumn = "genre_id")
     private List<Genre> genres;
 
-    @ManyToMany(genericType = Receipt.class, mappedBy = "books", lazyInit = false)
+    @ManyToMany(genericType = Receipt.class, mappedBy = "books")
     private List<Receipt> receipts;
 }
