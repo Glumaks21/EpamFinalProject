@@ -7,5 +7,7 @@ import java.lang.annotation.*;
 public @interface OneToOne {
     String mappedBy() default "";
 
+    CascadeType[] cascadeTypes();
+
     boolean lazyInit() default false;
 }

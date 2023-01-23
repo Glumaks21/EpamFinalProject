@@ -9,18 +9,18 @@ import java.sql.*;
 import java.util.*;
 
 abstract class AbstractSqlDao<K, T> implements Dao<K, T> {
-    protected final SqlQueryHelper sqlQueryHelper;
+    protected final Session session;
 
     private static final Logger log = LoggerFactory.getLogger(AbstractSqlDao.class);
 
-    public AbstractSqlDao(Connection connection) {
-        sqlQueryHelper = new SqlQueryHelper(connection);
+    public AbstractSqlDao(Session session) {
+        this.session = session;
     }
 
     protected abstract T mapEntity(ResultSet resultSet);
 
     protected Optional<T> querySingle(String sqlQuery, Object... args) {
-        try (ResultSet resultSet = sqlQueryHelper.query(sqlQuery, args)) {
+        try (ResultSet resultSet = session.query(sqlQuery, args)) {
             resultSet.setFetchSize(1);
             List<T> mappedQuery = mapResultSet(this::mapEntity, resultSet);
             return mappedQuery.isEmpty()?
@@ -47,7 +47,7 @@ abstract class AbstractSqlDao<K, T> implements Dao<K, T> {
     }
 
     protected List<T> queryList(String sqlQuery, Object... args) {
-        try (ResultSet resultSet = sqlQueryHelper.query(sqlQuery, args)) {
+        try (ResultSet resultSet = session.query(sqlQuery, args)) {
             return mapResultSet(this::mapEntity, resultSet);
         } catch (SQLException e) {
             log.warn("Failed to query entity list");

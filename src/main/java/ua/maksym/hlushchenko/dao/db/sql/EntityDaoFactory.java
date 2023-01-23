@@ -3,14 +3,11 @@ package ua.maksym.hlushchenko.dao.db.sql;
 import ua.maksym.hlushchenko.dao.Dao;
 import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
 import ua.maksym.hlushchenko.dao.entity.impl.Book;
-import ua.maksym.hlushchenko.dao.entity.impl.Publisher;
-import ua.maksym.hlushchenko.dao.entity.impl.Receipt;
 import ua.maksym.hlushchenko.exception.ConnectionException;
 import ua.maksym.hlushchenko.exception.EntityNotFoundException;
 
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class EntityDaoFactory {
     private final EntityManager entityManager;
@@ -26,7 +23,8 @@ public class EntityDaoFactory {
         }
 
         try {
-            return new GenericDao<>(entityClass, HikariCPDataSource.getInstance().getConnection());
+            Session newSession = new Session(HikariCPDataSource.getInstance().getConnection());
+            return new GenericDao<>(entityClass, newSession);
         } catch (SQLException e) {
             throw new ConnectionException(e);
         }

@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ReflectionUtil {
-    public static List<Class<?>> getClassesHierarchyOf(Class<?> clazz) {
+    public static List<Class<?>> getAncestorListOf(Class<?> clazz) {
         List<Class<?>> subTypes = new LinkedList<>();
 
         Class<?> currClass = clazz;

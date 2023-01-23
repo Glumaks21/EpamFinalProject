@@ -9,7 +9,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static ua.maksym.hlushchenko.dao.db.sql.EntityUtil.*;
+import static ua.maksym.hlushchenko.dao.db.sql.EntityParser.*;
+import static ua.maksym.hlushchenko.dao.db.sql.QueryBuilder.*;
 
 public class GenericQueryCreator {
     public static String generateQueryByMethodName(Class<?> entityClass, String name) {
@@ -31,8 +32,8 @@ public class GenericQueryCreator {
         QueryBuilder queryBuilder = QueryRelationUtil.generateSelectQueryBuilder(entityClass);
 
         if (name.equals("find")) {
-            queryBuilder.addCondition(getTableName(entityClass),
-                    getIdColumnName(entityClass),
+            queryBuilder.addCondition(getTableNameOf(entityClass),
+                    getIdColumnNameOf(entityClass),
                     QueryBuilder.ConditionOperator.EQUALS);
         } else if (name.startsWith("findBy")) {
             String conditions = name.substring(name.indexOf("By") + "By".length());
@@ -47,7 +48,7 @@ public class GenericQueryCreator {
     }
 
     private static void parseConditions(Class<?> entityClass, QueryBuilder queryBuilder, String conditions) {
-        List<Class<?>> subTypes = getEntitiesHierarchyOf(entityClass);
+        List<Class<?>> hierarchy = getEntityHierarchyOf(entityClass);
         Pattern pattern = Pattern.compile("(Or|And|Greater|Lower)|((?!Or|And|Greater|Lower)[A-Z][a-z0-9]+)+");
         Matcher matcher = pattern.matcher(conditions);
 
@@ -61,21 +62,28 @@ public class GenericQueryCreator {
                 queryBuilder.addConditionConcatenation(QueryBuilder.ConditionOperator.valueOf(word.toUpperCase()));
             } else {
                 String fieldName = StringUtil.toLowerCapCase(word);
-                Class<?> containedClass = subTypes.stream().
-                        filter(clazz -> ReflectionUtil.isContainsDeclaredField(clazz, fieldName)).
-                        findFirst().
-                        orElseThrow(() -> new EntityParserException(
-                                "Any subclass of entity doesn't contain specified field" + fieldName));
-
-                String tableName = getTableName(containedClass);
                 try {
-                    Field field = containedClass.getDeclaredField(fieldName);
-                    String column = getColumnNameFor(field);
+                    Field field = null;
+                    for (int i = hierarchy.size() - 1; i >= 0; i--) {
+                        entityClass = hierarchy.get(i);
+
+                        if (ReflectionUtil.isContainsDeclaredField(entityClass, fieldName)) {
+                            field = entityClass.getDeclaredField(fieldName);
+                        }
+                    }
+
+                    if (field == null) {
+                        new EntityParserException("Any subclass of entity " +
+                                "doesn't contain specified field" + fieldName);
+                    }
+
+                    String tableName = getTableNameOf(entityClass);
+                    String column = getColumnNameOf(field);
                     queryBuilder.addCondition(tableName, column, operator);
 
-                    operator = QueryBuilder.ConditionOperator.EQUALS;
+                    operator = ConditionOperator.EQUALS;
                 } catch (NoSuchFieldException e) {
-                    throw new RuntimeException(e);
+                    throw new EntityParserException(e);
                 }
             }
         }
@@ -83,19 +91,19 @@ public class GenericQueryCreator {
 
     private static String generateSave(Class<?> entityClass) {
         return new QueryBuilder(QueryBuilder.QueryType.INSERT).
-                setTable(getTableName(entityClass)).
-                addAllColumns(getTableName(entityClass), getColumnNames(entityClass)).
+                setTable(getTableNameOf(entityClass)).
+                addAllColumns(getTableNameOf(entityClass), getColumnNamesOf(entityClass)).
                 toString();
     }
 
     private static String generateUpdate(Class<?> entityClass, String name) {
         QueryBuilder queryBuilder = new QueryBuilder(QueryBuilder.QueryType.UPDATE).
-                setTable(getTableName(entityClass)).
-                addAllColumns(getTableName(entityClass), getColumnNames(entityClass));
+                setTable(getTableNameOf(entityClass)).
+                addAllColumns(getTableNameOf(entityClass), getColumnNamesOf(entityClass));
 
         if (name.equals("update")) {
-            queryBuilder.addCondition(getTableName(entityClass),
-                    getIdColumnName(entityClass),
+            queryBuilder.addCondition(getTableNameOf(entityClass),
+                    getIdColumnNameOf(entityClass),
                     QueryBuilder.ConditionOperator.EQUALS);
         } else if (name.startsWith("updateBy")) {
             String conditions = name.substring(name.indexOf("updateBy") + "updateBy".length());
@@ -107,11 +115,11 @@ public class GenericQueryCreator {
 
     private static String generateDelete(Class<?> entityClass, String name) {
         QueryBuilder queryBuilder = new QueryBuilder(QueryBuilder.QueryType.DELETE).
-                setTable(getTableName(entityClass));
+                setTable(getTableNameOf(entityClass));
 
         if (name.equals("delete")) {
-            queryBuilder.addCondition(getTableName(entityClass),
-                    getIdColumnName(entityClass),
+            queryBuilder.addCondition(getTableNameOf(entityClass),
+                    getIdColumnNameOf(entityClass),
                     QueryBuilder.ConditionOperator.EQUALS);
         } else if (name.startsWith("deleteBy")) {
             String conditions = name.substring(name.indexOf("deleteBy") + "deleteBy".length());
@@ -119,5 +127,39 @@ public class GenericQueryCreator {
         }
 
         return queryBuilder.toString();
+    }
+
+    public static String createInsertQuery(Class<?> entityClass, Object entity) {
+        String tableName = getTableNameOf(entityClass);
+        List<String> columns = getColumnNamesOf(entityClass);
+        List<Object> values = getColumnValuesOf(entityClass, entity);
+        return new QueryBuilder(QueryType.INSERT).
+                setTable(tableName).
+                addAllColumns(tableName, columns).
+                addAllValues(values).
+                toString();
+    }
+
+    public static String createUpdateQuery(Class<?> entityClass, Object entity) {
+        String tableName = getTableNameOf(entityClass);
+        List<String> columns = getColumnNamesOf(entityClass);
+        List<Object> values = getColumnValuesOf(entityClass, entity);
+        String idColumn = getIdColumnNameOf(entityClass);
+        Object idValue = getIdValue(entityClass, entityClass);
+        return new QueryBuilder(QueryType.UPDATE).
+                setTable(tableName).
+                addAllColumns(tableName, columns).
+                addAllValues(values).
+                addCondition(tableName, idColumn, ConditionOperator.EQUALS, idValue).
+                toString();
+    }
+
+    public static String createDeleteQuery(Class<?> entityClass, Object idValue) {
+        String tableName = getTableNameOf(entityClass);
+        String idColumn = getIdColumnNameOf(entityClass);
+        return  new QueryBuilder(QueryType.DELETE).
+                setTable(tableName).
+                addCondition(tableName, idColumn, ConditionOperator.EQUALS, idValue).
+                toString();
     }
 }

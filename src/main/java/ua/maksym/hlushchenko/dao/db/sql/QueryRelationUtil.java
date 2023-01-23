@@ -5,22 +5,22 @@ import ua.maksym.hlushchenko.orm.annotations.*;
 import java.lang.reflect.Field;
 import java.util.List;
 
-import static ua.maksym.hlushchenko.dao.db.sql.EntityUtil.*;
+import static ua.maksym.hlushchenko.dao.db.sql.EntityParser.*;
 import static ua.maksym.hlushchenko.dao.db.sql.QueryBuilder.*;
 
 public class QueryRelationUtil {
     public static QueryBuilder generateSelectQueryBuilder(Class<?> entityClass) {
         QueryBuilder queryBuilder = new QueryBuilder(QueryType.SELECT).
-                setTable(getTableName(entityClass)).
-                addAllColumns(getTableName(entityClass), getColumnNames(entityClass));
+                setTable(getTableNameOf(entityClass)).
+                addAllColumns(getTableNameOf(entityClass), getColumnNamesOf(entityClass));
 
-        List<Class<?>> superTypes = getEntitiesHierarchyOf(entityClass);
+        List<Class<?>> superTypes = getEntityHierarchyOf(entityClass);
         for (int i = 1; i < superTypes.size(); i++) {
             Class<?> prevType = superTypes.get(i - 1);
             Class<?> currType = superTypes.get(i);
-            queryBuilder.addJoin(getTableName(prevType), getTableName(currType),
-                            getIdColumnName(prevType), getIdColumnName(currType)).
-                    addAllColumns(getTableName(currType), getColumnNames(currType));
+            queryBuilder.addJoin(getTableNameOf(prevType), getTableNameOf(currType),
+                            getIdColumnNameOf(prevType), getIdColumnNameOf(currType)).
+                    addAllColumns(getTableNameOf(currType), getColumnNamesOf(currType));
         }
 
         return queryBuilder;
@@ -29,16 +29,16 @@ public class QueryRelationUtil {
     public static String getSelectQueryForField(Field field) {
         Class<?> entityClass = field.getDeclaringClass();
         return new QueryBuilder(QueryType.SELECT).
-                setTable(getTableName(entityClass)).
-                addColumn(getTableName(entityClass), getColumnNameFor(field)).
-                addCondition(getTableName(entityClass), getIdColumnName(entityClass), ConditionOperator.EQUALS).
+                setTable(getTableNameOf(entityClass)).
+                addColumn(getTableNameOf(entityClass), getColumnNameOf(field)).
+                addCondition(getTableNameOf(entityClass), getIdColumnNameOf(entityClass), ConditionOperator.EQUALS).
                 toString();
     }
 
     public static String getUnMappedOneToOneQueryFor(Field field) {
         Class<?> relatedEntity = field.getType();
         return generateSelectQueryBuilder(relatedEntity).
-                addCondition(getTableName(relatedEntity), getIdColumnName(relatedEntity), ConditionOperator.EQUALS).
+                addCondition(getTableNameOf(relatedEntity), getIdColumnNameOf(relatedEntity), ConditionOperator.EQUALS).
                 toString();
     }
 
@@ -47,14 +47,14 @@ public class QueryRelationUtil {
         Class<?> relatedEntity = field.getType();
         Field mappedField = relatedEntity.getDeclaredField(oneToOne.mappedBy());
         return generateSelectQueryBuilder(relatedEntity).
-                addCondition(getTableName(relatedEntity), getColumnNameFor(mappedField), ConditionOperator.EQUALS).
+                addCondition(getTableNameOf(relatedEntity), getColumnNameOf(mappedField), ConditionOperator.EQUALS).
                 toString();
     }
 
     public static String getQueryOfManyToOneFor(Field field) {
         Class<?> relatedEntity = field.getType();
         return generateSelectQueryBuilder(relatedEntity).
-                addCondition(getTableName(relatedEntity), getIdColumnName(relatedEntity), ConditionOperator.EQUALS).
+                addCondition(getTableNameOf(relatedEntity), getIdColumnNameOf(relatedEntity), ConditionOperator.EQUALS).
                 toString();
     }
 
@@ -63,8 +63,8 @@ public class QueryRelationUtil {
         Class<?> relatedEntity = oneToMany.genericType();
         Field mappedField = relatedEntity.getDeclaredField(oneToMany.mappedBy());
         return generateSelectQueryBuilder(relatedEntity).
-                addCondition(getTableName(relatedEntity),
-                        getColumnNameFor(mappedField),
+                addCondition(getTableNameOf(relatedEntity),
+                        getColumnNameOf(mappedField),
                         ConditionOperator.EQUALS).
                 toString();
     }
@@ -86,11 +86,11 @@ public class QueryRelationUtil {
         }
 
         return generateSelectQueryBuilder(relatedEntity).
-                addJoin(getTableName(relatedEntity), params[0],
-                        getIdColumnName(relatedEntity), params[2]).
-                addJoin(params[0], getTableName(originEntity),
-                        params[1], getIdColumnName(originEntity)).
-                addCondition(getTableName(originEntity), getIdColumnName(originEntity),
+                addJoin(getTableNameOf(relatedEntity), params[0],
+                        getIdColumnNameOf(relatedEntity), params[2]).
+                addJoin(params[0], getTableNameOf(originEntity),
+                        params[1], getIdColumnNameOf(originEntity)).
+                addCondition(getTableNameOf(originEntity), getIdColumnNameOf(originEntity),
                         ConditionOperator.EQUALS).
                 toString();
     }

@@ -3,7 +3,7 @@ package ua.maksym.hlushchenko.dao.db.sql;
 import java.sql.Statement;
 import java.util.*;
 
-class TemplateSqlQueryUtil {
+class SqlQueryFormatter {
     public static String formatSql(Statement statement) {
         Objects.requireNonNull(statement);
         String dirtySqlQuery = statement.toString();
@@ -37,6 +37,8 @@ class TemplateSqlQueryUtil {
                     nextWord.equalsIgnoreCase("WHERE") ||
                     nextWord.equalsIgnoreCase("SET"))) {
                 isListing = false;
+                queryFormatBuilder.append("\n");
+            } else if (nextWord.equalsIgnoreCase("JOIN")) {
                 queryFormatBuilder.append("\n");
             } else {
                 queryFormatBuilder.append(" ");

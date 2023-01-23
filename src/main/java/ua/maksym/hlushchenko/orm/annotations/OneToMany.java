@@ -9,5 +9,7 @@ public @interface OneToMany {
 
     String mappedBy();
 
+    CascadeType[] cascadeType();
+
     boolean lazyInit() default true;
 }

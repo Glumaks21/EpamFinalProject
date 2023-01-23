@@ -9,5 +9,7 @@ public @interface ManyToMany {
 
     String mappedBy() default "";
 
+    CascadeType[] cascadeTypes();
+
     boolean lazyInit() default true;
 }

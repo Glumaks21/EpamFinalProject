@@ -1,21 +1,22 @@
 package ua.maksym.hlushchenko.dao.db.sql;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import ua.maksym.hlushchenko.exception.DaoException;
+import org.slf4j.*;
+import ua.maksym.hlushchenko.exception.SessionException;
 
 import java.sql.*;
+import java.util.Arrays;
 
-public class SqlQueryHelper {
+public class Session {
     private final Connection connection;
 
-    private static final Logger log = LoggerFactory.getLogger(SqlQueryHelper.class);
+    private static final Logger log = LoggerFactory.getLogger(Session.class);
 
-    public SqlQueryHelper(Connection connection) {
+    public Session(Connection connection) {
         try {
             if (connection == null || connection.isClosed()) {
                 throw new IllegalArgumentException();
             }
+            connection.setAutoCommit(false);
             this.connection = connection;
         } catch (SQLException e) {
             throw new IllegalArgumentException();
@@ -26,11 +27,12 @@ public class SqlQueryHelper {
         try {
             PreparedStatement statement = connection.prepareStatement(query);
             fillPreparedStatement(statement, args);
-            log.info("Try to execute query:\n" + TemplateSqlQueryUtil.formatSql(statement));
+            log.info("Try to execute query:\n" + SqlQueryFormatter.formatSql(statement));
             return statement.executeQuery();
         } catch (SQLException e) {
             log.warn(e.getMessage());
-            throw new DaoException("Failure to request a query: " + query, e);
+            throw new SessionException("Failed to execute query: " + query +
+                    " with args " + Arrays.toString(args),e);
         }
     }
 
@@ -45,12 +47,13 @@ public class SqlQueryHelper {
         try {
             PreparedStatement statement = connection.prepareStatement(query);
             fillPreparedStatement(statement, args);
-            log.info("Try to execute update:\n" + TemplateSqlQueryUtil.formatSql(statement));
+            log.info("Try to execute update:\n" + SqlQueryFormatter.formatSql(statement));
             statement.executeUpdate();
         } catch (SQLException e) {
             log.warn(e.getMessage());
             tryToRollBack();
-            throw new DaoException(e);
+            throw new SessionException("Failed to execute query: " + query +
+                    " with args " + Arrays.toString(args),e);
         }
     }
 
@@ -58,13 +61,14 @@ public class SqlQueryHelper {
         try {
             PreparedStatement statement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
             fillPreparedStatement(statement, args);
-            log.info("Try to execute update:\n" + TemplateSqlQueryUtil.formatSql(statement));
+            log.info("Try to execute update:\n" + SqlQueryFormatter.formatSql(statement));
             statement.executeUpdate();
             return statement.getGeneratedKeys();
         } catch (SQLException e) {
             log.warn(e.getMessage());
             tryToRollBack();
-            throw new DaoException(e);
+            throw new SessionException("Failed to execute update: " + query +
+                    " with args " + Arrays.toString(args),e);
         }
     }
 
@@ -74,12 +78,26 @@ public class SqlQueryHelper {
             if (!connection.getAutoCommit()) {
                 connection.rollback();
                 log.info("Roll back successful");
-            } else {
-                log.warn("Autocommit is turned on");
             }
         } catch (SQLException e) {
             log.warn("Roll back failed: " + e.getMessage());
-            throw new DaoException(e);
+            throw new SessionException(e);
+        }
+    }
+
+    public void commit() {
+        try {
+            connection.commit();
+        } catch (SQLException e) {
+            throw new SessionException(e);
+        }
+    }
+
+    public void closeSession() {
+        try {
+            connection.close();
+        } catch (SQLException e) {
+            throw new SessionException(e);
         }
     }
 }

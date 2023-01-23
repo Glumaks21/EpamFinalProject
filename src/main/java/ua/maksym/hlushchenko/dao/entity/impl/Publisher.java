@@ -17,6 +17,8 @@ public class Publisher {
     @Column("name")
     private String name;
 
-    @OneToMany(genericType = Book.class, mappedBy = "publisher")
+    @OneToMany(genericType = Book.class,
+            cascadeType = {CascadeType.SAVE, CascadeType.UPDATE},
+            mappedBy = "publisher")
     private List<Book> books;
 }

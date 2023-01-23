@@ -19,11 +19,11 @@ public class Book {
     @Column("title")
     private String title;
 
-    @ManyToOne
+    @ManyToOne(cascadeTypes = {CascadeType.SAVE, CascadeType.UPDATE})
     @JoinColumn("author_id")
     private Author author;
 
-    @ManyToOne
+    @ManyToOne(cascadeTypes = {CascadeType.SAVE, CascadeType.UPDATE})
     @JoinColumn("publisher_id")
     private Publisher publisher;
 
@@ -36,12 +36,15 @@ public class Book {
     @Column("cover_path")
     private String coverPath;
 
-    @ManyToMany(genericType = Genre.class)
+    @ManyToMany(genericType = Genre.class,
+            cascadeTypes = {CascadeType.SAVE, CascadeType.UPDATE})
     @JoinTable(name = "book_has_genre",
             joinColumn = "book_id",
             inverseColumn = "genre_id")
     private List<Genre> genres;
 
-    @ManyToMany(genericType = Receipt.class, mappedBy = "books")
+    @ManyToMany(genericType = Receipt.class,
+            cascadeTypes = {CascadeType.SAVE, CascadeType.UPDATE},
+            mappedBy = "books")
     private List<Receipt> receipts;
 }

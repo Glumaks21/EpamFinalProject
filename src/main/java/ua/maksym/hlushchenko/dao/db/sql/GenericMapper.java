@@ -8,16 +8,16 @@ import java.lang.reflect.*;
 import java.sql.*;
 import java.util.*;
 
-import static ua.maksym.hlushchenko.dao.db.sql.EntityUtil.*;
+import static ua.maksym.hlushchenko.dao.db.sql.EntityParser.*;
 import static ua.maksym.hlushchenko.dao.db.sql.QueryBuilder.*;
 
 public class GenericMapper<T> implements SqlMapper<T> {
-    private final Class<T> entityClass;
-    private final Connection connection;
+    private final Class<? extends T> entityClass;
+    private final Session session;
 
-    public GenericMapper(Class<T> entityClass, Connection connection) {
+    public GenericMapper(Class<? extends T> entityClass, Session session) {
         this.entityClass = entityClass;
-        this.connection = connection;
+        this.session = session;
     }
 
     @Override
@@ -25,12 +25,13 @@ public class GenericMapper<T> implements SqlMapper<T> {
         try {
             ProxyFactory factory = new ProxyFactory();
             factory.setSuperclass(entityClass);
+            factory.setInterfaces(new Class[]{LoadProxy.class});
             Class<? extends T> proxyClass = (Class<? extends T>) factory.createClass();
 
             T proxyInstance = proxyClass.getConstructor().newInstance();
             setAllColumns(resultSet, proxyInstance);
 
-            ((ProxyObject) proxyInstance).setHandler(new LazyInitializationHandler(connection));
+            ((ProxyObject) proxyInstance).setHandler(new LazyInitializationHandler(session));
             return proxyInstance;
         } catch (InvocationTargetException | IllegalAccessException |
                  InstantiationException | NoSuchMethodException e) {
@@ -40,9 +41,8 @@ public class GenericMapper<T> implements SqlMapper<T> {
 
     private void setAllColumns(ResultSet resultSet, Object instance) {
         try {
-            List<Class<?>> hierarchy = getEntitiesHierarchyOf(entityClass);
-            for (int i = hierarchy.size() - 1; i >= 0; i--) {
-                for (Field field : hierarchy.get(i).getDeclaredFields()) {
+            for (Class<?> entityClass : getEntityHierarchyOf(entityClass)) {
+                for (Field field : entityClass.getDeclaredFields()) {
                     mapField(field, resultSet, instance);
                 }
             }
@@ -71,8 +71,8 @@ public class GenericMapper<T> implements SqlMapper<T> {
     }
 
     private Object getMappedSingleColumnValue(Field field, ResultSet resultSet) throws SQLException {
-        String tableName = getTableName(field.getDeclaringClass());
-        String columnName = getColumnNameFor(field);
+        String tableName = getTableNameOf(field.getDeclaringClass());
+        String columnName = getColumnNameOf(field);
         String resultSetColumn = convertToResultSetColumn(tableName, columnName);
         return resultSet.getObject(resultSetColumn, field.getType());
     }
@@ -87,16 +87,16 @@ public class GenericMapper<T> implements SqlMapper<T> {
             if (oneToOne.mappedBy().equals("")) {
                 sqlQuery = QueryRelationUtil.getUnMappedOneToOneQueryFor(field);
                 String resultSetForeignKeyColumn = convertToResultSetColumn(
-                        getTableName(originEntity), getColumnNameFor(field));
+                        getTableNameOf(originEntity), getColumnNameOf(field));
                 foreignKey = resultSet.getObject(resultSetForeignKeyColumn);
             } else {
                 sqlQuery = QueryRelationUtil.getMappedOneToOneQueryFor(field);
                 String resultSetForeignKeyColumn = convertToResultSetColumn(
-                        getTableName(originEntity), getIdColumnName(originEntity));
+                        getTableNameOf(originEntity), getIdColumnNameOf(originEntity));
                 foreignKey = resultSet.getObject(resultSetForeignKeyColumn);
             }
 
-            AbstractSqlDao<Object, ?> dao = new GenericDao<>(field.getType(), connection);
+            AbstractSqlDao<Object, ?> dao = new GenericDao<>(field.getType(), session);
             return dao.querySingle(sqlQuery, foreignKey).
                     orElseThrow(() -> new MappingException("Related entity wasn't found"));
         } catch (NoSuchFieldException e) {
@@ -109,10 +109,10 @@ public class GenericMapper<T> implements SqlMapper<T> {
         String sqlQuery = QueryRelationUtil.getQueryOfManyToOneFor(field);
 
         String resultSetForeignKeyColumn = convertToResultSetColumn(
-                getTableName(field.getDeclaringClass()), getColumnNameFor(field));
+                getTableNameOf(field.getDeclaringClass()), getColumnNameOf(field));
         Object relatedIdValue = resultSet.getObject(resultSetForeignKeyColumn);
 
-        AbstractSqlDao<Object, ?> dao = new GenericDao<>(field.getType(), connection);
+        AbstractSqlDao<Object, ?> dao = new GenericDao<>(field.getType(), session);
         return dao.querySingle(sqlQuery, relatedIdValue).
                 orElseThrow(() -> new MappingException("Related entity wasn't found"));
     }
@@ -124,10 +124,10 @@ public class GenericMapper<T> implements SqlMapper<T> {
 
             Class<?> entityClass = field.getDeclaringClass();
             String resultSetIdColumn = convertToResultSetColumn(
-                    getTableName(entityClass), getIdColumnName(entityClass));
+                    getTableNameOf(entityClass), getIdColumnNameOf(entityClass));
             Object id = resultSet.getObject(resultSetIdColumn);
 
-            AbstractSqlDao<Object, ?> dao = new GenericDao<>(oneToMany.genericType(), connection);
+            AbstractSqlDao<Object, ?> dao = new GenericDao<>(oneToMany.genericType(), session);
             List<?> list = dao.queryList(sqlQuery, id);
             return null;
         } catch (NoSuchFieldException e) {
@@ -145,10 +145,10 @@ public class GenericMapper<T> implements SqlMapper<T> {
             String sqlQuery = QueryRelationUtil.getQueryOfManyToManyFor(field);
 
             String resultSetIdColumn = convertToResultSetColumn(
-                    getTableName(originEntity), getIdColumnName(originEntity));
+                    getTableNameOf(originEntity), getIdColumnNameOf(originEntity));
             Object idValue = resultSet.getObject(resultSetIdColumn);
 
-            AbstractSqlDao<Object, ?> dao = new GenericDao<>(relatedEntity, connection);
+            AbstractSqlDao<Object, ?> dao = new GenericDao<>(relatedEntity, session);
             return dao.queryList(sqlQuery, idValue);
         } catch (NoSuchFieldException e) {
             throw new MappingException("Field that mappedBy: " + manyToMany.mappedBy() +
