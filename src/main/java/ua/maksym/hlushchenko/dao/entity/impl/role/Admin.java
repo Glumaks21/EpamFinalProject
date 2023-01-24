@@ -8,6 +8,7 @@ import ua.maksym.hlushchenko.orm.annotations.*;
 @Setter
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
+@Entity
 @Table("admin")
 @IdMappedByColumn("user_id")
 public class Admin extends AbstractUser {}

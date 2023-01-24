@@ -53,13 +53,15 @@ public class GenericDao<K, T> extends AbstractSqlDao<K, T> {
             return;
         }
 
-        for (Class<?> entityClass : getEntityHierarchyOf(entityClass)) {
-            saveRelatedEntities(entityClass, entity);
-
-            Dao<Object, Object> dao = new GenericDao<>(entityClass, session);
-            dao.save(entity);
+        List<Class<?>> hierarchy = getEntityHierarchyOf(entityClass);
+        for (int i = 0; i < hierarchy.size() - 1; i++) {
+            if (hierarchy.get(i + 1).isAnnotationPresent(Table.class)) {
+                Dao<Object, Object> dao = new GenericDao<>(hierarchy.get(i), session);
+                dao.save(entity);
+            }
         }
 
+        saveRelatedEntities(entityClass, entity);
         saveEntityInDb(entity);
     }
 

@@ -6,6 +6,7 @@ import ua.maksym.hlushchenko.orm.annotations.*;
 @Getter
 @Setter
 @ToString
+@Entity
 @EqualsAndHashCode(exclude = {"name", "surname", "alias"})
 @Table("author")
 public class Author {

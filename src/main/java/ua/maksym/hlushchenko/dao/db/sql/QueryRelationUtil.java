@@ -9,9 +9,9 @@ import static ua.maksym.hlushchenko.dao.db.sql.EntityParser.*;
 import static ua.maksym.hlushchenko.dao.db.sql.QueryBuilder.*;
 
 public class QueryRelationUtil {
-    public static QueryBuilder generateSelectQueryBuilder(Class<?> entityClass) {
-        QueryBuilder queryBuilder = new QueryBuilder(QueryType.SELECT).
-                setTable(getTableNameOf(entityClass)).
+    public static SelectQueryBuilder generateSelectQueryBuilder(Class<?> entityClass) {
+        SelectQueryBuilder queryBuilder = new SelectQueryBuilder().
+                addMainTable(getTableNameOf(entityClass)).
                 addAllColumns(getTableNameOf(entityClass), getColumnNamesOf(entityClass));
 
         List<Class<?>> superTypes = getEntityHierarchyOf(entityClass);
@@ -28,8 +28,8 @@ public class QueryRelationUtil {
 
     public static String getSelectQueryForField(Field field) {
         Class<?> entityClass = field.getDeclaringClass();
-        return new QueryBuilder(QueryType.SELECT).
-                setTable(getTableNameOf(entityClass)).
+        return new SelectQueryBuilder().
+                addMainTable(getTableNameOf(entityClass)).
                 addColumn(getTableNameOf(entityClass), getColumnNameOf(field)).
                 addCondition(getTableNameOf(entityClass), getIdColumnNameOf(entityClass), ConditionOperator.EQUALS).
                 toString();

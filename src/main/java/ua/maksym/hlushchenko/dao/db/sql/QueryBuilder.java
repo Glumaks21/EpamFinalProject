@@ -2,261 +2,146 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import java.util.*;
 
-public class QueryBuilder {
-    private final QueryType queryType;
+public abstract class QueryBuilder<T extends QueryBuilder<?>> {
+    private final TableContainer tableContainer = new TableContainer();
 
-    private final List<String> tables;
-    private final List<String> columns;
-    private final List<String> values;
-
-    private final List<String> joins;
-    private final List<String> conditions;
-    private final List<ConditionOperator> concatOperators;
-
-    public QueryBuilder(QueryType queryType) {
-        this.queryType = queryType;
-        tables = new ArrayList<>();
-        columns = new ArrayList<>();
-        values = new ArrayList<>();
-        joins = new ArrayList<>();
-        conditions = new ArrayList<>();
-        concatOperators = new ArrayList<>();
+    protected TableContainer getTableContainer() {
+        return tableContainer;
     }
 
-    public QueryBuilder setTable(String table) {
-        if (table == null || table.isBlank()) {
-            throw new IllegalArgumentException();
-        }
-        if (!tables.isEmpty()) {
-            throw new IllegalArgumentException("Table is already set: " + tables.get(0));
-        }
-
-        tables.add(table);
-        return this;
+    public T addMainTable(String mainTable) {
+        tableContainer.addMainTable(mainTable);
+        return (T) this;
     }
 
-    public QueryBuilder addColumn(String table, String column) {
-        if (!tables.contains(table) || column == null || column.isBlank()) {
-            throw new IllegalArgumentException();
-        }
-
-        if (queryType == QueryType.SELECT) {
-            column = convertToTableColumn(table, column) +
-                    " AS " +
-                    convertToResultSetColumn(table, column);
-        }
-        columns.add(column);
-        return this;
-    }
-
-    public QueryBuilder addAllColumns(String table, List<String> columns) {
-        if (columns == null || columns.isEmpty()) {
-            throw new IllegalArgumentException();
-        }
-        columns.forEach(column -> addColumn(table, column));
-        return this;
-    }
-
-    public QueryBuilder addValue(Object value) {
-        if (queryType == QueryType.DELETE || queryType == QueryType.SELECT) {
-            throw new IllegalStateException("Query type is " + queryType);
-        }
-
-        values.add(convertToValue(value));
-        return this;
-    }
-
-    private String convertToValue(Object object) {
-        if (object instanceof String) {
-            return "'" + object + "'";
-        }
-        return object.toString();
-    }
-
-    public QueryBuilder addAllValues(List<?> values) {
-        if (values == null || values.isEmpty()) {
-            throw new IllegalArgumentException();
-        }
-        values.forEach(this::addValue);
-        return this;
-    }
-
-    public QueryBuilder addJoin(String targetTable, String joinedTable,
-                                String targetColumn, String joinedColumn) {
-        if (!tables.contains(targetTable)) {
-            throw new IllegalArgumentException("Target table is unknown");
-        } else if (queryType != QueryType.SELECT) {
-            throw new IllegalStateException("Query type is " + queryType);
-        }
-
-        tables.add(joinedTable);
-        String join = String.format("JOIN %s ON %s = %s",
-                joinedTable,
-                convertToTableColumn(targetTable, targetColumn),
-                convertToTableColumn(joinedTable, joinedColumn));
-        joins.add(join);
-        return this;
-    }
-
-    public static String convertToTableColumn(String tableName, String columnName) {
+    protected static String convertToTableColumn(String tableName, String columnName) {
         return tableName + "." + columnName;
     }
 
-    public static String convertToResultSetColumn(String tableName, String columnName) {
-        return "_" + tableName + "_" + columnName;
-    }
-
-    public QueryBuilder addCondition(String table, String column, ConditionOperator conditionOperator, Object value) {
-        if (!tables.contains(table)) {
-            throw new IllegalArgumentException("Table is unknown");
-        } else if (queryType == QueryType.INSERT) {
-            throw new IllegalStateException("Query type is " + queryType);
-        } else if (conditions.size() - concatOperators.size() == 1) {
-            throw new IllegalStateException("Add concatenation operator");
+    protected static String convertToValue(Object object) {
+        if (object instanceof String) {
+            return "'" + object + "'";
         }
-
-        String condExp = convertToConditionExpression(
-                convertToTableColumn(table, column),
-                conditionOperator,
-                value);
-        conditions.add(condExp);
-        return this;
+        return Objects.toString(object);
     }
 
-    public QueryBuilder addCondition(String table, String column, ConditionOperator conditionOperator) {
-        return addCondition(table, column, conditionOperator, null);
-    }
-
-    private String convertToConditionExpression(String var, ConditionOperator conditionOperator, Object value) {
+    protected static String convertToConditionExpression
+            (String var, ConditionOperator conditionOperator, Object value) {
         return var.trim() + " " + conditionOperator.value + " " + (value == null ? "?" : convertToValue(value));
     }
 
-    public void addConditionConcatenation(ConditionOperator conditionOperator) {
-        if (concatOperators.size() == conditions.size()) {
-            throw new IllegalStateException("Number of concatenation operators must be lower then conditions");
-        }
-        concatOperators.add(conditionOperator);
-    }
+    protected static class TableContainer {
+        private final List<String> tables = new ArrayList<>();
 
-    @Override
-    public String toString() {
-        switch (queryType) {
-            case SELECT:
-                return toSelectQueryString();
-            case INSERT:
-                return toInsertQueryString();
-            case UPDATE:
-                return toUpdateQueryString();
-            case DELETE:
-                return toDeleteQueryString();
-            default:
-                throw new EnumConstantNotPresentException(queryType.getClass(), queryType.name());
-        }
-    }
-
-    private String toSelectQueryString() {
-        return String.format("SELECT %s FROM %s%s%s",
-                String.join(", ", columns),
-                tables.get(0),
-                toJoinsString(),
-                toConditionsString()
-        );
-    }
-
-    private String toJoinsString() {
-        if (!joins.isEmpty()) {
-            StringJoiner stringJoiner = new StringJoiner(" ", " ", "");
-            joins.forEach(stringJoiner::add);
-            return stringJoiner.toString();
-        }
-        return "";
-    }
-
-    private String toConditionsString() {
-        if (conditions.isEmpty()) {
-            return "";
-        }
-
-        StringBuilder strb = new StringBuilder(" WHERE ").
-                append(conditions.get(0));
-        if (conditions.size() > 1) {
-            for (int i = 1; i < conditions.size(); i++) {
-                strb.append(" ").
-                        append(concatOperators.get(i - 1)).
-                        append(" ").
-                        append(conditions.get(i));
+        public void add(String table) {
+            if (table == null || table.isBlank()) {
+                throw new IllegalArgumentException();
             }
+
+            tables.add(table);
         }
 
-        return strb.toString();
-    }
-
-    private String toInsertQueryString() {
-        return String.format("INSERT INTO %s(%s) VALUES(%s)",
-                tables.get(0),
-                String.join(", ", columns),
-                toValuesString()
-        );
-    }
-
-    private String toValuesString() {
-        StringBuilder strb = new StringBuilder();
-        for (int i = 0; i < columns.size(); i++) {
-            if (i < values.size()) {
-                strb.append(values.get(i));
-            } else {
-                strb.append("?");
+        protected void addMainTable(String mainTable) {
+            if (!tables.isEmpty()) {
+                throw new IllegalStateException("Main table is already set: " + getMainTable());
             }
-            if (i != columns.size() - 1) {
-                strb.append(", ");
-            }
+
+            add(mainTable);
         }
-        return strb.toString();
-    }
 
-    private String toUpdateQueryString() {
-        return String.format("UPDATE %s SET %s%s",
-                tables.get(0),
-                toSetsString(),
-                toConditionsString());
-    }
-
-    private String toSetsString() {
-        StringBuilder strb = new StringBuilder();
-        for (int i = 0; i < columns.size(); i++) {
-            if (i < values.size()) {
-                strb.append(convertToConditionExpression(
-                        columns.get(i),
-                        ConditionOperator.EQUALS,
-                        values.get(i)));
-            } else {
-                strb.append(columns.get(i)).
-                        append(" = ?");
+        protected String getMainTable() {
+            if (tables.isEmpty()) {
+                throw new IllegalStateException("Main table is not set");
             }
-            if (i != columns.size() - 1) {
-                strb.append(", ");
-            }
+            return tables.get(0);
         }
-        return strb.toString();
+
+        public List<String> getAll() {
+            return Collections.unmodifiableList(tables);
+        }
     }
 
-    private String toDeleteQueryString() {
-        return String.format("DELETE FROM %s%s",
-                tables.get(0),
-                toConditionsString());
+    protected static class ColumnContainer {
+        private final List<String> columns = new ArrayList<>();
+        private final TableContainer tableContainer;
+
+        public ColumnContainer(TableContainer tableContainer) {
+            this.tableContainer = tableContainer;
+        }
+
+        public void add(String table, String column) {
+            if (!tableContainer.getAll().contains(table)) {
+                throw new IllegalArgumentException("Table " + table + " is unknown");
+            }
+
+            columns.add(column);
+        }
+
+        public List<String> getAll() {
+            return Collections.unmodifiableList(columns);
+        }
     }
 
-    public enum QueryType {
-        SELECT, INSERT, UPDATE, DELETE
+    protected static class ValueContainer {
+        private final List<String> values = new ArrayList<>();
+        private final ColumnContainer columnContainer;
+
+        public ValueContainer(ColumnContainer columnContainer) {
+            this.columnContainer = columnContainer;
+        }
+
+        public void add(Object value) {
+            if (columnContainer.getAll().size() == values.size()) {
+                throw new IllegalStateException("There are no columns for extra value: " + value);
+            }
+
+            values.add(convertToValue(value));
+        }
+
+        public List<String> getAll() {
+            return Collections.unmodifiableList(values);
+        }
     }
 
-    public enum ConditionOperator {
-        EQUALS("="), LOWER("<"), GREATER(">"), AND("AND"), OR("OR");
+    protected static class ConditionContainer {
+        private String conditionString = "";
+        private boolean isPrevCondition;
 
-        final String value;
+        private final TableContainer tableContainer;
 
-        ConditionOperator(String value) {
-            this.value = value;
+        public ConditionContainer(TableContainer tableContainer) {
+            this.tableContainer = tableContainer;
+        }
+
+        public void addCondition(String table, String column,
+                                               ConditionOperator conditionOperator, Object value) {
+            if (!tableContainer.getAll().contains(table)) {
+                throw new IllegalArgumentException("Table " + table + " is unknown");
+            } else if (isPrevCondition) {
+                throw new IllegalStateException("Condition concatenation wasn't added");
+            }
+
+            String fullTableName = convertToTableColumn(table, column);
+            String condExp = convertToConditionExpression(fullTableName, conditionOperator, value);
+            conditionString += condExp;
+            isPrevCondition = true;
+        }
+
+        public void addConditionConcatenation(ConditionOperator conditionOperator) {
+            if (!isPrevCondition) {
+                throw new IllegalStateException("Condition concatenation has already added");
+            }
+
+            conditionString += " " + conditionOperator + " ";
+            isPrevCondition = false;
+        }
+
+        public String getWhereString() {
+            if (!isPrevCondition && !conditionString.equals("")) {
+                throw new IllegalStateException("Condition wasn't added after concatenation");
+            }
+
+            return conditionString.equals("")? "": " WHERE " + conditionString;
         }
     }
 }

@@ -7,6 +7,7 @@ import ua.maksym.hlushchenko.orm.annotations.*;
 @Setter
 @ToString
 @EqualsAndHashCode(exclude = {"name", "surname", "alias"}, callSuper = true)
+@Entity
 @Table("author_ua")
 @IdMappedByColumn("author_id")
 public class AuthorUa extends Author {

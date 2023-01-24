@@ -29,37 +29,38 @@ public class GenericQueryCreator {
     }
 
     private static String generateFind(Class<?> entityClass, String name) {
-        QueryBuilder queryBuilder = QueryRelationUtil.generateSelectQueryBuilder(entityClass);
+        SelectQueryBuilder builder = QueryRelationUtil.generateSelectQueryBuilder(entityClass);
 
         if (name.equals("find")) {
-            queryBuilder.addCondition(getTableNameOf(entityClass),
+            builder.addCondition(getTableNameOf(entityClass),
                     getIdColumnNameOf(entityClass),
-                    QueryBuilder.ConditionOperator.EQUALS);
+                    ConditionOperator.EQUALS);
         } else if (name.startsWith("findBy")) {
             String conditions = name.substring(name.indexOf("By") + "By".length());
-            parseConditions(entityClass, queryBuilder, conditions);
+            parseConditions(entityClass, builder, conditions);
         } else if (name.matches("find((?:[A-z][a-z0-9]+)+s)")) {
             String collectionField = name.substring(name.indexOf("find") + "find".length());
 
 
         }
 
-        return queryBuilder.toString();
+        return builder.toString();
     }
 
-    private static void parseConditions(Class<?> entityClass, QueryBuilder queryBuilder, String conditions) {
+    private static void parseConditions(Class<?> entityClass,
+                                        QueryBuilderWithConditions<?> queryBuilder, String conditions) {
         List<Class<?>> hierarchy = getEntityHierarchyOf(entityClass);
         Pattern pattern = Pattern.compile("(Or|And|Greater|Lower)|((?!Or|And|Greater|Lower)[A-Z][a-z0-9]+)+");
         Matcher matcher = pattern.matcher(conditions);
 
-        QueryBuilder.ConditionOperator operator = QueryBuilder.ConditionOperator.EQUALS;
+        ConditionOperator operator = ConditionOperator.EQUALS;
         while (matcher.find()) {
             String word = matcher.group();
 
             if (word.equals("Lower") | word.equals("Greater")) {
-                operator = QueryBuilder.ConditionOperator.valueOf(word.toUpperCase());
+                operator = ConditionOperator.valueOf(word.toUpperCase());
             } else if (word.equals("And") | word.equals("Or")) {
-                queryBuilder.addConditionConcatenation(QueryBuilder.ConditionOperator.valueOf(word.toUpperCase()));
+                queryBuilder.addConditionConcatenation(ConditionOperator.valueOf(word.toUpperCase()));
             } else {
                 String fieldName = StringUtil.toLowerCapCase(word);
                 try {
@@ -90,37 +91,37 @@ public class GenericQueryCreator {
     }
 
     private static String generateSave(Class<?> entityClass) {
-        return new QueryBuilder(QueryBuilder.QueryType.INSERT).
-                setTable(getTableNameOf(entityClass)).
+        return new InsertQueryBuilder().
+                addMainTable(getTableNameOf(entityClass)).
                 addAllColumns(getTableNameOf(entityClass), getColumnNamesOf(entityClass)).
                 toString();
     }
 
     private static String generateUpdate(Class<?> entityClass, String name) {
-        QueryBuilder queryBuilder = new QueryBuilder(QueryBuilder.QueryType.UPDATE).
-                setTable(getTableNameOf(entityClass)).
+        UpdateQueryBuilder builder = new UpdateQueryBuilder().
+                addMainTable(getTableNameOf(entityClass)).
                 addAllColumns(getTableNameOf(entityClass), getColumnNamesOf(entityClass));
 
         if (name.equals("update")) {
-            queryBuilder.addCondition(getTableNameOf(entityClass),
+            builder.addCondition(getTableNameOf(entityClass),
                     getIdColumnNameOf(entityClass),
-                    QueryBuilder.ConditionOperator.EQUALS);
+                    ConditionOperator.EQUALS);
         } else if (name.startsWith("updateBy")) {
             String conditions = name.substring(name.indexOf("updateBy") + "updateBy".length());
-            parseConditions(entityClass, queryBuilder, conditions);
+            parseConditions(entityClass, builder, conditions);
         }
 
-        return queryBuilder.toString();
+        return builder.toString();
     }
 
     private static String generateDelete(Class<?> entityClass, String name) {
-        QueryBuilder queryBuilder = new QueryBuilder(QueryBuilder.QueryType.DELETE).
-                setTable(getTableNameOf(entityClass));
+        DeleteQueryBuilder queryBuilder = new DeleteQueryBuilder().
+                addMainTable(getTableNameOf(entityClass));
 
         if (name.equals("delete")) {
             queryBuilder.addCondition(getTableNameOf(entityClass),
                     getIdColumnNameOf(entityClass),
-                    QueryBuilder.ConditionOperator.EQUALS);
+                    ConditionOperator.EQUALS);
         } else if (name.startsWith("deleteBy")) {
             String conditions = name.substring(name.indexOf("deleteBy") + "deleteBy".length());
             parseConditions(entityClass, queryBuilder, conditions);
@@ -133,8 +134,8 @@ public class GenericQueryCreator {
         String tableName = getTableNameOf(entityClass);
         List<String> columns = getColumnNamesOf(entityClass);
         List<Object> values = getColumnValuesOf(entityClass, entity);
-        return new QueryBuilder(QueryType.INSERT).
-                setTable(tableName).
+        return new InsertQueryBuilder().
+                addMainTable(tableName).
                 addAllColumns(tableName, columns).
                 addAllValues(values).
                 toString();
@@ -145,9 +146,9 @@ public class GenericQueryCreator {
         List<String> columns = getColumnNamesOf(entityClass);
         List<Object> values = getColumnValuesOf(entityClass, entity);
         String idColumn = getIdColumnNameOf(entityClass);
-        Object idValue = getIdValue(entityClass, entityClass);
-        return new QueryBuilder(QueryType.UPDATE).
-                setTable(tableName).
+        Object idValue = getIdValue(entityClass, entity);
+        return new UpdateQueryBuilder().
+                addMainTable(tableName).
                 addAllColumns(tableName, columns).
                 addAllValues(values).
                 addCondition(tableName, idColumn, ConditionOperator.EQUALS, idValue).
@@ -157,8 +158,8 @@ public class GenericQueryCreator {
     public static String createDeleteQuery(Class<?> entityClass, Object idValue) {
         String tableName = getTableNameOf(entityClass);
         String idColumn = getIdColumnNameOf(entityClass);
-        return  new QueryBuilder(QueryType.DELETE).
-                setTable(tableName).
+        return new DeleteQueryBuilder().
+                addMainTable(tableName).
                 addCondition(tableName, idColumn, ConditionOperator.EQUALS, idValue).
                 toString();
     }

@@ -10,6 +10,7 @@ import java.util.*;
 @Setter
 @ToString(callSuper = true, exclude = {"receipts", "subscriptions"})
 @EqualsAndHashCode(callSuper = true)
+@Entity
 @Table("reader")
 @IdMappedByColumn("user_id")
 public class Reader extends AbstractUser {

@@ -111,7 +111,7 @@ public class LazyInitializationHandler implements MethodHandler {
                 throw new LazyInitializationException(
                         "Entity " + entityClass + " with id " + id + " wasn't found in db");
             }
-            String resultSetForeignKeyColumn = convertToResultSetColumn(
+            String resultSetForeignKeyColumn = SelectQueryBuilder.convertToResultSetColumn(
                     getTableNameOf(entityClass), getColumnNameOf(field));
             return resultSet.getObject(resultSetForeignKeyColumn);
         } catch (SQLException e) {
@@ -139,7 +139,7 @@ public class LazyInitializationHandler implements MethodHandler {
 
             String sqlQuery = QueryRelationUtil.getQueryOfManyToOneFor(field);
 
-            String resultSetForeignKeyColumn = convertToResultSetColumn(
+            String resultSetForeignKeyColumn = SelectQueryBuilder.convertToResultSetColumn(
                     getTableNameOf(entityClass), getColumnNameOf(field));
             Object relatedIdValue = resultSet.getObject(resultSetForeignKeyColumn);
 

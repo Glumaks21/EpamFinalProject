@@ -9,7 +9,6 @@ import java.sql.*;
 import java.util.*;
 
 import static ua.maksym.hlushchenko.dao.db.sql.EntityParser.*;
-import static ua.maksym.hlushchenko.dao.db.sql.QueryBuilder.*;
 
 public class GenericMapper<T> implements SqlMapper<T> {
     private final Class<? extends T> entityClass;
@@ -73,7 +72,7 @@ public class GenericMapper<T> implements SqlMapper<T> {
     private Object getMappedSingleColumnValue(Field field, ResultSet resultSet) throws SQLException {
         String tableName = getTableNameOf(field.getDeclaringClass());
         String columnName = getColumnNameOf(field);
-        String resultSetColumn = convertToResultSetColumn(tableName, columnName);
+        String resultSetColumn = SelectQueryBuilder.convertToResultSetColumn(tableName, columnName);
         return resultSet.getObject(resultSetColumn, field.getType());
     }
 
@@ -86,12 +85,12 @@ public class GenericMapper<T> implements SqlMapper<T> {
 
             if (oneToOne.mappedBy().equals("")) {
                 sqlQuery = QueryRelationUtil.getUnMappedOneToOneQueryFor(field);
-                String resultSetForeignKeyColumn = convertToResultSetColumn(
+                String resultSetForeignKeyColumn = SelectQueryBuilder.convertToResultSetColumn(
                         getTableNameOf(originEntity), getColumnNameOf(field));
                 foreignKey = resultSet.getObject(resultSetForeignKeyColumn);
             } else {
                 sqlQuery = QueryRelationUtil.getMappedOneToOneQueryFor(field);
-                String resultSetForeignKeyColumn = convertToResultSetColumn(
+                String resultSetForeignKeyColumn = SelectQueryBuilder.convertToResultSetColumn(
                         getTableNameOf(originEntity), getIdColumnNameOf(originEntity));
                 foreignKey = resultSet.getObject(resultSetForeignKeyColumn);
             }
@@ -108,7 +107,7 @@ public class GenericMapper<T> implements SqlMapper<T> {
     private Object getMappedManyToOneValue(Field field, ResultSet resultSet) throws SQLException {
         String sqlQuery = QueryRelationUtil.getQueryOfManyToOneFor(field);
 
-        String resultSetForeignKeyColumn = convertToResultSetColumn(
+        String resultSetForeignKeyColumn = SelectQueryBuilder.convertToResultSetColumn(
                 getTableNameOf(field.getDeclaringClass()), getColumnNameOf(field));
         Object relatedIdValue = resultSet.getObject(resultSetForeignKeyColumn);
 
@@ -123,7 +122,7 @@ public class GenericMapper<T> implements SqlMapper<T> {
             String sqlQuery = QueryRelationUtil.getQueryOfOneToManyFor(field);
 
             Class<?> entityClass = field.getDeclaringClass();
-            String resultSetIdColumn = convertToResultSetColumn(
+            String resultSetIdColumn = SelectQueryBuilder.convertToResultSetColumn(
                     getTableNameOf(entityClass), getIdColumnNameOf(entityClass));
             Object id = resultSet.getObject(resultSetIdColumn);
 
@@ -144,7 +143,7 @@ public class GenericMapper<T> implements SqlMapper<T> {
 
             String sqlQuery = QueryRelationUtil.getQueryOfManyToManyFor(field);
 
-            String resultSetIdColumn = convertToResultSetColumn(
+            String resultSetIdColumn = SelectQueryBuilder.convertToResultSetColumn(
                     getTableNameOf(originEntity), getIdColumnNameOf(originEntity));
             Object idValue = resultSet.getObject(resultSetIdColumn);
 

@@ -10,7 +10,7 @@ import java.util.List;
 @Setter
 @ToString(exclude = {"genresUa"}, callSuper = true)
 @EqualsAndHashCode(exclude = {"title", "author", "description",  "genresUa"}, callSuper = true)
-
+@Entity
 @Table("book_ua")
 @IdMappedByColumn("book_id")
 public class BookUa extends Book {
