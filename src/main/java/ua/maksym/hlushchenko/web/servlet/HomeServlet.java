@@ -4,7 +4,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import ua.maksym.hlushchenko.dao.*;
-import ua.maksym.hlushchenko.dao.entity.impl.Book;
+import ua.maksym.hlushchenko.dao.entity.Book;
 import ua.maksym.hlushchenko.util.ParamsValidator;
 
 import java.io.IOException;

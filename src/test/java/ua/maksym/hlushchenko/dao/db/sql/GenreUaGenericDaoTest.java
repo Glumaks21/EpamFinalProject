@@ -2,10 +2,12 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.*;
-import ua.maksym.hlushchenko.dao.Dao;
-import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.dao.entity.impl.Genre;
-import ua.maksym.hlushchenko.dao.entity.impl.GenreUa;
+import ua.maksym.hlushchenko.orm.dao.Dao;
+import ua.maksym.hlushchenko.dao.HikariCPDataSource;
+import ua.maksym.hlushchenko.dao.entity.Genre;
+import ua.maksym.hlushchenko.dao.entity.GenreUa;
+import ua.maksym.hlushchenko.orm.dao.GenericDao;
+import ua.maksym.hlushchenko.orm.dao.SessionImpl;
 
 import java.sql.*;
 import java.util.*;
@@ -16,12 +18,12 @@ import static ua.maksym.hlushchenko.dao.db.sql.TestEntityFactory.createEntity;
 
 
 public class GenreUaGenericDaoTest {
-    private static Session session;
+    private static SessionImpl session;
     private static Dao<Integer, GenreUa> dao;
 
     @BeforeAll
     static void init() throws SQLException {
-        session = new Session(HikariCPDataSource.getInstance().getConnection());
+        session = new SessionImpl(HikariCPDataSource.getInstance().getConnection());
         dao = new GenericDao<>(GenreUa.class, session);
     }
 

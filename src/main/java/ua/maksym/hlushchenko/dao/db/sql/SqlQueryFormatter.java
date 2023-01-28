@@ -3,7 +3,7 @@ package ua.maksym.hlushchenko.dao.db.sql;
 import java.sql.Statement;
 import java.util.*;
 
-class SqlQueryFormatter {
+public class SqlQueryFormatter {
     public static String formatSql(Statement statement) {
         Objects.requireNonNull(statement);
         String dirtySqlQuery = statement.toString();

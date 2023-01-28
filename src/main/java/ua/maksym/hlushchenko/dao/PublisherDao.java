@@ -1,6 +1,7 @@
 package ua.maksym.hlushchenko.dao;
 
-import ua.maksym.hlushchenko.dao.entity.impl.Publisher;
+import ua.maksym.hlushchenko.dao.entity.Publisher;
+import ua.maksym.hlushchenko.orm.dao.Dao;
 
 import java.util.Optional;
 

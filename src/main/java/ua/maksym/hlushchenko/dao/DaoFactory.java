@@ -1,9 +1,10 @@
 package ua.maksym.hlushchenko.dao;
 
-import ua.maksym.hlushchenko.dao.entity.impl.Author;
-import ua.maksym.hlushchenko.dao.entity.impl.Genre;
-import ua.maksym.hlushchenko.dao.entity.impl.role.Admin;
-import ua.maksym.hlushchenko.dao.entity.impl.role.Librarian;
+import ua.maksym.hlushchenko.dao.entity.Author;
+import ua.maksym.hlushchenko.dao.entity.Genre;
+import ua.maksym.hlushchenko.dao.entity.role.Admin;
+import ua.maksym.hlushchenko.dao.entity.role.Librarian;
+import ua.maksym.hlushchenko.orm.dao.Dao;
 
 import java.util.Locale;
 

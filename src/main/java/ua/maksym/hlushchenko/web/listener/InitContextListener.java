@@ -2,7 +2,7 @@ package ua.maksym.hlushchenko.web.listener;
 
 import jakarta.servlet.*;
 import jakarta.servlet.annotation.WebListener;
-import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
+import ua.maksym.hlushchenko.dao.HikariCPDataSource;
 
 @WebListener
 public class InitContextListener implements ServletContextListener {

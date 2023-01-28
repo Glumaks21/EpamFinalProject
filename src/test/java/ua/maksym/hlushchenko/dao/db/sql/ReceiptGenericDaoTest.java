@@ -2,10 +2,13 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.*;
-import ua.maksym.hlushchenko.dao.Dao;
-import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.dao.entity.impl.Receipt;
-import ua.maksym.hlushchenko.dao.entity.impl.role.Reader;
+import ua.maksym.hlushchenko.orm.dao.Dao;
+import ua.maksym.hlushchenko.dao.HikariCPDataSource;
+import ua.maksym.hlushchenko.dao.entity.Receipt;
+import ua.maksym.hlushchenko.dao.entity.role.Reader;
+import ua.maksym.hlushchenko.orm.dao.GenericDao;
+import ua.maksym.hlushchenko.orm.dao.SessionImpl;
+import ua.maksym.hlushchenko.orm.entity.EntityParser;
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -16,12 +19,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 
 public class ReceiptGenericDaoTest {
-    private static Session session;
+    private static SessionImpl session;
     private static Dao<Integer, Receipt> dao;
 
     @BeforeAll
     static void init() throws SQLException {
-        session = new Session(HikariCPDataSource.getInstance().getConnection());
+        session = new SessionImpl(HikariCPDataSource.getInstance().getConnection());
         dao = new GenericDao<>(Receipt.class, session);
     }
 

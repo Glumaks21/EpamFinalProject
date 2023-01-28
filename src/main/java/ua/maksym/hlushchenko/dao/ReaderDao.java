@@ -1,8 +1,9 @@
 package ua.maksym.hlushchenko.dao;
 
-import ua.maksym.hlushchenko.dao.entity.impl.Receipt;
-import ua.maksym.hlushchenko.dao.entity.impl.Subscription;
-import ua.maksym.hlushchenko.dao.entity.impl.role.Reader;
+import ua.maksym.hlushchenko.dao.entity.Receipt;
+import ua.maksym.hlushchenko.dao.entity.Subscription;
+import ua.maksym.hlushchenko.dao.entity.role.Reader;
+import ua.maksym.hlushchenko.orm.dao.Dao;
 
 import java.util.List;
 

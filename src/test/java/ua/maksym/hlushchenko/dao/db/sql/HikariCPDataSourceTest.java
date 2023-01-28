@@ -1,7 +1,7 @@
 package ua.maksym.hlushchenko.dao.db.sql;
 
 import org.junit.jupiter.api.Test;
-import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
+import ua.maksym.hlushchenko.dao.HikariCPDataSource;
 
 import java.sql.SQLException;
 

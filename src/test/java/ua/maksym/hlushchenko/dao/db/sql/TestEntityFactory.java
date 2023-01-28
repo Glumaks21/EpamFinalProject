@@ -1,10 +1,13 @@
 package ua.maksym.hlushchenko.dao.db.sql;
 
-import ua.maksym.hlushchenko.dao.Dao;
-import ua.maksym.hlushchenko.dao.entity.impl.*;
-import ua.maksym.hlushchenko.dao.entity.impl.role.Admin;
-import ua.maksym.hlushchenko.dao.entity.impl.role.Librarian;
-import ua.maksym.hlushchenko.dao.entity.impl.role.Reader;
+import ua.maksym.hlushchenko.orm.dao.Dao;
+import ua.maksym.hlushchenko.dao.entity.*;
+import ua.maksym.hlushchenko.dao.entity.role.Admin;
+import ua.maksym.hlushchenko.dao.entity.role.Librarian;
+import ua.maksym.hlushchenko.dao.entity.role.Reader;
+import ua.maksym.hlushchenko.orm.dao.GenericDao;
+import ua.maksym.hlushchenko.orm.dao.SessionImpl;
+import ua.maksym.hlushchenko.orm.entity.EntityParser;
 
 import java.lang.reflect.Field;
 import java.time.*;
@@ -15,7 +18,7 @@ import java.util.function.Supplier;
 public class TestEntityFactory {
     private static final Map<Class<?>, Supplier<?>> map;
     private static final Map<Class<?>, Integer> mappedCounter;
-    private final Session session;
+    private final SessionImpl session;
 
     static {
         map = new HashMap<>();
@@ -34,7 +37,7 @@ public class TestEntityFactory {
         map.put(Subscription.class, TestEntityFactory::createSubscription);
     }
 
-    public TestEntityFactory(Session session) {
+    public TestEntityFactory(SessionImpl session) {
         this.session = session;
     }
 

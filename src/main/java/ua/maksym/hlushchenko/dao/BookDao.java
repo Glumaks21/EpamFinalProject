@@ -1,7 +1,8 @@
 package ua.maksym.hlushchenko.dao;
 
-import ua.maksym.hlushchenko.dao.entity.impl.Book;
-import ua.maksym.hlushchenko.dao.entity.impl.Genre;
+import ua.maksym.hlushchenko.dao.entity.Book;
+import ua.maksym.hlushchenko.dao.entity.Genre;
+import ua.maksym.hlushchenko.orm.dao.Dao;
 
 import java.util.List;
 

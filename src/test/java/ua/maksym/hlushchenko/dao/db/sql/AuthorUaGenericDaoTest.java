@@ -2,10 +2,12 @@ package ua.maksym.hlushchenko.dao.db.sql;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.*;
-import ua.maksym.hlushchenko.dao.Dao;
-import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
-import ua.maksym.hlushchenko.dao.entity.impl.Author;
-import ua.maksym.hlushchenko.dao.entity.impl.AuthorUa;
+import ua.maksym.hlushchenko.orm.dao.Dao;
+import ua.maksym.hlushchenko.dao.HikariCPDataSource;
+import ua.maksym.hlushchenko.dao.entity.Author;
+import ua.maksym.hlushchenko.dao.entity.AuthorUa;
+import ua.maksym.hlushchenko.orm.dao.GenericDao;
+import ua.maksym.hlushchenko.orm.dao.SessionImpl;
 
 import java.sql.*;
 import java.util.*;
@@ -15,12 +17,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 
 public class AuthorUaGenericDaoTest {
-    private static Session session;
+    private static SessionImpl session;
     private static Dao<Integer, AuthorUa> dao;
 
     @BeforeAll
     static void init() throws SQLException {
-        session = new Session(HikariCPDataSource.getInstance().getConnection());
+        session = new SessionImpl(HikariCPDataSource.getInstance().getConnection());
         dao = new GenericDao<>(AuthorUa.class, session);
     }
 

@@ -1,6 +1,6 @@
 package ua.maksym.hlushchenko.dao.db.sql;
 
-import ua.maksym.hlushchenko.dao.db.HikariCPDataSource;
+import ua.maksym.hlushchenko.dao.HikariCPDataSource;
 
 import java.sql.*;
 import java.util.*;

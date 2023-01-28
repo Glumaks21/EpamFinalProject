@@ -5,7 +5,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import ua.maksym.hlushchenko.dao.DaoFactory;
 import ua.maksym.hlushchenko.dao.UserDao;
-import ua.maksym.hlushchenko.dao.entity.impl.role.AbstractUser;
+import ua.maksym.hlushchenko.dao.entity.role.AbstractUser;
 import ua.maksym.hlushchenko.util.ParamsValidator;
 
 import java.io.IOException;

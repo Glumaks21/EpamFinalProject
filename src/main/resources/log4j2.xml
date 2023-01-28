@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration>
     <Appenders>
+        <File name="SessionLogToFile" fileName="logs/session.log">
+            <PatternLayout>
+                <Pattern>%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1} - %m%n</Pattern>
+            </PatternLayout>
+        </File>
         <File name="DaoLogToFile" fileName="logs/dao.log">
             <PatternLayout>
                 <Pattern>%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1} - %m%n</Pattern>
@@ -13,9 +18,12 @@
         </File>
     </Appenders>
     <Loggers>
-        <Logger name="ua.maksym.hlushchenko.dao.db.sql" level="info" additivity="false">
-            <AppenderRef ref="DaoLogToFile"/>
+        <Logger name="ua.maksym.hlushchenko.orm.dao.SessionImpl" level="info" additivity="false">
+            <AppenderRef ref="SessionLogToFile"/>
         </Logger>
+<!--        <Logger name="ua.maksym.hlushchenko.dao.db.sql" level="info" additivity="false">-->
+<!--            <AppenderRef ref="DaoLogToFile"/>-->
+<!--        </Logger>-->
         <Logger name="ua.maksym.hlushchenko.web.filter" level="info" additivity="false">
             <AppenderRef ref="WebLogToFile"/>
         </Logger>
